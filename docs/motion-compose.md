@@ -1,12 +1,11 @@
 # モーションをつなぐ（tools/compose）
 
-文章（Kimodo）、動画（vrma-pipeline）、FBX のアセット、VRMA、MotionBricks の条件を、同じ形（中間形式）にそろえて、区間の間を MotionBricks で生成し、1 本の VRMA にする。使い方は `skills/motion-compose/SKILL.md`。保管場所のモーション、MotionBricks の条件、文章（`motion-text`）や動画（`video-motion`）や MotionBricks（`motion-gen`）のジョブの取り込む前の結果をつなぐときは、きゃらすたの動きの画面の「つくる」から動かせる（下の「画面からつなぐ」）。計画の `text`、`video`、FBX の区間は CLI だけ。用語は `CONTEXT.md`、移し替えは `docs/adr/0003-motionbricks-retarget.md`、足は `docs/foot-ik.md`。
+動画（vrma-pipeline）、FBX のアセット、VRMA、MotionBricks の条件を、同じ形（中間形式）にそろえて、区間の間を MotionBricks で生成し、1 本の VRMA にする。保管場所のモーション、MotionBricks の条件、動画（`video-motion`）や MotionBricks（`motion-gen`）のジョブの取り込む前の結果をつなぐときは、きゃらすたの動きの画面の「つくる」から動かせる（下の「画面からつなぐ」）。計画の `video`、FBX の区間は CLI だけ。用語は `CONTEXT.md`、移し替えは `docs/adr/0003-motionbricks-retarget.md`、足は `docs/foot-ik.md`。
 
 ## 流れ
 
 1. 計画を読む。`motion` の区間は保管場所の `motion.vrma` と `motion.json` の `license` をそのまま使う。`path` の区間に `license` が無ければ止まる。推測で埋めない。
 2. 素材を中間形式にする。結果は `WORK/cache` に残す。
-   - `text`: `kimodo_gen.py` を Kimodo の .venv で動かす。
    - `asset`: `fbx_dump.py` を Blender で動かし、`fbx_clip.py` が移し替える。
    - `video`: vrma-pipeline の `batch_convert.py` で VRMA を作り、`vrma_read.py` で読む。
    - `motionbricks`: 条件（`kind`、`speed`、`direction`、`turn`、`seconds`、`action`、`ending`、`root`）を `lib/motion-gen-options.json` で確かめ（きゃらすたの `motion-gen` と同じ規則と既定）、`tools/motionbricks_gen.py` を MotionBricks の uv の環境で動かして VRMA と接地を作る（`--fake` ではふだんの python の作りものの動き）。`speed` は動きの速さ（m/s）なので、再生の速さには使わない。`root` は compose の区間の `root` として扱い、`motionbricks_gen.py` はいつも進む動きを作る。結果は `WORK/cache/mb-<条件の値>` に残す。許諾は `motion-gen` の取り込みと同じ記録（`lib/model-licenses.json` の `motionbricksGen`。評価用のみ）に使った見本の動きの BVH を入れたもの。`generated.segments[]` に条件、`motionbricks`（モデル、版、コマ数、進んだ距離、使った見本の動き）、`license` を残す。
@@ -74,7 +73,7 @@ D(t) = B * W(t) * W_ref^-1 * B^-1 * F^-1
 
 `anatomy` は `anatomy.py` の定義で測った肩と肘（挙上、水平内外転、屈曲、上腕の回旋、前腕の回内、肘が向く方向）と、人の可動域を超えるコマの数。
 
-`elbowPrior: true` を計画か区間に書くと、肘の向きの無理に、肘が重力と体の外へ向く事前分布と、肩と前腕の可動域の罰を足し、T ポーズから測る上腕のねじれの重みを 0.25 に下げる。`chestShare: 1` と一緒に使うと、数値では左肘の開きが消えて元の動きへ近づくが、**見た目で既定にしなかった**（`docs/notes/motion-compose.md`）。既定は `elbowPrior: false`。
+`elbowPrior: true` を計画か区間に書くと、肘の向きの無理に、肘が重力と体の外へ向く事前分布と、肩と前腕の可動域の罰を足し、T ポーズから測る上腕のねじれの重みを 0.25 に下げる。`chestShare: 1` と一緒に使うと、数値では左肘の開きが消えて元の動きへ近づくが、**見た目で既定にしなかった**。既定は `elbowPrior: false`。
 ## 武器を主に解く（weapon.py、weapon_check.py、weapon_def.py）
 
 `asset` の区間に `grip` の代わりに `weapon`（武器の定義の JSON）を書くと、武器を剛体として、その姿勢から両腕を解く。`grip` は両手首の差を合わせるだけで、武器は計算に入っていない。Warrior の 2Handed_Attack1 を `grip` で解くと、刃が地面へ最大 21 cm 入り、柄頭が右の太ももに入り、1 コマで 176 度回ったまま残る。
@@ -176,7 +175,7 @@ blender --background --python-exit-code 1 --python tools/compose/fbx_to_vrma_ble
 
 VRM 0.0 の体は読まずに止まるので、先に vrma-pipeline の `tools/convert_vrm0_to_1.py` で変換する。`--out` は全部終わってから置き換えるので、途中で失敗しても前の出力が残る。
 
-2 つの経路の両手首の間隔は同じ（コマごとの差 0.0001 cm）。手の向きを T ポーズへ向ける回転が違う（Python は REST の体、Blender は VRM の体の骨の向き）ので、ねじれの値は少し違う（測った値は `docs/notes/motion-compose.md`）。
+2 つの経路の両手首の間隔は同じ（コマごとの差 0.0001 cm）。手の向きを T ポーズへ向ける回転が違う（Python は REST の体、Blender は VRM の体の骨の向き）ので、ねじれの値は少し違う。
 
 ## つなぎ
 
@@ -187,13 +186,13 @@ VRM 0.0 の体は読まずに止まるので、先に vrma-pipeline の `tools/c
 
 ## 継ぎ目の接地
 
-継ぎ目（区間とつなぎの境、全部）の前後 1 コマは、4 列全部の接地を 0 にする（`clip.concat`）。接地の区間が継ぎ目をまたぐと、足の IK が足を留めたまま体だけが次の区間へ動き、Kimodo の 2 本をつないだ確かめで膝立ちが崩れた。
+継ぎ目（区間とつなぎの境、全部）の前後 1 コマは、4 列全部の接地を 0 にする（`clip.concat`）。接地の区間が継ぎ目をまたぐと、足の IK が足を留めたまま体だけが次の区間へ動く。
 
 `root: inplace` の区間は接地を持たない（足が床を滑るのが動きそのもの。`docs/foot-ik.md`）。全区間が `inplace` なら `generated.options.root` も `inplace` にする。
 
 ## 記録
 
-- `license`（`records.py`）: 区間とつなぎの条件を `terms` に並べる。計画の `text` の区間（`KIMODO_LICENSE`）と MotionBricks のつなぎ（`BRIDGE_LICENSE`）の記録は `lib/model-licenses.json` の `kimodoCompose` と `motionbricksBridge` にあり、きゃらすたの文章からの取り込みの記録（`kimodoText`、`lib/motion-text.mjs`）と同じファイルで持つ。`redistribution` は全部 true のときだけ true、`evaluationOnly` はどれかが true なら true。`summary` は一番厳しい区間の文を先に置き、ほかの文を続ける。厳しさは `lib/terms.mjs` の判定の順（評価用のみ > 個人利用 > 公開不可 > 二次配布不可）。
+- `license`（`records.py`）: 区間とつなぎの条件を `terms` に並べる。MotionBricks のつなぎ（`BRIDGE_LICENSE`）の記録は `lib/model-licenses.json` の `motionbricksBridge` にある。`redistribution` は全部 true のときだけ true、`evaluationOnly` はどれかが true なら true。`summary` は一番厳しい区間の文を先に置き、ほかの文を続ける。厳しさは `lib/terms.mjs` の判定の順（評価用のみ > 個人利用 > 公開不可 > 二次配布不可）。
 - `generated`: `tool: motion-compose`、区間の出どころ、つなぎの方法と時間、`spans`（コマの範囲）。
 
 ## 確かめの値（check.py）
@@ -213,27 +212,26 @@ REST の体で組み立てて測る。キャラに当てた値は `tools/motion_
 
 動きの画面の「モーションを足す」の「つくる」（`public/recipe-motion.mjs`）で 2 つ以上の区間を並べると、ジョブ `motion-recipe`（`lib/motion-recipe.mjs`）を積む。区間が 1 つのときは単体のジョブを積む（下の「つくるの区間が 1 つのとき」）。新しい生成の仕組みは無く、`compose.py` を子プロセスで呼ぶだけ。
 
-- レシピ: 区間は保管場所のモーション（`{source: 'motion', motion, trim?, speed?}`）か、確認待ちのジョブの結果（`{source: 'job', job, n?, trim?, speed?}`）か、MotionBricks の条件（`{source: 'motionbricks', kind?, speed?, direction?, turn?, seconds?, action?, ending?, root?, trim?}`）で、2〜8 本。`job` は文章（`motion-text`）、動画（`video-motion`）、MotionBricks（`motion-gen`）のジョブ。文章は候補が複数あるので `n`（1 から）が要り、動画と MotionBricks は 1 本なので `n` を書かない。MotionBricks の条件は `motion-gen` と同じ規則で確かめて既定を埋め（`lib/motion-gen.mjs` の `motionGenConditions`）、そのまま計画の `motionbricks` の区間にする。その `speed` は動きの速さ（m/s）で、再生の速さは無い。`trim` の終わりは動く秒数を超えてよい（止まる分の長さは作るまで分からないので、`compose.py` が最後のコマに収める）。積めるのは確認待ち（`review: waiting`）のジョブだけで、取り込み済みなら取り込んだモーションを使う。`trim` は `[開始の秒, 終了の秒 か null]` でモーションの長さの中、`speed` は 0.25〜4。区間の間は `bridge: {seconds, method}`（0〜3 秒、`motionbricks` か `interpolate`。既定は 1.2 秒の MotionBricks）。全体の `bridge` が既定で、区間の `bridge` はその区間の前のつなぎ。
-- ジョブの結果の読み方: 取り込みと同じファイルと利用条件を読む。文章は `jobs/<ジョブ>/cand/<n>/motion.vrma` と `contacts.json`、利用条件は文章からの取り込みと同じ Kimodo の記録（`lib/model-licenses.json` の `kimodoText`）。動画は `jobs/<ジョブ>/out/clip/clip.vrma` と `contacts.json`、利用条件はジョブの結果の `license`（個人利用のみ）。MotionBricks は `jobs/<ジョブ>/motion.vrma` と `contacts.json`、利用条件はジョブの結果の `license`（評価用のみ）。条件は書き換えずに `compose.py` へ渡すので、評価用や個人利用の条件はそのまま全体の条件になる。利用条件の記録が無いジョブは積めない（推測で埋めない）。
+- レシピ: 区間は保管場所のモーション（`{source: 'motion', motion, trim?, speed?}`）か、確認待ちのジョブの結果（`{source: 'job', job, n?, trim?, speed?}`）か、MotionBricks の条件（`{source: 'motionbricks', kind?, speed?, direction?, turn?, seconds?, action?, ending?, root?, trim?}`）で、2〜8 本。`job` は動画（`video-motion`）、MotionBricks（`motion-gen`）のジョブ。動画と MotionBricks は 1 本なので `n` を書かない。MotionBricks の条件は `motion-gen` と同じ規則で確かめて既定を埋め（`lib/motion-gen.mjs` の `motionGenConditions`）、そのまま計画の `motionbricks` の区間にする。その `speed` は動きの速さ（m/s）で、再生の速さは無い。`trim` の終わりは動く秒数を超えてよい（止まる分の長さは作るまで分からないので、`compose.py` が最後のコマに収める）。積めるのは確認待ち（`review: waiting`）のジョブだけで、取り込み済みなら取り込んだモーションを使う。`trim` は `[開始の秒, 終了の秒 か null]` でモーションの長さの中、`speed` は 0.25〜4。区間の間は `bridge: {seconds, method}`（0〜3 秒、`motionbricks` か `interpolate`。既定は 1.2 秒の MotionBricks）。全体の `bridge` が既定で、区間の `bridge` はその区間の前のつなぎ。
+- ジョブの結果の読み方: 取り込みと同じファイルと利用条件を読む。動画は `jobs/<ジョブ>/out/clip/clip.vrma` と `contacts.json`、利用条件はジョブの結果の `license`（個人利用のみ）。MotionBricks は `jobs/<ジョブ>/motion.vrma` と `contacts.json`、利用条件はジョブの結果の `license`（評価用のみ）。条件は書き換えずに `compose.py` へ渡すので、評価用や個人利用の条件はそのまま全体の条件になる。利用条件の記録が無いジョブは積めない（推測で埋めない）。
 - 実行の直前の検査: 「区間を確かめる」で、ジョブがまだあり確認待ちか取り込み済みで、結果のファイルが残っていることを確かめ、作業フォルダの `segments/<番号>/` へ VRMA、接地、`license.json` を写してから使う。写したあとは元のジョブが捨てられても取り込まれても動く。捨てたジョブや、消えた候補のファイルは `compose.py` を呼ぶ前に失敗にする。
 - 記録: ジョブの結果の区間は、`generated.segments[].motionRecord` に保管場所のモーションと同じ形（`id` は null、`library`、写した VRMA の `sha256`、`source` の `path` は元のファイルの保管場所からの相対パスと `pack`、`contacts`）で残し、`job` に `{id, type, candidate}`（動画は `candidate: null`）を足す。
-- ジョブ: 計画（`plan.json`。区間は `vrma` で、保管場所のモーションは `motion`、ジョブの結果は写した `path`、`contacts`、`license`、`motionRecord`。MotionBricks の条件は `motionbricks` で条件をそのまま書く。名前は「番号: 名前」で、文章の候補は「ラベル（候補 n）」）を書いて `compose.py` を呼ぶ。外の道具の場所は設定から環境変数で渡す（`MOTIONBRICKS_DIR` は `motionbricksDir`、`KIMODO_PYTHON` は `kimodoDir` の .venv、`VRMA_PIPELINE_DIR` は `vrmaPipelineDir`、`VRMA_BLENDER` は `blender`、`CHARASTA_LIBRARY` は保管場所）。`uv` の場所は `CHARASTA_UV`。時間の上限は 15 分（`CHARASTA_MOTION_RECIPE_TIMEOUT_MS`）。`CHARASTA_FAKE_MOTIONBRICKS` では `--fake` を付ける（MotionBricks の区間は作りものの動き、つなぎは補間）。MotionBricks の条件の区間があると、つなぎが補間でも MotionBricks が要る。見つからなければ `compose.py` を呼ぶ前に失敗にする。
-- 結果は確認待ち（`review: waiting`）。画面は `GET /api/motion-recipes`（選べる値、確認待ち、区間に使える確認待ちの結果 `sources`。文章は候補ごと、動画は 1 本で、`{job, n, type, kind, name, durationSec, license, limit}`）、`/api/motion-recipes/<ジョブ>/motion.vrma` と `contacts.json`（確認待ちの間だけ配る）を読み、ビューアの `playCandidate` で再生する。`report.json` の `seams`、`elsewhereP99`、`footSlide`、`hipsHeight`、`handInBody` を並べる。
+- ジョブ: 計画（`plan.json`。区間は `vrma` で、保管場所のモーションは `motion`、ジョブの結果は写した `path`、`contacts`、`license`、`motionRecord`。MotionBricks の条件は `motionbricks` で条件をそのまま書く。名前は「番号: 名前」）を書いて `compose.py` を呼ぶ。外の道具の場所は設定から環境変数で渡す（`MOTIONBRICKS_DIR` は `motionbricksDir`、`VRMA_PIPELINE_DIR` は `vrmaPipelineDir`、`VRMA_BLENDER` は `blender`、`CHARASTA_LIBRARY` は保管場所）。`uv` の場所は `CHARASTA_UV`。時間の上限は 15 分（`CHARASTA_MOTION_RECIPE_TIMEOUT_MS`）。`CHARASTA_FAKE_MOTIONBRICKS` では `--fake` を付ける（MotionBricks の区間は作りものの動き、つなぎは補間）。MotionBricks の条件の区間があると、つなぎが補間でも MotionBricks が要る。見つからなければ `compose.py` を呼ぶ前に失敗にする。
+- 結果は確認待ち（`review: waiting`）。画面は `GET /api/motion-recipes`（選べる値、確認待ち、区間に使える確認待ちの結果 `sources`。動画は 1 本で、`{job, n, type, kind, name, durationSec, license, limit}`）、`/api/motion-recipes/<ジョブ>/motion.vrma` と `contacts.json`（確認待ちの間だけ配る）を読み、ビューアの `playCandidate` で再生する。`report.json` の `seams`、`elsewhereP99`、`footSlide`、`hipsHeight`、`handInBody` を並べる。
 - 取り込む（`POST /api/motion-recipes/<ジョブ>/import`）: `lib.importMotion` で `compose-<ジョブ>` に入れる。`license` は `license.json`、接地は `contacts.json`、`generated` は `generated.json` に `job`、`fake`、`recipe`（積んだレシピ）、`report`（`report.json` の全部）を足したもの。区間のモーションの `motion.json` は書き換えない（ADR 0002）。捨てる（`.../discard`）は作業フォルダを保管場所の `trash/motion-recipe-<ジョブ>` へ移す。
-- 順番待ちか実行中のレシピが使うモーションは、ごみ箱へ移せない。同じく、順番待ちか実行中のレシピが区間に使う確認待ちのジョブは捨てられない（`busy`、409）。文章のジョブの別の候補を取り込んだときは、そのレシピが使う候補のファイルを消さずに残す。残した候補は、そのレシピのジョブが終わったとき（成功、失敗、サーバーの停止による取り消しのどれでも）に消す。消すのは、取り込み済みで、取り込んだ候補ではなく、ほかの順番待ちか実行中のレシピも使っていない候補の `cand/<番号>/` だけで、取り込みで消えるはずだった候補と同じ。確認待ちのままのジョブの候補は選ぶ前なので消さない。
-- 画面: 「つくる」は区間の種類（文章（Kimodo）、MotionBricks の条件、動画、保管場所のモーション、確認待ちの結果（取り込む前））を選んで「足す」。保管場所のモーションと確認待ちの結果は一覧から選ぶ。MotionBricks の条件、文章、動画は、区間の中に今までの条件のフォームが開く（`public/gen-motion.mjs` の `genFields`、`public/text-motion.mjs` の `textFields`、`public/video-motion.mjs` の `videoFields`）。並べたあとに元のジョブを取り込んだか捨てた区間は、注意を出す。
-- つくるの区間が 1 つのとき: 文章は `motion-text`、動画は `video-motion`、MotionBricks の条件は `motion-gen` をそのまま積む（ボタンは「文章から作る」「動画から作る」「MotionBricks で作る」）。結果と確認の流れはそれぞれのジョブのまま。保管場所のモーションか確認待ちの結果が 1 つだけのときは積まない。
-- 文章と動画の区間は、2 つ以上並べたときには使えない（ボタンを押せなくし、「先にその区間だけで作り、確認の欄に出た結果を確認待ちの結果として足す」と出す）。文章と動画の区間のジョブを先に積み、終わってから結果を区間にしたレシピを積む形は、ジョブの間の待ち合わせと失敗の扱いが要るので、今回は作らなかった。MotionBricks の条件は `compose.py` の中で作るので、2 つ以上でも使える。
-- 計画の `text` の区間（`compose.py` が自分で Kimodo を読み込む `kimodo_gen.py` の経路）は CLI に残す。画面とレシピのジョブはこの経路を使わず、文章はジョブの結果を使う。残す理由: `skills/motion-compose/SKILL.md` が CLI の主な使い方として、文章の複数区間（`prompt` と `seconds` の配列）、`seed`、`steps`、`transition`、作ってある NPZ（`npz`）を案内していて、きゃらすたのサーバー無しで動く経路がほかに無い。また `test/compose_check.py` の多くの確かめが `--fake` の `text` の区間を作りものの動きの素材に使っている。
+- 順番待ちか実行中のレシピが使うモーションは、ごみ箱へ移せない。同じく、順番待ちか実行中のレシピが区間に使う確認待ちのジョブは捨てられない（`busy`、409）。
+- 画面: 「つくる」は区間の種類（MotionBricks の条件、動画、保管場所のモーション、確認待ちの結果（取り込む前））を選んで「足す」。保管場所のモーションと確認待ちの結果は一覧から選ぶ。MotionBricks の条件、動画は、区間の中に今までの条件のフォームが開く（`public/gen-motion.mjs` の `genFields`、`public/video-motion.mjs` の `videoFields`）。並べたあとに元のジョブを取り込んだか捨てた区間は、注意を出す。
+- つくるの区間が 1 つのとき: 動画は `video-motion`、MotionBricks の条件は `motion-gen` をそのまま積む（ボタンは「動画から作る」「MotionBricks で作る」）。結果と確認の流れはそれぞれのジョブのまま。保管場所のモーションか確認待ちの結果が 1 つだけのときは積まない。
+- 動画の区間は、2 つ以上並べたときには使えない（ボタンを押せなくし、「先にその区間だけで作り、確認の欄に出た結果を確認待ちの結果として足す」と出す）。動画の区間のジョブを先に積み、終わってから結果を区間にしたレシピを積む形は、ジョブの間の待ち合わせと失敗の扱いが要るので、今回は作らなかった。MotionBricks の条件は `compose.py` の中で作るので、2 つ以上でも使える。
 - 許諾: 評価用のみの区間（MotionBricks で作ったモーション、MotionBricks の条件の区間、MotionBricks のジョブの結果）が入ると全体が評価用のみになる。MotionBricks のつなぎ（`BRIDGE_LICENSE`）は二次配布 不可で、見本の動きを使わないので評価用にはしない。画面は積む前にこの 2 つを出す。
 
 ## GPU
 
-Kimodo の生成は CUDA（文章のエンコーダは層ごとに読む別プロセスで CUDA。`docs/motion-text.md`）、MotionBricks は TensorRT の GPU、撮影は ANGLE d3d11、エンコードは h264_nvenc を優先する。`compose.py` の numpy の計算は 1 本で 1 秒ほどなので、torch の CUDA へ移す必要が無い。
+MotionBricks は TensorRT の GPU、撮影は ANGLE d3d11、エンコードは h264_nvenc を優先する。`compose.py` の numpy の計算は 1 本で 1 秒ほどなので、torch の CUDA へ移す必要が無い。
 
 ## テスト
 
-`test/compose.test.mjs`、`test/compose_check.py`、`test/motion-recipe.test.mjs`（MotionBricks の条件の区間の確かめ、`--fake` でつなぐ、条件の確かめが `lib/motion-gen.mjs` と同じこと）、`test/grip_arms_check.py`、`test/neck_check.py`、`test/fingers_check.py`、`test/weapon_solve_check.py`。Blender、Kimodo、MotionBricks は呼ばない（MotionBricks の条件の区間は `--fake` の作りものの動き）。`fbx_to_vrma_blender.py` のベイクは自動のテストに入っていない。解き直しの `grip.solve_vrma` だけを確かめる。`--fake` は文章を作りものの動きに、つなぎを補間にする。
+`test/compose.test.mjs`、`test/compose_check.py`、`test/motion-recipe.test.mjs`（MotionBricks の条件の区間の確かめ、`--fake` でつなぐ、条件の確かめが `lib/motion-gen.mjs` と同じこと）、`test/grip_arms_check.py`、`test/neck_check.py`、`test/fingers_check.py`、`test/weapon_solve_check.py`。Blender、MotionBricks は呼ばない（MotionBricks の条件の区間は `--fake` の作りものの動き）。`fbx_to_vrma_blender.py` のベイクは自動のテストに入っていない。解き直しの `grip.solve_vrma` だけを確かめる。`--fake` はつなぎを補間にする。
 
 ## 残っている問題
 

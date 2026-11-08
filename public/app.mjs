@@ -7,7 +7,7 @@
 //   #trash ごみ箱。#model/<キャラ>[/<版>] 完成モデル。#model/<キャラ>/<版>/export と #char/<キャラ> は完成モデルへ移す(前の URL)
 //   生き物のキャラ(docs/creature.md)は #model が生き物のページ。VRM の工程の画面(つくる、動き、表情、仕上げ、MV)は短い案内とキャラのページへのリンクだけ
 import {h, getJSON} from './dom.mjs';
-import {enc, thumb, sortVersions, jobActive, jobRow} from './shared.mjs';
+import {METHODS, enc, thumb, sortVersions, jobActive, jobRow} from './shared.mjs';
 import {showLibrary} from './library.mjs';
 import {showCreate} from './create.mjs';
 import {showMotion} from './motion.mjs';
@@ -20,7 +20,8 @@ import {showGallery} from './gallery.mjs';
 import {showShorts, showShort} from './short.mjs';
 import {startDanceShort} from './short-dance.mjs';
 import {showCreature} from './creature.mjs';
-import {isCreature, styleLabel} from './char-style.mjs';
+import {CHAR_STYLES, STYLE_TABS, isCreature, styleLabel} from './char-style.mjs';
+import {STYLE_LABEL} from './short-direct.mjs';
 
 const main = document.getElementById('main'), bar = document.getElementById('appbar'), phoneNav = document.getElementById('phoneNav');
 const STAGES = [['create', '1', 'つくる'], ['motion', '2', '動き'], ['expression', '3', '表情'], ['finish', '4', '仕上げ']];
@@ -116,8 +117,18 @@ function renderPhoneNav(stage, c) {
 function creatureNotice(char, page) {
   return h('div', {class: 'page-empty route-notice'},
     h('h1', {}, `${char.name} は${styleLabel('creature')}のキャラ`),
-    h('p', {}, `${VRM_PAGES[page]}の画面は VRM のキャラ(スタンダードとチビ)だけで使う。${styleLabel('creature')}は Blender の骨と動きで作り、scripts/import-creature.mjs で取り込む。`),
+    h('p', {}, `${VRM_PAGES[page]}の画面は VRM のキャラ(${styleLabel('standard')}と${styleLabel('chibi')})だけで使う。${styleLabel('creature')}は Blender の骨と動きで作り、scripts/import-creature.mjs で取り込む。`),
     h('a', {class: 'button primary', href: '#model/' + enc(char.id)}, 'キャラのページへ戻る'));
+}
+
+// 版の種類の名前(/api/overview の labels、public/edition.mjs)を画面の表に入れる。版の種類は動いている間に変わらないので、読むたびに同じ値を入れ直すだけ
+function applyEdition({labels}) {
+  if (!labels) return;   // 古いサーバー
+  METHODS.splice(0, METHODS.length, ...labels.methods);
+  for (const [k, v] of Object.entries(labels.styles)) if (CHAR_STYLES[k]) CHAR_STYLES[k].label = v;
+  for (const t of STYLE_TABS) if (labels.styles[t[0]]) t[1] = labels.styles[t[0]];
+  for (const k of Object.keys(STYLE_LABEL)) delete STYLE_LABEL[k];
+  Object.assign(STYLE_LABEL, labels.shortStyles);
 }
 
 // ---- 画面の切り替え ----
@@ -135,6 +146,7 @@ async function route(e) {
   try {
     const ov = await getJSON('/api/overview');
     if (!alive()) return;
+    applyEdition(ov);
     const pick = id => ov.chars.find(x => x.id === id) ?? null;
     const stage = {create: 'create', motions: 'motion', expression: 'expression', studio: 'expression', face: 'expression', finish: 'finish', model: 'model', mv: 'mv'}[page] ?? 'none';
     if (a && stage !== 'none' && !pick(a)) throw Error(`キャラ ${a} が無い`);

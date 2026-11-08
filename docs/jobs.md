@@ -30,15 +30,11 @@
 | `shoot` | 完成モデルの動画を撮る | `docs/shoot.md` |
 | `mv` | 前からの MV。画面からは MV の試しの「本番で書き出す」だけが積む | `docs/shorts-dance-mv.md` |
 | `short` | ショートを書き出す（ダンス MV、グラフィック MV も） | `docs/shorts.md` |
-| `short-draft` | ショートの下書きを作る | `docs/shorts-draft.md` |
-| `short-figures` | ショートの図を作る | `docs/shorts.md` |
 | `motion-gen` | MotionBricks でモーションを作る | `docs/motionbricks.md` |
-| `motion-text` | 文章からモーションを作る | `docs/motion-text.md` |
 | `video-motion` | 動画からモーションを作る | `docs/video-to-vrma.md` |
 | `motion-recipe` | 区間をつないだモーションを作る | `docs/motion-compose.md` |
 | `studio-front`、`studio-build`、`studio-video`、`studio-checks` | 表情づくりの工程 | `docs/expression-studio.md` |
 | `face-check` | シェイプキー方式の版の確かめの撮影 | `docs/expression-studio.md` |
-| `game-export` | ゲーム用の書き出し | `docs/game-export.md` |
 
 ## 試しの動き
 

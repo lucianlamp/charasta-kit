@@ -16,6 +16,8 @@ import {motionTextLicense} from '../lib/motion-text.mjs';
 import {tempDir, startServer, fakeGlb, SAMPLE_VRMA} from './helpers.mjs';
 
 const FAKE = {CHARASTA_FAKE_MOTIONBRICKS: '1'};
+// 文章のジョブの結果を区間にする確かめは、Kimodo の作業プロセス(tools/kimodo_worker.py)の試しの動きを使う。配布のキットには無いので飛ばす
+const KIMODO = fsSync.existsSync(path.join(import.meta.dirname, '..', 'tools', 'kimodo_worker.py'));
 const FREE = {holder: 'H', summary: '改変可', redistribution: true};
 
 // 保管場所に 2 本: MotionBricks の試しの動きで作った評価用のモーション(接地あり)と、取り込んだ VRMA(二次配布 可)
@@ -74,7 +76,7 @@ async function setupJobs(t) {
   return {...s, text: text.id, video: video.id};
 }
 
-test('ジョブの結果の区間: 一覧は文章の候補ごとと動画 1 本。積むのは確認待ちだけで、文章は n が要り、動画は n を書かない', async t => {
+test('ジョブの結果の区間: 一覧は文章の候補ごとと動画 1 本。積むのは確認待ちだけで、文章は n が要り、動画は n を書かない', {skip: !KIMODO}, async t => {
   const {lib, q, text, video} = await setupJobs(t);
   const sources = await q.recipeSources();
   assert.deepEqual(sources.map(s => [s.job, s.n, s.kind, s.name, s.limit.text]),
@@ -100,7 +102,7 @@ test('ジョブの結果の区間: 一覧は文章の候補ごとと動画 1 本
   assert.deepEqual((await q.recipeSources()).map(s => s.job), [text, text], '取り込んだ動画は一覧から消える');
 });
 
-test('ジョブの結果の区間: 写してからつなぎ、記録にジョブと候補を残す。使っている間は捨てられず、別の候補を取り込んでも使う候補は消えない', async t => {
+test('ジョブの結果の区間: 写してからつなぎ、記録にジョブと候補を残す。使っている間は捨てられず、別の候補を取り込んでも使う候補は消えない', {skip: !KIMODO}, async t => {
   const {lib, q, dir, text, video} = await setupJobs(t);
   const textBefore = await fs.readFile(path.join(dir, 'jobs', text, 'cand', '2', 'motion.vrma'));
   const job = await q.enqueue({type: 'motion-recipe', segments: [{source: 'job', job: text, n: 2}, {source: 'motion', motion: 'b', trim: [0, 1]}, {source: 'job', job: video}],
@@ -134,7 +136,7 @@ test('ジョブの結果の区間: 写してからつなぎ、記録にジョブ
   assert.equal((await lib.getMotion('text-one')).generated.candidate, 1, '取り込んだモーションはそのまま');
 });
 
-test('残した候補は、使うつなぐジョブがすべて終わってから消す。確認待ちのままのジョブの候補は消さない', async t => {
+test('残した候補は、使うつなぐジョブがすべて終わってから消す。確認待ちのままのジョブの候補は消さない', {skip: !KIMODO}, async t => {
   const {q, dir, text} = await setupJobs(t);
   const cand = n => path.join(dir, 'jobs', text, 'cand', String(n));
   const exists = n => fs.access(cand(n)).then(() => true, () => false);
@@ -163,7 +165,7 @@ test('残した候補は、使うつなぐジョブがすべて終わってか�
   assert.deepEqual([await exists(1), await exists(2)], [true, false], '取り込んだ候補は残り、使い終えた候補は消える');
 });
 
-test('ジョブの結果の区間: 実行の直前に検査する。捨てたジョブや消えた候補のファイルは compose.py の前に断る', async t => {
+test('ジョブの結果の区間: 実行の直前に検査する。捨てたジョブや消えた候補のファイルは compose.py の前に断る', {skip: !KIMODO}, async t => {
   const {lib, q, dir, text} = await setupJobs(t);
   const jobs = {get: id => q.peek(id), dir: id => path.join(lib.dir, 'jobs', id)};
   const run = async segments => {

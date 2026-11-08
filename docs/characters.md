@@ -27,7 +27,7 @@
 <保管場所>/
   characters/<charId>/
     character.json
-    versions/<verId>/model.vrm, version.json, thumb.png, check.json(検査の結果。消してよい), game/<exportId>/(ゲーム用の書き出し。docs/game-export.md)      (生き物の版は model.blend, creature.json, version.json, thumb.png。docs/creature.md)
+    versions/<verId>/model.vrm, version.json, thumb.png, check.json(検査の結果。消してよい)      (生き物の版は model.blend, creature.json, version.json, thumb.png。docs/creature.md)
     lines/<lineId>/audio.(mp3|wav|m4a), line.json
   motions/<motionId>/
     motion.vrma, motion.json
@@ -50,9 +50,9 @@
 
 `tags` は任意の文字列の配列。各タグは前後の空白を除いて 1〜20 文字、最大 8 個で、重複は先に出たものを残す。無いキャラは `[]` として扱う。`PATCH /api/characters/<id>` で変える（不正なら `bad-input`）。
 
-`vrmMeta` は任意で、ゲーム用の書き出しが VRM の meta に入れる作者と利用条件(`authors`、`commercialUsage`、`allowRedistribution`、`modification`、`avatarPermission`、`creditNotation`、`licenseUrl`。docs/game-export.md)。`PATCH` で丸ごと置き換え、`null` か空で消す。
+`vrmMeta` は任意で、VRM の meta に入れる作者と利用条件(`authors`、`commercialUsage`、`allowRedistribution`、`modification`、`avatarPermission`、`creditNotation`、`licenseUrl`)。`PATCH` で丸ごと置き換え、`null` か空で消す。
 
-`style` はキャラのスタイルで、`standard`（スタンダード、表情はシェイプキー）、`chibi`（チビ、表情は画像）、`creature`（生き物、Blender の骨と動き）のどれか。仕様は `docs/character-style.md` と `docs/creature.md`。新しいキャラは作るときに必ず選ぶ（`POST /api/characters` と `scripts/new-character.mjs --style` で必須。ライブラリ層の `createCharacter` は省略できる）。前からのキャラで character.json に `style` が無いものは、`GET` の応答で `style: null`（未設定）になる。自動では決めない。`PATCH /api/characters/<id>` で `standard` / `chibi` / `creature` に変えられる。それ以外の値と `null` は `bad-input`。版があるキャラは、`creature` とそれ以外のあいだを行き来できない（`bad-input`。VRM の版と生き物の版は中身が違う）。
+`style` はキャラのスタイルで、`standard`（スタンダード体型、表情はシェイプキー）、`chibi`（チビ体型、表情は画像）、`creature`（生き物、Blender の骨と動き）のどれか。仕様は `docs/character-style.md` と `docs/creature.md`。新しいキャラは作るときに必ず選ぶ（`POST /api/characters` と `scripts/new-character.mjs --style` で必須。ライブラリ層の `createCharacter` は省略できる）。前からのキャラで character.json に `style` が無いものは、`GET` の応答で `style: null`（未設定）になる。自動では決めない。`PATCH /api/characters/<id>` で `standard` / `chibi` / `creature` に変えられる。それ以外の値と `null` は `bad-input`。版があるキャラは、`creature` とそれ以外のあいだを行き来できない（`bad-input`。VRM の版と生き物の版は中身が違う）。
 
 ### version.json
 
@@ -82,7 +82,6 @@
 | `PATCH /api/characters/<id>` | 本文に `voice` / `note` / `latestVersion` / `method` / `tags` / `style` / `vrmMeta` のどれかを入れる。成功は 200 で `GET /api/characters/<id>` と同じ形を返す |
 | `GET /api/overview` の `chars[]` | 各キャラに `style`（`standard` / `chibi` / `creature` / `null`）と `kind`（`creature` か `vrm`）を含む。生き物には `creature`（最新の版の `{ rest, fly, clips, clipNames, scale, drop, fps, yaw }`、版が無ければ `null`）が付き、`thumb` は最新の版の thumb.png の URL。`finished[]` の各版にも `kind` と `creature` が付き、生き物の版の `model` は `null`。`stages` は VRM の 4 工程なので、生き物では使わない |
 | `GET /api/characters/<id>/versions/<ver>/check` | 版の検査。`{ charId, verId, style, applicable, reason?, unavailable?, items: [{id, label, level, detail}], summary: {ok, warn, ng, unknown, total}, cached, checkedAt }`。`style` が `standard` なら VRoid 形式の検査、`chibi` ならチビの検査(軽い版、三角形、材質、テクスチャ、表情の方式)。`creature` と未設定は `applicable: false` で `reason` を返す。スタンダードで手本(`studio/vroid/reference.json`)が無ければ `unavailable` に理由を入れて `items` は空。版が無ければ 404。結果は版のフォルダの `check.json` に置き、model.vrm と model-lite.vrm の大きさと更新時刻が同じなら読み直さない（docs/character-style.md） |
-| `GET /api/characters/<id>/versions/<ver>/game-exports` | 版のゲーム用の書き出しの一覧(新しい順)。各 `export.json` に `modelUrl` と、モーションごとの `url` を足したもの。作るのはジョブ `game-export`(docs/game-export.md) |
 | `GET /api/motions` | `[...motion.json に file の URL を足したもの]` |
 | `POST /api/motions` | VRMA の取り込み。本文は VRMA そのもの、ヘッダ `x-filename`（元の名前）と `x-license`（JSON: holder、summary、redistribution）。返すのは作った motion.json |
 | `GET /lib/<保管場所の中のパス>` | 保管場所のファイル（読むだけ。パスの外へ出るものは 404） |

@@ -6,12 +6,13 @@ import {moveToTrash} from './confirm.mjs';
 import {profilePanel} from './profile.mjs';
 import {checkPanel} from './version-check.mjs';
 import {gameExportPanel} from './game-export.mjs';
+import {can} from './capabilities.mjs';
 
 const VOICES = ['ara', 'eve', 'leo', 'rex'];   // Grok の声の候補。ほかの名前は手で入れる
 const EMOTIONS = ['happy', 'angry', 'sad', 'relaxed', 'surprised'];
 const voiceText = v => v ? `${v.provider}:${v.id}` : 'なし';
 
-export async function showModel({main, char, verId, alive, jobsChanged}) {
+export async function showModel({main, ov, char, verId, alive, jobsChanged}) {
   if (!char) { main.replaceChildren(h('div', {class: 'empty page-empty'}, 'キャラがまだない。')); return; }
   let c = await getJSON('/api/characters/' + enc(char.id));
   const motions = await getJSON('/api/motions');
@@ -58,7 +59,7 @@ export async function showModel({main, char, verId, alive, jobsChanged}) {
     h('section', {class: 'center'},
       h('div', {class: 'stage shoot'}, panel?.box ?? h('div', {class: 'empty'}, 'このキャラには版がまだない。つくるの画面で取り込む。')), panel?.timeline,
       ver ? h('div', {class: 'stage-foot'}, h('a', {class: 'link', href: viewerHref(c.id, ver.id), target: '_blank'}, '全部の操作があるビューアを開く')) : null),
-    h('aside', {class: 'pane pane-right', 'aria-label': '撮る'}, h('h2', {}, '撮る'), panel?.controls ?? [h('div', {class: 'empty small'}, '版がまだない'), ...more], ver ? h('a', {class: 'button', href: `#mv/${enc(c.id)}/${enc(ver.id)}`}, 'ダンス MV を作る') : null, ver ? checkPanel(c, ver) : null, ver ? gameExportPanel(c, ver, {jobsChanged}) : null, ver ? exportLinks(c, ver) : null)));
+    h('aside', {class: 'pane pane-right', 'aria-label': '撮る'}, h('h2', {}, '撮る'), panel?.controls ?? [h('div', {class: 'empty small'}, '版がまだない'), ...more], ver ? h('a', {class: 'button', href: `#mv/${enc(c.id)}/${enc(ver.id)}`}, 'ダンス MV を作る') : null, ver ? checkPanel(c, ver) : null, ver && can(ov, 'gameExport') ? gameExportPanel(c, ver, {jobsChanged}) : null, ver ? exportLinks(c, ver) : null)));
   renderMade();
   await watcher.poll();
 }

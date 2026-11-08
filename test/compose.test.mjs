@@ -6,9 +6,12 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {execFile, execFileSync} from 'node:child_process';
 import {promisify} from 'node:util';
+import fsSync from 'node:fs';
 import {tempDir, SAMPLE_VRMA} from './helpers.mjs';
 
 const run = promisify(execFile), root = path.resolve(import.meta.dirname, '..');
+// RGB MoCap の道具(tools/rgbmocap)は配布のキットに入らない。それを使う確かめは無ければ飛ばす
+const RGBMOCAP = fsSync.existsSync(path.join(root, 'tools', 'rgbmocap'));
 
 test('中間形式、骨の対応表、FBX の移し替え、継ぎ目、許諾、計画から 1 本を作る(test/compose_check.py)', () => {
   const out = execFileSync(findPython() ?? 'python', [path.join(import.meta.dirname, 'compose_check.py')], {encoding: 'utf8'});
@@ -20,7 +23,7 @@ test('handFrame palm: 基準の姿勢の手のねじれを手のひらの向き�
   assert.match(out, /palm frame ok/);
 });
 
-test('ExMR の仕上げ: 先頭の別カットの検出と置き換え、接地の区間、平滑(test/exmr_polish_check.py)', () => {
+test('ExMR の仕上げ: 先頭の別カットの検出と置き換え、接地の区間、平滑(test/exmr_polish_check.py)', {skip: !RGBMOCAP}, () => {
   const out = execFileSync(findPython() ?? 'python', [path.join(import.meta.dirname, 'exmr_polish_check.py')], {encoding: 'utf8', env: {...process.env, PYTHONUTF8: '1'}});
   assert.match(out, /OK exmr polish/);
 });
@@ -35,7 +38,7 @@ test('武器を主に解く: 速い回転の時刻、握りの固定、地面と
   assert.match(out, /OK/);
 });
 
-test('体に合わせる直し: 手のめり込みの時間の処理と、VRM の首の長さ(test/body_fix_check.py)', () => {
+test('体に合わせる直し: 手のめり込みの時間の処理と、VRM の首の長さ(test/body_fix_check.py)', {skip: !RGBMOCAP}, () => {
   const out = execFileSync(findPython() ?? 'python', [path.join(import.meta.dirname, 'body_fix_check.py')], {encoding: 'utf8', env: {...process.env, PYTHONUTF8: '1'}});
   assert.match(out, /"ok": true/);
 });

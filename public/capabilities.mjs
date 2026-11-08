@@ -2,7 +2,7 @@
 import {h} from './dom.mjs';
 
 const LABEL = {blender: 'Blender', charakuru: 'きゃらくる', expressionStudio: '表情づくり(きゃらくると Blender)', stageStudio: 'stage-studio(シーンの描画)',
-  hyperframes: 'HyperFrames(文字と演出)', voicevox: 'VOICEVOX', ffmpeg: 'ffmpeg', python: 'Python'};
+  hyperframes: 'HyperFrames(文字と演出)', motionbricks: 'MotionBricks', voicevox: 'VOICEVOX', ffmpeg: 'ffmpeg', python: 'Python'};
 
 // 情報が無い(古いサーバーなど)ときは使えるとみなして、隠さない
 export const can = (ov, key) => ov?.capabilities?.[key]?.available ?? true;

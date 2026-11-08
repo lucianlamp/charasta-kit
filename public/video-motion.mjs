@@ -18,9 +18,10 @@ export function videoFields({char, verId, o}, onChange = () => {}) {
   const unmirror = h('input', {type: 'checkbox'});
   const speed = h('input', {type: 'number', step: '0.05', min: String(o.speed[0]), max: String(o.speed[1]), value: '1', 'aria-label': '動画の速さ'});
   // 変換の方法。exmr は RGB MoCap の ExMR(既定)、mediapipe は vrma-pipeline。奥行きと両手の間隔は mediapipe だけの条件
-  const engines = o.engines ?? {mediapipe: o.available};
+  // engines に exmr が無い(キット、docs/edition.md)ときは ExMR を出さない
+  const engines = o.engines ?? {mediapipe: o.available}, exmr = 'exmr' in engines;
   const engine = h('select', {'aria-label': '変換の方法'},
-    h('option', {value: 'exmr', disabled: !engines.exmr}, 'RGB MoCap の ExMR（指まで。教育・研究・非営利の条件のモデル）'),
+    exmr ? h('option', {value: 'exmr', disabled: !engines.exmr}, 'RGB MoCap の ExMR（指まで。教育・研究・非営利の条件のモデル）') : null,
     h('option', {value: 'mediapipe', disabled: !engines.mediapipe}, 'MediaPipe（vrma-pipeline）'));
   engine.value = o.defaultEngine ?? 'mediapipe';
   const depthOff = h('input', {type: 'checkbox'});
@@ -51,12 +52,12 @@ export function videoFields({char, verId, o}, onChange = () => {}) {
     h('div', {class: 'seg'}, h('label', {}, '開始の秒', start), h('label', {}, '終了の秒', end)),
     h('label', {}, '変換の方法', engine),
     h('label', {}, '権利のメモ（必須）', rights),
-    h('details', {}, h('summary', {}, '細かい条件（ミラー、速さ、切り抜き、手のめり込み、奥行き、両手の間隔）'),
+    h('details', {}, h('summary', {}, `細かい条件（ミラー、速さ、切り抜き、${exmr ? '手のめり込み、' : ''}奥行き、両手の間隔）`),
       h('div', {class: 'form-stack'},
         h('label', {class: 'check'}, unmirror, 'ミラーを解除する（左右を反転する）'),
         h('label', {}, '動画の速さ（スローの動画なら 0.6 のように、実際の何倍速かを書く）', speed),
         h('label', {}, '切り抜き（ほかの人や小窓を除く。空なら全体）', crop),
-        h('label', {class: 'check'}, bodyFix, '手と腕が体にめり込むコマを直す（ExMR のとき。この版の体に合わせて腕を外へ出す。22 秒の動画で約 22 分増える）'),
+        exmr ? h('label', {class: 'check'}, bodyFix, '手と腕が体にめり込むコマを直す（ExMR のとき。この版の体に合わせて腕を外へ出す。22 秒の動画で約 22 分増える）') : null,
         h('label', {class: 'check'}, depthOff, '全身の奥行き最適化を切る（MediaPipe のとき。剣など振りの速さを優先するとき）'),
         h('label', {}, '両手の間隔 cm（MediaPipe のとき。両手で持つ物があるとき。ダンスでは空のまま）', grip),
         h('p', {class: 'muted'}, `${char ? `${char.name}（${verId ?? '版なし'}）の体に合わせて VRMA を作る。ほかのキャラでも再生はできるが、足や手の位置がずれる。` : ''}${o.maxClipSec} 秒まで。URL の動画は「作る」を押したときだけ取りに行く。作ったモーションは個人利用として記録し、確認の欄で「取り込む」を押すまで一覧に入らない。ラベルは下の欄（空ならファイル名）。`))));

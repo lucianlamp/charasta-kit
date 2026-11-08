@@ -1,5 +1,6 @@
 // 画面どうしで共有するもの: 保管場所の URL、札、作り方の表、ジョブの行と読み直し、iframe のビューア。DOM は呼ばれたときだけ使う(テストが読み込める)。
 import {h, getJSON, elapsedText} from './dom.mjs';
+import {editionLabels} from './edition.mjs';
 
 export const enc = encodeURIComponent;
 export const libUrl = (...parts) => '/lib/' + parts.map(enc).join('/');
@@ -9,11 +10,8 @@ export const when = s => s ? new Date(s).toLocaleString('ja-JP', {month: 'numeri
 export const mb = n => (n / 1048576).toFixed(1) + ' MB';
 export const sortVersions = c => [...(c.versions || [])].sort((a, b) => (b.order ?? 0) - (a.order ?? 0));   // 新しい順
 
-// 3D の作り方: [鍵, 名前, 説明]
-export const METHODS = [
-  ['tripo', 'Tripo（本家）', 'きゃらくる標準の手順。Tripo Studio で候補・再テクスチャ・自動リグ。顔の出来はこちらがよい。'],
-  ['kimi', 'Kimi', 'Tripo Studio の代わりに Kimi と Blender で進める。Tripo のクレジットを使わない。'],
-];
+// 3D の作り方: [鍵, 名前, 説明]。キットでは public/app.mjs が /api/overview の labels の表に入れ替える(public/edition.mjs)
+export const METHODS = editionLabels('full').methods;
 
 export function thumb(src, alt, cls = 'thumb') {
   if (!src) return h('div', {class: cls + ' none'}, 'なし');

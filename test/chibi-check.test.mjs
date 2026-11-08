@@ -80,6 +80,9 @@ test('チビの検査: 三角形が 1.8 万を超えると warn。顔の手が�
   assert.equal(chibiCheck(await measure(glb({images: [{name: 'a', data: png(512, 512)}], tris: 18000})), null).find(i => i.id === 'triangles').level, 'ok');
   const keyed = chibiCheck(await measure(glb({images: [{name: 'a', data: png(512, 512)}], extra: {meshes: [{name: 'Face', primitives: [{attributes: {POSITION: 0}, indices: 0}], extras: {targetNames: ['Fcl_ALL_Joy']}}]}})), null);
   assert.equal(level(keyed, 'expression'), 'warn');
+  assert.match(keyed.find(i => i.id === 'expression').detail, /チビは顔テクスチャ/);
+  const kitKeyed = chibiCheck(await measure(glb({images: [{name: 'a', data: png(512, 512)}], extra: {meshes: [{name: 'Face', primitives: [{attributes: {POSITION: 0}, indices: 0}], extras: {targetNames: ['Fcl_ALL_Joy']}}]}})), null, {chibi: 'チビ体型'});
+  assert.match(kitKeyed.find(i => i.id === 'expression').detail, /チビ体型は顔テクスチャ/, 'キットはスタイルの名前を版の種類の名前にする');
 });
 
 test('チビの検査: 画像の大きさを読めないときは textures を unknown にする', async () => {

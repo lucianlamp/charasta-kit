@@ -2,7 +2,7 @@
 
 動きの画面の「モーションを足す」の「つくる」で区間の種類「MotionBricks の条件」を足し、条件を選んで「MotionBricks で作る」を押すと、NVIDIA の MotionBricks（SIGGRAPH 2026、リアルタイムの動きの生成）が人の動きを作り、VRM の骨に移し替えた VRMA を確認待ちにする。確認の欄で見て「取り込む」とモーションの一覧に入る。どのキャラのビューアでも再生できる。ビューアの中で動きをその場で操作する形は作っていない。
 
-区間が 1 つならこのジョブ（`motion-gen`）を積み、ほかの区間と並べたときは、同じ条件が「つなぐ」のレシピの `motionbricks` の区間になる（`docs/motion-compose.md` の「画面からつなぐ」）。文章から作る方は `docs/motion-text.md`。
+区間が 1 つならこのジョブ（`motion-gen`）を積み、ほかの区間と並べたときは、同じ条件が「つなぐ」のレシピの `motionbricks` の区間になる（`docs/motion-compose.md` の「画面からつなぐ」）。
 
 用語は `CONTEXT.md`、移し替えの決めごとは `docs/adr/0003-motionbricks-retarget.md`。
 
@@ -28,7 +28,7 @@
    - 最初は待機の見本の動き（`idle_loop_001`、しゃがみは `crouch_idle_001`）から始まる。書き出すのは生成した区間だけで、見本の動きのコマそのものは書き出さない。「止まって終わる」は、待機の見本の動きへつなぐ生成までを書き出す。
    - 途中の動作（跳び越す・くぐる）は、動く長さの 4 割の時点で、体の前（速さ×1.2 m、2 m 以上）に Smart Primitive を置き、Scene Preview と同じく、体の前の判定の箱が触れたら始める。
 3. `tools/soma_vrma.py` が VRM の骨に移し替えて VRMA を書く（下の「移し替え」）。
-4. 確認待ちで止まる（`job.result.review` が `waiting`。結果は `jobs/<ジョブ>/motion.vrma`、`contacts.json`、`generated.json`）。文章・動画・つなぐと同じく、人が見てから入れる。
+4. 確認待ちで止まる（`job.result.review` が `waiting`。結果は `jobs/<ジョブ>/motion.vrma`、`contacts.json`、`generated.json`）。動画・つなぐと同じく、人が見てから入れる。
 5. 画面で「取り込む」（`POST /api/motion-gen/<ジョブ>/import`、本文 `{label?, motionId?}`。ID の既定は積んだときの `mb-<種類>-<時刻>`）と、保管場所の `motions/<ID>/` にモーションとして登録する（`motion.json` に `generated` と `license`。足の接地を `contacts.json` として横に置く。`docs/foot-ik.md`）。作業フォルダは残す（つなぐジョブが区間に使うため）。「捨てる」（`.../discard`）は作業フォルダを保管場所の `trash/motion-gen-<ジョブ>` へ移す。
    確認待ちの結果は、取り込む前に「つくる」の区間（確認待ちの結果）にも使える。順番待ちか実行中のつなぐジョブが使っている間は捨てられない。確認待ちのジョブが持つ ID（`motionId`）は、取り込むか捨てるまで次のジョブに使えない。
 

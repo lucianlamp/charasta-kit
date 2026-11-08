@@ -4,6 +4,7 @@ import {pendingRow, viewerFrame, viewerReady, viewerHref, watchJobs} from './sha
 import {showReviews} from './video-motion.mjs';
 import {showTextReviews} from './text-motion.mjs';
 import {showGenReviews} from './gen-motion.mjs';
+import {can} from './capabilities.mjs';
 import {recipePanel, showRecipeReviews} from './recipe-motion.mjs';
 import {moveToTrash} from './confirm.mjs';
 import {attachScrub} from './scrub.mjs';
@@ -64,10 +65,13 @@ export async function showMotion({main, ov, char, verId, alive, jobsChanged}) {
   const previewCandidate = frame ? async rec => { caption.textContent = ''; await (await viewerReady(frame)).playCandidate(rec); } : null;
   const textReviewBox = h('div', {class: 'stack'}), genReviewBox = h('div', {class: 'stack'}), recipeReviewBox = h('div', {class: 'stack'});
   let recipeSources = null;   // 「つくる」の区間に使える確認待ちの結果。確認の欄を読み直すたびに替える
+  // 区間をつなぐ「つくる」はキットにもある。文章からの作り方(Kimodo)は作者の版だけ(docs/edition.md)
+  const recipe = can(ov, 'motionRecipe'), kit = ov.edition === 'kit';
   const refreshReviews = async () => {
-    await showReviews(reviewBox, reviewed); await showTextReviews(textReviewBox, {preview: previewCandidate, changed: reviewed});
+    await showReviews(reviewBox, reviewed);
+    if (!kit) await showTextReviews(textReviewBox, {preview: previewCandidate, changed: reviewed});
     await showGenReviews(genReviewBox, {preview: previewCandidate, changed: reviewed});
-    recipeSources = await showRecipeReviews(recipeReviewBox, {preview: previewCandidate, changed: reviewed});
+    if (recipe) recipeSources = await showRecipeReviews(recipeReviewBox, {preview: previewCandidate, changed: reviewed});
   };
   const watcher = watchJobs({filter: j => j.type === 'motion-gen' || j.type === 'video-motion' || j.type === 'motion-text' || j.type === 'motion-recipe', alive, onJobs: jobs => pendingBox.replaceChildren(...jobs.map(pendingRow)), onDone: async () => {
     await refreshMotions();
@@ -87,7 +91,7 @@ export async function showMotion({main, ov, char, verId, alive, jobsChanged}) {
       h('div', {class: 'pane-head'}, h('h1', {}, 'モーション'), count), chips, pendingBox, listBox),
     center,
     h('aside', {class: 'pane pane-right', 'aria-label': 'モーションを足す'}, reviewBox, textReviewBox, genReviewBox, recipeReviewBox,
-      addPanel([['つくる', await recipePanel({motions: () => motions, sources: () => recipeSources, queued, char, verId})], ['ファイル', importForm(refreshMotions)]])));
+      addPanel([['つくる', await recipePanel({motions: () => motions, sources: () => recipeSources, queued, char, verId, kit, ov})], ['ファイル', importForm(refreshMotions)]])));
   main.replaceChildren(work);
   await watcher.poll();
   await refreshReviews();

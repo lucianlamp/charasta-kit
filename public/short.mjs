@@ -73,7 +73,7 @@ export async function showShorts({main, ov, reload, alive}) {
       if (!choices.stages.length || !motions.length) throw Error('シーンとモーションが要る');
       const motionId = (motions.find(m => /話す/.test(m.label ?? '')) ?? motions[0]).id, stage = choices.stages[0].id;
       const cuts = sample ? SAMPLE.map(([camera, text, telop]) => ({stage, motionId, expression: 'neutral', camera, text, telop})) : [{stage, motionId, expression: 'neutral', camera: 'talk_bust', text: '', telop: ''}];
-      const s = await send('POST', '/api/shorts', {title: sample ? 'タコの雑学' : '新しいショート', style: 'trivia', series: sample ? 'サクッと雑学' : '', defaultBgm: sample, charId: c.id, verId: c.latest.id, speaker: 8, speakerName: '春日部つむぎ', cuts});
+      const s = await send('POST', '/api/shorts', {title: sample ? 'タコの雑学' : '新しいショート', style: sample ? 'trivia' : newStyle, series: sample ? 'サクッと雑学' : '', defaultBgm: sample, charId: c.id, verId: c.latest.id, speaker: 8, speakerName: '春日部つむぎ', cuts});
       if (sample) {   // 見本の図
         for (const [i, row] of SAMPLE.entries()) {
           if (!row[3]) continue;
@@ -95,11 +95,15 @@ export async function showShorts({main, ov, reload, alive}) {
       location.hash = '#short/' + enc(s.id);
     } catch (e) { msg.className = 'err'; msg.textContent = '作れない: ' + e.message; }
   };
-  const draft = draftForm({ov, alive, msg, reload});
+  // キット(docs/edition.md)は対話型とダンス MV だけ: 雑学・ドラマの見本と下書きを出さず、ダンス MV の入口を並べる
+  const talk = can(ov, 'talkStyles'), newStyle = ov.labels?.newShortStyle ?? 'trivia';
+  const draft = can(ov, 'shortDraft') ? draftForm({ov, alive, msg, reload}) : null;
   const noStage = !can(ov, 'stageStudio'), note = missingNote(ov, ['stageStudio', 'hyperframes', 'blender'], 'ショートを作って書き出すのに要る道具が未設定');
   main.replaceChildren(h('div', {class: 'library'},
-    h('div', {class: 'lib-head', ...(noStage && {inert: ''})}, h('h1', {}, 'ショート'), draft.open, h('button', {type: 'button', onclick: make(true)}, '雑学の見本から作る'), h('button', {type: 'button', onclick: makeDrama}, 'ドラマの見本から作る'), h('button', {type: 'button', class: 'primary', onclick: make(false)}, '新しいショート')),
-    note, msg, draft.form, draft.box,
+    h('div', {class: 'lib-head', ...(noStage && {inert: ''})}, h('h1', {}, 'ショート'), draft?.open,
+      talk ? [h('button', {type: 'button', onclick: make(true)}, '雑学の見本から作る'), h('button', {type: 'button', onclick: makeDrama}, 'ドラマの見本から作る')] : h('a', {class: 'button', href: '#mv'}, 'ダンス MV を作る'),
+      h('button', {type: 'button', class: 'primary', onclick: make(false)}, talk ? '新しいショート' : `${STYLE_LABEL[newStyle]}を作る`)),
+    note, msg, draft?.form, draft?.box,
     shorts.length ? h('div', {class: 'stack-small'}, shorts.map(s => h('div', {class: 'short-row'},
       h('a', {class: 'short-name', href: '#short/' + enc(s.id)}, s.title), h('span', {class: 'muted'}, [`${s.cuts.length} カット`, MAKER_LABEL[s.draftBy] && `下書き ${MAKER_LABEL[s.draftBy]}`].filter(Boolean).join('、')),
       h('button', {type: 'button', class: 'quiet', onclick: async () => { if (await moveToTrash({kind: 'short', id: s.id}, s.title)) reload(); }}, '削除'))))
@@ -380,7 +384,7 @@ export async function showShort({main, alive, jobsChanged}, id) {
             select('効果', options(EFFECT_LABEL, EFFECTS), () => c.effect ?? '', sets('effect')),
             select('テロップの型', options(TELOP_LABEL, TELOP_TYPES), () => c.telopType ?? '', sets('telopType')),
             many ? null : h('label', {}, '話者の名札', whoTag),
-            h('label', {}, '図（語に合わせて弾んで出る）', figure), h('label', {}, '図の説明', figureNote))))];
+            h('label', {}, '図（語に合わせて弾んで出る）', figure), can(overview, 'shortFigures') ? h('label', {}, '図の説明', figureNote) : null)))];
   }
   // グラフィックのカットの欄: 場面、言葉、入りのワイプ。顔に文字がかかったコマがあれば注意を出す
   function graphicCutFields(c, i) {
@@ -558,7 +562,7 @@ export async function showShort({main, alive, jobsChanged}, id) {
     onDone: async () => { await syncFigures(); const [last] = (await getJSON('/api/jobs')).filter(j => j.type === 'short-figures' && j.input?.shortId === id); figureMsg.className = 'muted'; figureMsg.textContent = last?.result ? figuresReport(last.result) : ''; jobsChanged(); }});
 
   // ---- 左: 出演者、シーン、音、全体への頼みごと、型、確認の欄、書き出した動画 ----
-  const series = h('input', {maxlength: '20', value: s.series ?? '', placeholder: '例: サクッと雑学', 'aria-label': 'シリーズ帯'});
+  const series = h('input', {maxlength: '20', value: s.series ?? '', placeholder: can(overview, 'talkStyles') ? '例: サクッと雑学' : '例: 放課後の会話', 'aria-label': 'シリーズ帯'});   // キットに雑学の型は無い
   series.oninput = () => { s.series = series.value; touch(); };
   // 出演者の欄: キャラ、版、声の提供元、声。名前を変えると、カットの話す人も合わせる
   const castBox = h('div', {class: 'form-stack'}), castList = h('div', {class: 'se-list'});
@@ -663,7 +667,8 @@ export async function showShort({main, alive, jobsChanged}, id) {
   };
   if (dance) dancing = dancePanel({s, id, options: shortOptions, motions, audio: audioFields, save, touch, onSplit: replaceShort, onPick: i => pickCut(i), onMotion: () => preview()});
   // ダンス MV の型は変えられない(出演者 1 人、拍で割った秒が要る)。ほかの型からもダンス MV には変えない
-  const styleField = dance ? h('p', {class: 'muted'}, '型: ダンス MV（変えられない。ほかの型は「ショートを作る」から）')
+  const styleField = dance ? h('p', {class: 'muted'}, `型: ${STYLE_LABEL.dance}（変えられない。ほかの型は「ショートを作る」から）`)
+    : !can(overview, 'talkStyles') ? h('p', {class: 'muted'}, `型: ${STYLE_LABEL[s.style] ?? s.style}（変えられない。ダンス MV は「ダンス MV を作る」から）`)
     : select('型', DRAFT_STYLES.map(k => [k, STYLE_LABEL[k]]), () => s.style ?? 'trivia', v => { s.style = v; touch(); renderAll(); });
 
   // 歩く 1 テイクだけ: 枝に止まる生き物を選ぶ。選ぶと動画の種類が変わり、カメラと右の欄の「生き物の動き」が変わる
@@ -679,8 +684,8 @@ export async function showShort({main, alive, jobsChanged}, id) {
     MAKER_LABEL[s.draftBy] ? h('p', {class: 'muted'}, `下書きの作り手: ${MAKER_LABEL[s.draftBy]}${s.draft?.checkedBy ? `。主張の確かめ: ${s.draft.checkedBy}` : ''}`) : null,
     s.draft?.warnings?.length ? h('details', {class: 'cut'}, h('summary', {}, `下書きの注意 ${s.draft.warnings.length} 件`), h('ul', {}, s.draft.warnings.map(w => h('li', {}, w)))) : null,
     claimBox?.box,
-    s.style === 'drama' || s.serial ? serialPanel(s, touch, {save, alive}) : null,
-    sec('図', h('div', {class: 'actions'}, figureBtn, figureMsg), figurePending),
+    can(overview, 'shortDraft') && (s.style === 'drama' || s.serial) ? serialPanel(s, touch, {save, alive}) : null,
+    can(overview, 'shortFigures') ? sec('図', h('div', {class: 'actions'}, figureBtn, figureMsg), figurePending) : null,
     sec('書き出し', summary, more('書き出した動画', false, madeBox)));
 
   const center = h('section', {class: 'se-center', 'aria-label': 'プレビュー'},

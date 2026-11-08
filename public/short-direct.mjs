@@ -1,7 +1,9 @@
 // ショートの文の印と自動演出。入力が同じなら答えも同じ純粋な関数で、Math.random は使わない。
 //   書き出し(lib/short-timeline.mjs)と編集画面で使う。描画の道具には依らない
+import {editionLabels} from './edition.mjs';
+
 export const SHORT_STYLES = ['trivia', 'drama', 'pop', 'news', 'dance'];
-export const STYLE_LABEL = {trivia: '雑学', drama: 'ドラマ', pop: '派手', news: 'ニュース', dance: 'ダンス MV'};
+export const STYLE_LABEL = editionLabels('full').shortStyles;   // キットでは public/app.mjs が名前を入れ替える(public/edition.mjs)
 export const DRAFT_STYLES = SHORT_STYLES.filter(k => k !== 'dance');   // 下書き(short-draft)が作れる型。ダンス MV は曲と拍でカットを割るので台本の下書きは無い
 export const TRANSITIONS = ['none', 'whip', 'zoom', 'flash', 'slide', 'glitch', 'dissolve', 'fade'];
 export const EFFECTS = ['none', 'punch', 'shake', 'speedlines', 'particles', 'flash', 'sparkle', 'question', 'exclaim', 'slam', 'insert'];

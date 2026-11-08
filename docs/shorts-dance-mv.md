@@ -1,6 +1,6 @@
 # ダンス MV（ショートの型 dance）
 
-完成モデルを Blender のシーンで踊らせ、拍に合わせたカット割りの縦動画にする。ショートの型 `dance`（表示名「ダンス MV」）で、編集画面と `short` ジョブはほかの型と同じものを使う（`docs/shorts.md`）。動画の種類は 1 つのカット表の上の「型」として並べる（雑学、2 人のドラマ、歩きながら話す、ダンス MV、1 カットの確かめ）。グラフィックの演出は `docs/shorts-graphic-mv.md`。
+完成モデルを Blender のシーンで踊らせ、拍に合わせたカット割りの縦動画にする。ショートの型 `dance`（表示名「ダンス MV」）で、編集画面と `short` ジョブはほかの型と同じものを使う（`docs/shorts.md`）。動画の種類は 1 つのカット表の上の「型」として並べる（対話型、歩きながら話す、ダンス MV、1 カットの確かめ）。グラフィックの演出は `docs/shorts-graphic-mv.md`。
 
 ## 作る入口
 
@@ -13,7 +13,7 @@
 
 ## データと描画
 
-決めた経緯は `docs/notes/shorts-dance-mv.md`。コードは `lib/dance.mjs`、`tools/dance_plan.py`、`lib/short.mjs` の `runShort`（`short.style === 'dance'` の分岐）。
+コードは `lib/dance.mjs`、`tools/dance_plan.py`、`lib/short.mjs` の `runShort`（`short.style === 'dance'` の分岐）。
 
 - `short.json` の `music`: `{bpm, seed, beatsPerShot, shotsPerScene, audioStart, motionId?, stages?}`。範囲は MV と同じ（bpm 40〜240、seed 0〜9999、beatsPerShot 4 / 8 / 16、shotsPerScene 1 / 2、audioStart は 0 以上の秒）。`dance` 以外では保存しない。動きは `music.motionId` の 1 つで、保存するとき全カットの `motionId` に写す（カットの `motionId` は省ける。`music.motionId` が無ければ最初のカットのものを使う）。出演者は `cast[0]` の 1 人。曲は `short.audioId`（`audioStart` 秒から使う）。`stages` は拍から割ったときに選んだシーンの並びで、描画には使わず（カット表のシーンを使う）、画面が選び直すために残す。
 - カットは今の形（`stage`、`camera`、`seconds`、`telop`、`transition`）に、`angle`（stage-studio の `shots.plan` の `a`）と `shot: {dir: 1 か -1, seed: 0〜99999}`（`plan` の `dir`、`seed`）を足す。`camera` は `lib/shots.py` の FLOW にある `wide_push`、`orbit`、`close`、`low_feet`、`crane_up`、`side_track`、`crane_down`、`high_top` だけで、ほかの型のカットはこの 5 つ（`close`、`crane_up`、`crane_down`、`side_track`、`high_top`）を選べない。`seconds` は必須で、セリフ（`text`）は空に固定する。カットの秒の合計は 180 秒まで。

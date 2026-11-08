@@ -30,6 +30,7 @@ import {draftImportCheck, draftRequest} from './lib/short-draft.mjs';
 import {DANCE_CAMERAS} from './public/short-camera.mjs';
 import {SHORT_CAMERAS, VOICE_TONES, newDanceShort, saveFigure, newShortBody, saveShortEdit, shortBody, splitShort, shortCompose, shortPreview, shortTimes, voiceSample} from './lib/short.mjs';
 import {writePidFile, removePidFile} from './lib/pidfile.mjs';
+import {checkCharacter, recipeDefaultMethod, refuseRemovedRoute, editionInfo, editionOf, shortInput, videoOptions} from './lib/edition.mjs';
 
 
 const types = {'.html': 'text/html; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
@@ -157,7 +158,8 @@ export function createServer(config) {
   let server;
   // config.env: ジョブの外部コマンドに足す環境変数(CHARASTA_FAKE_GROK など。ふだんは process.env だけ)
   const studio = new Studio(lib, {charakuruApp: config.charakuruApp, blender: config.blender, env: config.env ?? {}});
-  const jobs = new JobQueue({lib, studio, env: config.env ?? {}, getPort: () => server.address()?.port ?? config.port,
+  const edition = editionOf(config);   // 版の種類(docs/edition.md)。キットで外した機能の API とジョブは断る
+  const jobs = new JobQueue({lib, studio, edition, env: config.env ?? {}, getPort: () => server.address()?.port ?? config.port,
     tools: {blender: config.blender, kit: config.charakuruApp, patchVrm: config.patchVrm, springTune: config.springTune, motionbricksDir: config.motionbricksDir, vrmaPipelineDir: config.vrmaPipelineDir, rgbmocapDir: config.rgbmocapDir,
       kimodoDir: config.kimodoDir, hfCacheDir: config.hfCacheDir, stageStudioDir: config.stageStudioDir, voicevoxDir: config.voicevoxDir, hyperframesCli: config.hyperframesCli, hyperframesBrowser: config.hyperframesBrowser, figureImageGen: config.figureImageGen, gitBash: config.gitBash}});
 
@@ -181,17 +183,19 @@ export function createServer(config) {
       let p;
       try { p = decodeURIComponent(url.pathname); } catch { return notFound(res); }
       const get = req.method === 'GET' || req.method === 'HEAD';
+      refuseRemovedRoute(edition, p);
 
       if (get && p === '/') return await sendHtml(req, res, path.join(publicDir, 'index.html'));
       if (get && p === '/viewer') return await sendHtml(req, res, path.join(publicDir, 'viewer.html'));
 
-      if (get && p === '/api/overview') return json(res, 200, {...await overview(lib, studio, {charakuruUrl: config.charakuruUrl}), capabilities: await capabilities({config, jobs})});
+      if (get && p === '/api/overview') return json(res, 200, {...await overview(lib, studio, {charakuruUrl: config.charakuruUrl}), ...editionInfo(edition), capabilities: await capabilities({config, jobs})});
       if (get && p === '/api/capabilities') return json(res, 200, await capabilities({config, jobs}));
       if (p === '/api/characters') {
         if (get) return json(res, 200, await lib.listCharacters());
         if (req.method === 'POST') {
           const body = await readJsonBody(req);
           if (body?.style == null) throw new LibraryError('bad-input', 'style が要る(' + STYLES.join(' / ') + ')');   // 新しいキャラはスタイルを必ず選ぶ
+          checkCharacter(edition, body);
           return json(res, 201, await lib.createCharacter(body));
         }
         res.writeHead(405, {Allow: 'GET, POST'}); return res.end();
@@ -199,7 +203,7 @@ export function createServer(config) {
       const faceRoute = /^\/api\/characters\/([^/]+)\/versions\/([^/]+)\/face$/.exec(url.pathname);   // 版の顔: 方式、Fcl_ のキー、プリセット、確かめの撮影
       if (faceRoute && get) return json(res, 200, await faceInfo(lib, safeDecode(faceRoute[1]), safeDecode(faceRoute[2])));
       const checkRoute = /^\/api\/characters\/([^/]+)\/versions\/([^/]+)\/check$/.exec(url.pathname);   // 版の検査: スタイルごと(スタンダード=VRoid 形式、チビ=軽い版と三角形など)
-      if (checkRoute && get) return json(res, 200, await versionCheck(lib, safeDecode(checkRoute[1]), safeDecode(checkRoute[2])));
+      if (checkRoute && get) return json(res, 200, await versionCheck(lib, safeDecode(checkRoute[1]), safeDecode(checkRoute[2]), {edition}));
       const gameRoute = /^\/api\/characters\/([^/]+)\/versions\/([^/]+)\/game-exports$/.exec(url.pathname);   // 版のゲーム用の書き出し(docs/game-export.md)。作るのはジョブ game-export
       if (gameRoute && get) return json(res, 200, await listGameExports(lib, safeDecode(gameRoute[1]), safeDecode(gameRoute[2])));
       const verRoute = /^\/api\/characters\/([^/]+)\/versions$/.exec(url.pathname);   // きゃらくるのプロジェクトから版を取り込む
@@ -236,7 +240,7 @@ export function createServer(config) {
       if (p.startsWith('/api/characters/')) {
         const id = p.slice('/api/characters/'.length);
         if (get) return json(res, 200, await lib.getCharacter(id));
-        if (req.method === 'PATCH') { await lib.updateCharacter(id, await readJsonBody(req)); return json(res, 200, await lib.getCharacter(id)); }
+        if (req.method === 'PATCH') { const body = await readJsonBody(req); checkCharacter(edition, body); await lib.updateCharacter(id, body); return json(res, 200, await lib.getCharacter(id)); }
         res.writeHead(405, {Allow: 'GET, PATCH, DELETE'}); return res.end();
       }
       if (p === '/api/short-draft/prompt') {   // Gemini へ渡す依頼文
@@ -295,7 +299,7 @@ export function createServer(config) {
       }
       if (p === '/api/motion-recipes') {   // モーションをつなぐ: 選べる条件、確認待ち、区間に使える確認待ちの結果(sources)。積むのは /api/jobs の type: motion-recipe
         if (!get) { res.writeHead(405, {Allow: 'GET'}); return res.end(); }
-        return json(res, 200, {...await motionRecipeOptions(config.motionbricksDir, jobs.env), waiting: await jobs.recipeMotionsWaiting(), sources: await jobs.recipeSources()});
+        return json(res, 200, {...await motionRecipeOptions(config.motionbricksDir, jobs.env, {defaultMethod: recipeDefaultMethod(edition, jobs.motionbricksReady())}), waiting: await jobs.recipeMotionsWaiting(), sources: await jobs.recipeSources()});
       }
       const mr = /^\/api\/motion-recipes\/([^/]+)\/(motion\.vrma|contacts\.json|import|discard)$/.exec(url.pathname);
       if (mr) {
@@ -309,7 +313,7 @@ export function createServer(config) {
         return json(res, 200, await jobs.discardRecipeMotion(id));
       }
       if (p === '/api/video-motions') {   // 動画からモーションを作る: GET は使えるかどうかと確認待ち、POST は手元の動画を受け取って積む
-        if (get) return json(res, 200, {...await videoMotionOptions(config.vrmaPipelineDir, jobs.env, config.rgbmocapDir), waiting: await jobs.videoMotionsWaiting()});
+        if (get) return json(res, 200, {...videoOptions(edition, await videoMotionOptions(config.vrmaPipelineDir, jobs.env, config.rgbmocapDir)), waiting: await jobs.videoMotionsWaiting()});
         if (req.method === 'POST') return await postVideoMotion(req, res, lib, jobs);
         res.writeHead(405, {Allow: 'GET, POST'}); return res.end();
       }
@@ -332,7 +336,7 @@ export function createServer(config) {
 
       if (p === '/api/shorts') {   // ショート動画のカット表
         if (get) return json(res, 200, await lib.listShorts());
-        if (req.method === 'POST') { const body = await newShortBody(lib, config.stageStudioDir, await readJsonBody(req)); return json(res, 201, await lib.saveShort('s' + Date.now().toString(36), body)); }
+        if (req.method === 'POST') { const body = await newShortBody(lib, config.stageStudioDir, shortInput(edition, await readJsonBody(req))); return json(res, 201, await lib.saveShort('s' + Date.now().toString(36), body)); }
         res.writeHead(405, {Allow: 'GET, POST'}); return res.end();
       }
       if (p === '/api/dance-shorts') {   // ダンス MV のショートを新しく作る(#mv/<キャラ> の入口)。docs/shorts-dance-mv.md
@@ -393,7 +397,7 @@ export function createServer(config) {
       if (target?.kind === 'short') {
         if (get) return json(res, 200, await lib.getShort(target.id));
         await lib.getShort(target.id);
-        return json(res, 200, await saveShortEdit(lib, target.id, await shortBody(lib, config.stageStudioDir, await readJsonBody(req)), await jobs.active()));
+        return json(res, 200, await saveShortEdit(lib, target.id, await shortBody(lib, config.stageStudioDir, shortInput(edition, await readJsonBody(req))), await jobs.active()));
       }
       if (p === '/api/shoots') {   // 動画ギャラリー: 全キャラの撮った動画
         if (!get) { res.writeHead(405, {Allow: 'GET'}); return res.end(); }

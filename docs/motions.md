@@ -6,7 +6,6 @@
 
 - VRMA のファイルを取り込む: このページ
 - MotionBricks の条件から作る: `docs/motionbricks.md`
-- 文章から作る（Kimodo）: `docs/motion-text.md`
 - 動画から作る: `docs/video-to-vrma.md`
 - 区間をつなぐ（compose）: `docs/motion-compose.md`
 - 再生のときに接地中の足を床に留める: `docs/foot-ik.md`
@@ -23,7 +22,7 @@
 ```
 
 - `license.evaluationOnly`（省くと false）: true なら、評価・テストの目的だけで使える（動画にして公開するのも不可）。`redistribution` は「取り出せる状態での二次配布」だけを指すので、動画への利用が許されるかはこの項目で分ける。MotionBricks で作ったモーションが true（見本の動きの NVIDIA Sample Data Evaluation License による）。ギャラリーに「評価用のみ」の札を出し、`tools/record.mjs` はそのモーションで撮るときに警告する。取り込み済みの `motion.json` は書き換えない（ADR 0002）ので、この項目を持たない MotionBricks 製のモーションは、`terms` に見本の動きの許諾があることから、API が読むときに true を補う。
-- `generated`（省略可）: 作ったときの記録。MotionBricks（`docs/motionbricks.md`）か、動画から作ったモーション（`tool` が `vrma-pipeline`、`docs/video-to-vrma.md`）か、文章から作ったモーション（`tool` が `Kimodo`、`docs/motion-text.md`。原文、英語の説明文、seed、区間を持つ。見本の動きを使わないので `evaluationOnly` は付かない）。保管場所のモーションをつないだモーション（`tool` が `motion-compose`、`docs/motion-compose.md`。画面から作ったものは `recipe` と `report` も持つ）。
+- `generated`（省略可）: 作ったときの記録。MotionBricks（`docs/motionbricks.md`）か、動画から作ったモーション（`tool` が `vrma-pipeline`、`docs/video-to-vrma.md`）。保管場所のモーションをつないだモーション（`tool` が `motion-compose`、`docs/motion-compose.md`。画面から作ったものは `recipe` と `report` も持つ）。
 - `fittedTo`（省略可）: 体を合わせたキャラの版 `{charId, charName, verId}`。動画から作ったモーションに付く。画面に出す。
 - `contacts`（省略可）: 足の接地の横の情報のファイル名（`contacts.json`）。MotionBricks で作ったモーションに付く。一覧の API は `contactsUrl` を足す。`docs/foot-ik.md`。
 - `durationSec` と `bones` は、取り込むときに VRMA（glTF）を読んで求める（アニメーションの入力の最大時刻、`VRMC_vrm_animation` の humanBones のうち、チャンネルの対象になっているもの）。

@@ -2,10 +2,12 @@
 // 区間を並べて 1 本にする。区間の種類は、保管場所のモーション、確認待ちの結果(文章の候補、動画、MotionBricks)、MotionBricks の条件、文章(Kimodo)、動画。
 // 区間が 1 つなら、その種類の単体のジョブ(motion-gen、motion-text、video-motion)を積む。2 つ以上なら motion-recipe を積み、区間の間を MotionBricks(か補間)でつなぐ。
 // 文章と動画の区間は 2 つ以上のときには使えない(先にその区間だけで作り、確認待ちの結果を区間にする)。結果はどれも確認の欄で見てから取り込む。
+// キット(kit。docs/edition.md)は文章(Kimodo)の区間を出さない。MotionBricks が無いときは MotionBricks の条件の区間も出さず、つなぎの MotionBricks も選べなくして補間にする。
 import {h, getJSON, send} from './dom.mjs';
 import {genFields, queueGen} from './gen-motion.mjs';
 import {textFields} from './text-motion.mjs';
 import {videoFields} from './video-motion.mjs';
+import {missingNote} from './capabilities.mjs';
 
 const sec = v => Number(v).toFixed(1) + ' 秒';
 const nameOf = m => m.label || m.name || m.id;
@@ -17,8 +19,9 @@ const GO = {text: '文章から作る', video: '動画から作る', motionbrick
 
 // 札。motions() は今のモーションの一覧、sources() は確認待ちの結果の一覧(GET /api/motion-recipes の sources。null なら開いたときの値)を返す関数。
 // char と verId は動画の区間が体を合わせる版。queued(job) はジョブを積めたときに呼ぶ
-export async function recipePanel({motions, sources = () => null, queued, char = null, verId = null}) {
-  const [o, gen, text, video] = await Promise.all(['/api/motion-recipes', '/api/motion-gen', '/api/motion-texts', '/api/video-motions'].map(getJSON));
+export async function recipePanel({motions, sources = () => null, queued, char = null, verId = null, kit = false, ov = null}) {
+  const [o, gen, text, video] = await Promise.all(['/api/motion-recipes', '/api/motion-gen', kit ? null : '/api/motion-texts', '/api/video-motions'].map(u => u && getJSON(u)));
+  const types = TYPES.filter(([k]) => !kit || (k !== 'text' && (k !== 'motionbricks' || o.motionbricks)));   // キットは文章を出さず、MotionBricks が無ければ条件の区間も出さない
   let rows = [];   // [{type, key?, seg?, name, fields?, nameEl?, start, end, speed, bridge}]。seg は一覧から選んだ区間の出どころ、fields は条件の部品、bridge はその区間の前のつなぎの秒
   // 一覧から選べるもの。key は motion:<ID> か job:<ジョブ>:<候補の番号>
   const items = () => [
@@ -26,7 +29,7 @@ export async function recipePanel({motions, sources = () => null, queued, char =
     ...(sources() ?? o.sources).map(s => ({key: `job:${s.job}:${s.n ?? ''}`, name: s.name, kind: s.kind, durationSec: s.durationSec, limit: s.limit, license: s.license,
       seg: {source: 'job', job: s.job, ...(s.n != null && {n: s.n})}}))];
   const find = key => items().find(x => x.key === key);
-  const type = h('select', {'aria-label': '区間の種類'}, TYPES.map(([k, v]) => h('option', {value: k}, v)));
+  const type = h('select', {'aria-label': '区間の種類'}, types.map(([k, v]) => h('option', {value: k}, v)));
   const picker = h('select', {'aria-label': '足すモーション'});
   const option = (x, keep) => h('option', {value: x.key, selected: x.key === keep}, `${x.name}（${sec(x.durationSec)}、${x.limit.text}）`);
   const fillPicker = () => {
@@ -39,7 +42,10 @@ export async function recipePanel({motions, sources = () => null, queued, char =
   // 一覧を読み直したあとも新しいモーションと結果を選べるように、開くときに作り直す。並べた区間も描き直し、無くなった結果を知らせる
   picker.addEventListener('focus', () => { fillPicker(); render(); });
   fillPicker();
-  const method = h('select', {'aria-label': 'つなぎの作り方'}, Object.entries(o.bridgeMethods).map(([k, v]) => h('option', {value: k, selected: k === o.defaultBridge.method}, v)));
+  const method = h('select', {'aria-label': 'つなぎの作り方'}, Object.entries(o.bridgeMethods).map(([k, v]) => {
+    const off = kit && k === 'motionbricks' && !o.motionbricks;   // キットで MotionBricks が無いときは補間だけ
+    return h('option', {value: k, selected: k === o.defaultBridge.method, disabled: off}, off ? `${v}（設定が無いので使えない）` : v);
+  }));
   const label = h('input', {maxlength: '100', placeholder: '空なら区間の名前から作る', 'aria-label': 'ラベル'});
   const list = h('div', {class: 'stack recipe-list'}), notes = h('div', {class: 'stack-small'});
   const msg = h('span', {class: 'muted'});
@@ -149,9 +155,10 @@ export async function recipePanel({motions, sources = () => null, queued, char =
     } catch (e) { msg.className = 'err'; msg.textContent = '積めない: ' + e.message; }
     renderNotes();
   };
-  addRow('text');   // 開いたときは文章の区間を 1 つ置く(今までの「文章」の札と同じ入口)
+  addRow(kit ? 'video' : 'text');   // 開いたときは区間を 1 つ置く(作者の版は文章で、今までの「文章」の札と同じ入口。キットは動画)
   return h('div', {class: 'form-stack', id: 'motionRecipePanel'},
     h('div', {class: 'recipe-pick'}, h('div', {class: 'stack-small'}, type, picker), add), list,
+    kit && !o.motionbricks ? missingNote(ov, ['motionbricks'], 'MotionBricks が無いので、つなぎは補間になり、MotionBricks の条件の区間は使えない') : null,
     joinOnly, notes,
     h('label', {}, 'ラベル（100 文字まで）', label), go, msg,
     h('p', {class: 'muted'}, `区間を上から順に並べる（${o.maxSegments} 本まで）。1 つなら、その区間だけを作って確認の欄に出す。2 つ以上なら、区間の終わりの向きと位置に次の区間を置き、間を作って 1 本にする。`

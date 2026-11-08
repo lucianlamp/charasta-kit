@@ -59,3 +59,26 @@ test('GET /api/capabilities: 未設定の機能は available: false で設定の
   const ov = await (await fetch(s.base + '/api/overview')).json();
   assert.deepEqual(ov.capabilities, caps);
 });
+
+test('stage-studio が未設定でも、ショートの編集画面の選択肢とシーンの一覧は 200 で返り、シーンは空・グラフィックは無し', async () => {
+  const s = await startServer({stageStudioDir: null});
+  try {
+    const r = await fetch(s.base + '/api/short-options');
+    assert.equal(r.status, 200, await r.clone().text());
+    const o = await r.json();
+    assert.equal(o.available, false); assert.deepEqual(o.stages, []); assert.equal(o.graphic, null);
+    const st = await fetch(s.base + '/api/mv');
+    assert.equal(st.status, 200);
+    assert.equal((await fetch(s.base + '/api/mv/stages/classroom.jpg')).status, 404);
+  } finally { await s.close(); }
+});
+
+test('stage-studio が未設定なら、ショートの書き出しは積む時点で理由を返して断る', async () => {
+  const s = await startServer({stageStudioDir: null});
+  try {
+    const made = await s.server.jobs.lib.saveShort('s-nostage', {title: 't', style: 'trivia', charId: 'c', verId: 'v', cuts: [{seconds: 2, text: 'あ'}]});   // 中身の検査は通さず、保管場所へ直に置く
+    const r = await fetch(s.base + '/api/jobs', {method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify({type: 'short', shortId: made.id ?? 's-nostage'})});
+    assert.equal(r.status, 400);
+    assert.match((await r.json()).error, /stage-studio/);
+  } finally { await s.close(); }
+});

@@ -43,8 +43,7 @@
 | 機能 | 入れる物 | 条件 |
 | --- | --- | --- |
 | 歩き・走りなどのモーション生成 | MotionBricks(NVIDIA) | モデルは NVIDIA Open Model Agreement。生成の文脈と目標に使う見本の動きは NVIDIA Sample Data Evaluation License(評価・テスト用、配布不可) |
-| 文章からのモーション生成 | Kimodo(NVIDIA)のモデル | NVIDIA Open Model License。文章の埋め込みに使う Meta Llama 3 は Meta Llama 3 Community License。使う人が Llama 3 を入れる場合、Llama Materials を使った製品やサービスを配布・提供するときは「Built with Meta Llama 3」の表示などの条件に従う |
-| 動画からのモーション生成 | RGB MoCap / ExMR、vrma-pipeline | 各配布元の条件に従う(確認してから使う) |
+| 動画からのモーション生成 | vrma-pipeline(MediaPipe) | 配布元の条件に従う(確認してから使う) |
 | モーションのパック | VRoid Project VRMA Motion Pack | 同梱しない。権利者はピクシブ株式会社。条件は配布元に従う |
 | 3D の描画、表情づくり | Blender(GPL) | 同梱しない |
 | 動画の書き出し | ffmpeg | 同梱しない。ビルドごとの条件に従う |

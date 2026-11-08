@@ -2,6 +2,9 @@
 // 生き物の動きの名前、動きの表の行、ショートから使う書き方の見本もここに置く。
 // 絞り込みと数は DOM を使わない(テストが読み込める)。札と選ぶボタンは呼ばれたときだけ DOM を使う。
 import {h} from './dom.mjs';
+import {editionLabels} from './edition.mjs';
+
+const LABEL = editionLabels('full').styles;   // キットでは public/app.mjs が名前を入れ替える(public/edition.mjs)
 
 export const STYLE_IDS = ['standard', 'chibi', 'creature'];
 export const VRM_STYLES = ['standard', 'chibi'];
@@ -9,19 +12,19 @@ export const VRM_STYLES = ['standard', 'chibi'];
 // band: ライブラリのタブの下の 1 行。points: 新しいキャラの大きなボタンの短い行。steps: 「このスタイルで決まること」
 export const CHAR_STYLES = {
   standard: {
-    label: 'スタンダード',
+    label: LABEL.standard,
     band: [['表情', 'シェイプキー(Fcl の 57 キー)'], ['形式', 'VRoid 形式の検査']],
     points: ['表情はシェイプキー', 'VRoid 形式で検査'],
     steps: [['作り方', 'きゃらくる(Tripo Studio)で rig と表情まで'], ['表情', 'キットの表情を kit_fcl で Fcl の 57 キーへ'], ['仕上げ', 'VRoid 形式への変換、輪郭線 0.8 mm、検査']],
   },
   chibi: {
-    label: 'チビ',
+    label: LABEL.chibi,
     band: [['表情', '画像(顔テクスチャのコマ)'], ['形式', '軽い版と三角形の数']],
     points: ['表情は顔テクスチャの画像', '軽い版と三角形の数で検査'],
     steps: [['作り方', 'きゃらくる(Tripo Studio)で rig まで'], ['表情', '表情スタジオで image_gen の絵を顔テクスチャに'], ['仕上げ', '軽い版、三角形の数の検査']],
   },
   creature: {
-    label: '生き物',
+    label: LABEL.creature,
     band: [['形式', 'Blender(骨と動き)']],
     points: ['Blender の骨と動き', '表情は無く、動きの Action を使う'],
     steps: [['作り方', 'Blender で骨と動きを作り、scripts/import-creature.mjs で取り込む'], ['表情', 'なし(動きの Action を使う)']],
@@ -31,7 +34,7 @@ export const UNSET_LABEL = 'スタイル未設定';
 export const RESTYLE_WARNING = 'スタイルを変えると、表情を作り直すことになる';
 
 // ライブラリのタブ。all は未設定のキャラも含む
-export const STYLE_TABS = [['standard', 'スタンダード'], ['chibi', 'チビ'], ['creature', '生き物'], ['all', 'すべて']];
+export const STYLE_TABS = [['standard', LABEL.standard], ['chibi', LABEL.chibi], ['creature', LABEL.creature], ['all', 'すべて']];
 export const TAB_KEY = 'charasta.styleTab';
 
 export const styleOf = c => (STYLE_IDS.includes(c?.style) ? c.style : null);

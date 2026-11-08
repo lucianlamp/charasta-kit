@@ -3,7 +3,7 @@ import {h, getJSON, send} from './dom.mjs';
 import {METHODS, enc, mb, thumb} from './shared.mjs';
 import {can} from './capabilities.mjs';
 import {confirmDialog, moveToTrash, trashIcon} from './confirm.mjs';
-import {RESTYLE_WARNING, STYLE_TABS, bandText, filterByStyleTab, isCreature, loadStyleTab, motionNames, motionSummary, pickStyleTab, saveStyleTab, styleChip, styleChoices, styleStepsBox, styleTabCounts} from './char-style.mjs';
+import {RESTYLE_WARNING, STYLE_TABS, bandText, filterByStyleTab, isCreature, loadStyleTab, motionNames, motionSummary, pickStyleTab, saveStyleTab, styleChip, styleChoices, styleLabel, styleStepsBox, styleTabCounts} from './char-style.mjs';
 
 const STAGE_ROWS = [['create', 'つくる'], ['motion', '動き'], ['expression', '表情'], ['finish', '仕上げ']];
 const STAGE_TEXT = {done: 'できている', doing: '途中', none: 'まだ'};
@@ -47,7 +47,7 @@ function waitBand(w) {
 
 // 新しいキャラ: スタイルと作り方を選んでキャラの記録を作り、きゃらくるのアプリを開く。制作はきゃらくるの依頼文から Claude が進める
 // スタイルは必須。選ぶまで「作り始める」を押せない
-// 生き物は 3D の作り方(Tripo / Kimi)を隠し、きゃらくるを開かずに記録だけ作ってキャラのページへ移る。版は scripts/import-creature.mjs で取り込む
+// 生き物は 3D の作り方を隠し、きゃらくるを開かずに記録だけ作ってキャラのページへ移る。版は scripts/import-creature.mjs で取り込む
 function newCharacter(ov, stageHref) {
   let method = 'tripo';   // 顔の仕上がりは Tripo Studio の方がよかったので、既定にする
   let style = null, setReady = () => {};
@@ -68,7 +68,7 @@ function newCharacter(ov, stageHref) {
       methodField,
       h('label', {}, 'キャラ ID（英小文字・数字・ハイフン）', id), h('label', {}, '名前', name))],
     run: async () => {
-      if (!style) throw Error('スタイル(スタンダード、チビ、生き物のどれか)を選ぶ');
+      if (!style) throw Error(`スタイル(${['standard', 'chibi', 'creature'].map(styleLabel).join('、')}のどれか)を選ぶ`);
       if (!id.value.trim() || !name.value.trim()) throw Error('ID と名前を入れる');
       if (style === 'creature') {   // きゃらくるは VRM の作り方なので開かない
         try {

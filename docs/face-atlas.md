@@ -1,8 +1,8 @@
 # 顔テクスチャ方式の表情（平らな顔向け）
 
-スクリプトは `studio/face_atlas/`（以下の `$S`、`S=<キットの場所>/studio/face_atlas`）。きゃらすたの表情づくりの画面とジョブで動かす手順は [expression-studio.md](expression-studio.md)（どの工程がどのスクリプトをどの順で呼ぶか）。with-kimi の文書へのリンクは with-kimi の場所（`<skills>/charakuru-claude-code-with-kimi/references/`）を指す。ビューアの撮影（`viewer/serve.mjs`、`vshots.mjs`、`vrecord.mjs`）は with-kimi のもので、きゃらすたでは `tools/shots.mjs`・`tools/record.mjs`・`tools/studio_checks.mjs` を使う。
+スクリプトは `studio/face_atlas/`（以下の `$S`、`S=<キットの場所>/studio/face_atlas`）。きゃらすたの表情づくりの画面とジョブで動かす手順は [expression-studio.md](expression-studio.md)（どの工程がどのスクリプトをどの順で呼ぶか）。ビューアの撮影は`tools/shots.mjs`・`tools/record.mjs`・`tools/studio_checks.mjs` を使う。
 
-鼻のない平らな顔（のっぺり系のチビ）に使います。鼻のある顔はシェイプキー方式にします（使い分けは [expressions.md](<skills>/charakuru-claude-code-with-kimi/references/expressions.md#方式の選び方-顔の形で決める)）。
+鼻のない平らな顔（のっぺり系のチビ）に使います。鼻のある顔はシェイプキー方式にします。
 
 顔のメッシュの目・眉・頬と口の範囲を別の材質に分けます。表情ごとの絵を並べた画像（アトラス）を正面から投影で貼り、VRM 1.0 の `textureTransformBinds` で表示する区画をずらします。三角形はほとんど増えず、顔と同じ MToon 設定なので明るさのむらが出ません。
 
@@ -11,8 +11,6 @@
 ## 前提: 顔の形
 
 - 頭は、のっぺらぼう（目・眉・口のない顔）の4方向画像から作ります。
-- Kimi では `--face-limit 20000 --texture-quality detailed` で作り、分割は `--granularity balanced` にします。
-- 頭の差し替えの手順は [expressions.md](<skills>/charakuru-claude-code-with-kimi/references/expressions.md#頭を差し替える顔の絵を変えて作り直すとき) にあります。
 
 ## 顔の絵（Codex image_gen）
 
@@ -63,7 +61,7 @@ IRIS_MATCH_HEIGHT=1 python $S/ball_from_iris.py $F neutral_bald $C/iris_R.png:X0
 
 ## あごをなめらかにする（尖りすぎた頭）
 
-Kimi が元絵の細い V 字のあごをそのまま立体にすると、あご先から首まで三角形 1 枚になり、横顔の角が鋭く残る。尖りすぎたあごは、顔の区画を作る前に毎回なめらかにする。
+3D の生成が元絵の細い V 字のあごをそのまま立体にすると、あご先から首まで三角形 1 枚になり、横顔の角が鋭く残る。尖りすぎたあごは、顔の区画を作る前に毎回なめらかにする。
 
 ```bash
 "$BLENDER" -b work/character_cheek.blend --python $S/smooth_jaw.py -- work/character_face.blend <口の高さ m> 2 6
@@ -150,7 +148,6 @@ node <base-skill>/scripts/patch_vrm.mjs $F/gaze/face_gaze.vrm $F/gaze/face_gaze.
      - relaxed: 最初の 1.5 秒で上まぶたが半分まで下がり、眉がゆるむ。
      - surprised: 最初の 1 秒で目を大きく開き、瞳が少し小さくなり、眉が高く上がる。
    - 止まる・固定の指示: そのあと最後まで表情を止める。カメラは完全に固定（ズーム・平行移動・揺れなし）。構図と顔の外の肌は変えない。動くのはまぶた・まつ毛・眉だけ。髪・口・鼻・涙・汗・影を描き足さない。
-   - Kimi の動画生成は最初のコマしか固定できず、画面全体を少しずらすことがあった。Grok Build の方が 1 コマ目が入力とよく合い、ちらつきも少なかった（grok-build-video スキルの「画質」）。
 4. 全部の動画をまとめて VRM に入れる。
 
    ```bash
@@ -207,10 +204,6 @@ node <base-skill>/scripts/patch_vrm.mjs $F/gaze/face_gaze.vrm $F/gaze/face_gaze.
 ## 登録
 
 顔テクスチャ方式の表情は、キットに登録できません。キットの検査は、面・UV・材質が元のモデルのままであることと、表情ごとにシェイプキーがあることを求めます。表情は VRM ファイルの中に入れて渡します。メタ情報（名前・作者・利用条件）は、アプリで書き出した VRM から `patch_vrm.mjs --meta-from` で写すか、ユーザーから聞いた値を JSON にして `set_vrm_meta.mjs` で書き込みます（VRM 1.0 の値かを確かめ、書いていない項目は残す）。
-
-```bash
-node <skills>/charakuru-claude-code-with-kimi/scripts/set_vrm_meta.mjs $F/gaze/face_gaze.vrm <out>.vrm meta.json
-```
 
 ## 確かめ方
 
