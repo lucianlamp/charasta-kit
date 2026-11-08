@@ -1,0 +1,5 @@
+.dream-loop/
+out/
+cache/
+*.blend1
+__pycache__/

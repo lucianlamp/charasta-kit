@@ -1,0 +1,15 @@
+name: 要望
+description: 欲しい機能や、使いにくい所
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: want
+    attributes:
+      label: やりたいこと
+      description: 何を作りたくて、どこで困っているか
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: こうなると助かる

@@ -1,0 +1,67 @@
+{
+  "_note": "モデルの利用条件の記録。lib/motion-text.mjs(文章からのモーションの取り込み)と lib/motion-gen.mjs(MotionBricks の条件で作ったモーション)、tools/compose/records.py(compose.py の文章と MotionBricks の区間、つなぎ)が読む。値を変えると、これから取り込むモーションの motion.json の license が変わる。商用で使えるかの判断は書かない(条件の事実だけ)",
+  "kimodoText": {
+    "holder": "NVIDIA（Kimodo）、McGill-NLP（LLM2Vec）、Meta（Llama 3）",
+    "summary": "Kimodo-SOMA-RP-v1.2 は NVIDIA Open Model License。文章の埋め込みに LLM2Vec（MIT）と Meta Llama 3 8B Instruct（Meta Llama 3 Community License）を使った。見本の動きは使っていない。Llama 3 の利用は Acceptable Use Policy（https://llama.meta.com/llama3/use-policy/）に従う。Llama Materials（その派生物を含む）や、それを使った製品・サービスを配布・提供するときは、「Built with Meta Llama 3」の表示とライセンス文の写しが要る（Llama 3 Community License 1.b.i）",
+    "redistribution": false,
+    "terms": [
+      {
+        "part": "生成したモデル（Kimodo-SOMA-RP-v1.2）",
+        "license": "NVIDIA Open Model License",
+        "url": "https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-open-model-license/"
+      },
+      {
+        "part": "Kimodo のコード",
+        "license": "Apache 2.0"
+      },
+      {
+        "part": "文章の埋め込み（LLM2Vec: McGill-NLP/LLM2Vec-Meta-Llama-3-8B-Instruct-mntp と -mntp-supervised）",
+        "license": "MIT"
+      },
+      {
+        "part": "文章の埋め込みの元のモデル（Meta Llama 3 8B Instruct）",
+        "license": "Meta Llama 3 Community License",
+        "url": "https://llama.meta.com/llama3/license/",
+        "policy": "Acceptable Use Policy: https://llama.meta.com/llama3/use-policy/",
+        "condition": "Llama Materials（その派生物を含む）や、それを使った製品・サービスを配布・提供するときは、ライセンス文の写しを添え、関連するサイト・画面・文書に「Built with Meta Llama 3」を目立つように表示する（1.b.i）"
+      },
+      {
+        "part": "見本の動き（MotionBricks の BVH）",
+        "license": "使っていない"
+      }
+    ]
+  },
+  "kimodoCompose": {
+    "holder": "NVIDIA（Kimodo）、Meta（Llama 3）",
+    "summary": "Kimodo-SOMA-RP-v1.2（NVIDIA Open Model License）で文章から生成。文章の埋め込みに LLM2Vec（MIT）と Meta Llama 3 8B Instruct（Meta Llama 3 Community License）を使った",
+    "redistribution": false
+  },
+  "motionbricksBridge": {
+    "holder": "NVIDIA（MotionBricks）",
+    "summary": "MotionBricks のモデル（NVIDIA Open Model Agreement）で区間の間を生成。文脈と目標は前後の区間のポーズで、見本の動きは使っていない",
+    "redistribution": false
+  },
+  "motionbricksGen": {
+    "holder": "NVIDIA（MotionBricks）、見本の動きは Bones 由来（NVIDIA Sample Data）",
+    "summary": "MotionBricks のモデル（NVIDIA Open Model Agreement、商用可）で生成。生成の文脈と目標に、見本の動き（NVIDIA Sample Data Evaluation License。NVIDIA の技術の評価・テスト用で、派生物の配布・提供は禁止）のポーズを使った",
+    "redistribution": false,
+    "evaluationOnly": true,
+    "terms": [
+      {
+        "part": "生成したモデル",
+        "license": "NVIDIA Open Model Agreement",
+        "url": "https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-open-model-agreement/"
+      },
+      {
+        "part": "生成の文脈と目標のポーズ（見本の動き）",
+        "license": "NVIDIA Sample Data Evaluation License（v. Jan. 16, 2026）",
+        "file": "assets/motions/LICENSE.txt",
+        "clips": []
+      },
+      {
+        "part": "MotionBricks のコード",
+        "license": "Apache 2.0"
+      }
+    ]
+  }
+}

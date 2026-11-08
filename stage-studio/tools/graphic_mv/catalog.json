@@ -1,0 +1,11 @@
+[
+  {"id": "intro", "label": "INTRO", "name": "出だし", "passes": ["full"], "words": 0, "wipe": null, "back": 0, "role": "first"},
+  {"id": "name", "label": "NAME", "name": "大きな名前", "passes": ["mid"], "words": 0, "wipe": "iris", "back": 0},
+  {"id": "move", "label": "MOVE", "name": "斜めに流れる言葉", "passes": ["full"], "words": 3, "wipe": "diag", "back": 0},
+  {"id": "feel", "label": "FEEL", "name": "色の残像と大きな言葉", "passes": ["full"], "words": 2, "wipe": "bars", "back": 9},
+  {"id": "triple", "label": "TRIPLE", "name": "三面", "passes": ["full"], "words": 0, "wipe": "columns", "back": 30},
+  {"id": "face", "label": "FACE", "name": "顔の寄り", "passes": ["face"], "words": 1, "wipe": "iris", "back": 0},
+  {"id": "kick", "label": "KICK", "name": "落ちる言葉と残像", "passes": ["full"], "words": 1, "wipe": "diag", "back": 16},
+  {"id": "dance", "label": "DANCE", "name": "言葉と輪", "passes": ["full"], "words": 1, "wipe": "slab", "back": 0},
+  {"id": "end", "label": "END", "name": "締め", "passes": ["mid"], "words": 0, "wipe": "bars", "back": 0, "role": "last"}
+]

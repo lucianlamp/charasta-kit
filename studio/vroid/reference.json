@@ -1,0 +1,544 @@
+{
+ "from": [
+  "avatar-sample-a",
+  "avatar-sample-b",
+  "avatar-sample-c"
+ ],
+ "morphs": [
+  "Fcl_ALL_Neutral",
+  "Fcl_ALL_Angry",
+  "Fcl_ALL_Fun",
+  "Fcl_ALL_Joy",
+  "Fcl_ALL_Sorrow",
+  "Fcl_ALL_Surprised",
+  "Fcl_BRW_Angry",
+  "Fcl_BRW_Fun",
+  "Fcl_BRW_Joy",
+  "Fcl_BRW_Sorrow",
+  "Fcl_BRW_Surprised",
+  "Fcl_EYE_Natural",
+  "Fcl_EYE_Angry",
+  "Fcl_EYE_Close",
+  "Fcl_EYE_Close_R",
+  "Fcl_EYE_Close_L",
+  "Fcl_EYE_Fun",
+  "Fcl_EYE_Joy",
+  "Fcl_EYE_Joy_R",
+  "Fcl_EYE_Joy_L",
+  "Fcl_EYE_Sorrow",
+  "Fcl_EYE_Surprised",
+  "Fcl_EYE_Spread",
+  "Fcl_EYE_Iris_Hide",
+  "Fcl_EYE_Highlight_Hide",
+  "Fcl_MTH_Close",
+  "Fcl_MTH_Up",
+  "Fcl_MTH_Down",
+  "Fcl_MTH_Angry",
+  "Fcl_MTH_Small",
+  "Fcl_MTH_Large",
+  "Fcl_MTH_Neutral",
+  "Fcl_MTH_Fun",
+  "Fcl_MTH_Joy",
+  "Fcl_MTH_Sorrow",
+  "Fcl_MTH_Surprised",
+  "Fcl_MTH_SkinFung",
+  "Fcl_MTH_SkinFung_R",
+  "Fcl_MTH_SkinFung_L",
+  "Fcl_MTH_A",
+  "Fcl_MTH_I",
+  "Fcl_MTH_U",
+  "Fcl_MTH_E",
+  "Fcl_MTH_O",
+  "Fcl_HA_Hide",
+  "Fcl_HA_Fung1",
+  "Fcl_HA_Fung1_Low",
+  "Fcl_HA_Fung1_Up",
+  "Fcl_HA_Fung2",
+  "Fcl_HA_Fung2_Low",
+  "Fcl_HA_Fung2_Up",
+  "Fcl_HA_Fung3",
+  "Fcl_HA_Fung3_Up",
+  "Fcl_HA_Fung3_Low",
+  "Fcl_HA_Short",
+  "Fcl_HA_Short_Up",
+  "Fcl_HA_Short_Low"
+ ],
+ "presets": {
+  "neutral": [
+   "Fcl_ALL_Neutral"
+  ],
+  "blink": [
+   "Fcl_EYE_Close"
+  ],
+  "blinkLeft": [
+   "Fcl_EYE_Close_L"
+  ],
+  "blinkRight": [
+   "Fcl_EYE_Close_R"
+  ],
+  "happy": [
+   "Fcl_ALL_Joy"
+  ],
+  "angry": [
+   "Fcl_ALL_Angry"
+  ],
+  "sad": [
+   "Fcl_ALL_Sorrow"
+  ],
+  "relaxed": [
+   "Fcl_ALL_Fun"
+  ],
+  "surprised": [
+   "Fcl_ALL_Surprised"
+  ],
+  "aa": [
+   "Fcl_MTH_A"
+  ],
+  "ih": [
+   "Fcl_MTH_I"
+  ],
+  "ou": [
+   "Fcl_MTH_U"
+  ],
+  "ee": [
+   "Fcl_MTH_E"
+  ],
+  "oh": [
+   "Fcl_MTH_O"
+  ]
+ },
+ "human": {
+  "chest": "J_Bip_C_Chest",
+  "head": "J_Bip_C_Head",
+  "hips": "J_Bip_C_Hips",
+  "leftEye": "J_Adj_L_FaceEye",
+  "leftFoot": "J_Bip_L_Foot",
+  "leftHand": "J_Bip_L_Hand",
+  "leftIndexDistal": "J_Bip_L_Index3",
+  "leftIndexIntermediate": "J_Bip_L_Index2",
+  "leftIndexProximal": "J_Bip_L_Index1",
+  "leftLittleDistal": "J_Bip_L_Little3",
+  "leftLittleIntermediate": "J_Bip_L_Little2",
+  "leftLittleProximal": "J_Bip_L_Little1",
+  "leftLowerArm": "J_Bip_L_LowerArm",
+  "leftLowerLeg": "J_Bip_L_LowerLeg",
+  "leftMiddleDistal": "J_Bip_L_Middle3",
+  "leftMiddleIntermediate": "J_Bip_L_Middle2",
+  "leftMiddleProximal": "J_Bip_L_Middle1",
+  "leftRingDistal": "J_Bip_L_Ring3",
+  "leftRingIntermediate": "J_Bip_L_Ring2",
+  "leftRingProximal": "J_Bip_L_Ring1",
+  "leftShoulder": "J_Bip_L_Shoulder",
+  "leftThumbDistal": "J_Bip_L_Thumb3",
+  "leftThumbMetacarpal": "J_Bip_L_Thumb1",
+  "leftThumbProximal": "J_Bip_L_Thumb2",
+  "leftToes": "J_Bip_L_ToeBase",
+  "leftUpperArm": "J_Bip_L_UpperArm",
+  "leftUpperLeg": "J_Bip_L_UpperLeg",
+  "neck": "J_Bip_C_Neck",
+  "rightEye": "J_Adj_R_FaceEye",
+  "rightFoot": "J_Bip_R_Foot",
+  "rightHand": "J_Bip_R_Hand",
+  "rightIndexDistal": "J_Bip_R_Index3",
+  "rightIndexIntermediate": "J_Bip_R_Index2",
+  "rightIndexProximal": "J_Bip_R_Index1",
+  "rightLittleDistal": "J_Bip_R_Little3",
+  "rightLittleIntermediate": "J_Bip_R_Little2",
+  "rightLittleProximal": "J_Bip_R_Little1",
+  "rightLowerArm": "J_Bip_R_LowerArm",
+  "rightLowerLeg": "J_Bip_R_LowerLeg",
+  "rightMiddleDistal": "J_Bip_R_Middle3",
+  "rightMiddleIntermediate": "J_Bip_R_Middle2",
+  "rightMiddleProximal": "J_Bip_R_Middle1",
+  "rightRingDistal": "J_Bip_R_Ring3",
+  "rightRingIntermediate": "J_Bip_R_Ring2",
+  "rightRingProximal": "J_Bip_R_Ring1",
+  "rightShoulder": "J_Bip_R_Shoulder",
+  "rightThumbDistal": "J_Bip_R_Thumb3",
+  "rightThumbMetacarpal": "J_Bip_R_Thumb1",
+  "rightThumbProximal": "J_Bip_R_Thumb2",
+  "rightToes": "J_Bip_R_ToeBase",
+  "rightUpperArm": "J_Bip_R_UpperArm",
+  "rightUpperLeg": "J_Bip_R_UpperLeg",
+  "spine": "J_Bip_C_Spine",
+  "upperChest": "J_Bip_C_UpperChest"
+ },
+ "adjust": [
+  "J_Adj_L_FaceEye",
+  "J_Adj_R_FaceEye"
+ ],
+ "lookAt": "bone",
+ "colliders": {
+  "J_Bip_C_Spine": 1,
+  "J_Bip_C_UpperChest": 3,
+  "J_Bip_C_Neck": 1,
+  "J_Bip_C_Head": 1,
+  "J_Bip_L_UpperArm": 3,
+  "J_Bip_L_LowerArm": 4,
+  "J_Bip_L_Hand": 1,
+  "J_Bip_R_UpperArm": 3,
+  "J_Bip_R_LowerArm": 4,
+  "J_Bip_R_Hand": 1,
+  "J_Bip_L_UpperLeg": 3,
+  "J_Bip_R_UpperLeg": 3
+ },
+ "mtoon": {
+  "FaceMouth": {
+   "shift": -0.05,
+   "toony": 0.05,
+   "outlineWidth": 0.001223,
+   "rimFresnel": 8,
+   "rimLift": 0.1,
+   "gi": 0.9,
+   "outlineMode": "worldCoordinates"
+  },
+  "EyeIris": {
+   "shift": -0.05,
+   "toony": 0.05,
+   "outlineWidth": 0,
+   "rimFresnel": 8,
+   "rimLift": 0.1,
+   "gi": 0.9,
+   "outlineMode": "none"
+  },
+  "EyeHighlight": {
+   "shift": -0.05,
+   "toony": 0.05,
+   "outlineWidth": 0,
+   "rimFresnel": 8,
+   "rimLift": 0.1,
+   "gi": 0.9,
+   "outlineMode": "none"
+  },
+  "FaceSkin": {
+   "shift": -0.05,
+   "toony": 0.05,
+   "outlineWidth": 0.001223,
+   "rimFresnel": 8,
+   "rimLift": 0.1,
+   "gi": 0.9,
+   "outlineMode": "worldCoordinates"
+  },
+  "BodySkin": {
+   "shift": 1,
+   "toony": 1,
+   "outlineWidth": 0.001223,
+   "rimFresnel": 8,
+   "rimLift": 0.1,
+   "gi": 0.9,
+   "outlineMode": "worldCoordinates"
+  },
+  "Cloth": {
+   "shift": 1,
+   "toony": 1,
+   "outlineWidth": 0.001223,
+   "rimFresnel": 8,
+   "rimLift": 0.1,
+   "gi": 0.9,
+   "outlineMode": "worldCoordinates"
+  },
+  "Hair": {
+   "shift": -0.35,
+   "toony": 0.35,
+   "outlineWidth": 0.001223,
+   "rimFresnel": 8.6154,
+   "rimLift": 0.1,
+   "gi": 0.9,
+   "outlineMode": "worldCoordinates"
+  }
+ },
+ "springs": {
+  "Hair": {
+   "stiffness": [
+    0.6973,
+    0.8548
+   ],
+   "drag": [
+    0.4,
+    0.4
+   ],
+   "gravity": [
+    0,
+    0.5
+   ],
+   "radius": [
+    0.0074,
+    0.1
+   ],
+   "joints": [
+    2,
+    6
+   ]
+  },
+  "Skirt": {
+   "stiffness": [
+    0.5,
+    0.5
+   ],
+   "drag": [
+    0.05,
+    0.05
+   ],
+   "gravity": [
+    0,
+    0
+   ],
+   "radius": [
+    0.0112,
+    0.0112
+   ],
+   "joints": [
+    2,
+    2
+   ]
+  },
+  "Bust": {
+   "stiffness": [
+    0.75,
+    0.75
+   ],
+   "drag": [
+    0.05,
+    0.05
+   ],
+   "gravity": [
+    0,
+    0
+   ],
+   "radius": [
+    0.0071,
+    0.0077
+   ],
+   "joints": [
+    2,
+    2
+   ]
+  },
+  "TopsUpperArm": {
+   "stiffness": [
+    0.75,
+    0.75
+   ],
+   "drag": [
+    0,
+    0.05
+   ],
+   "gravity": [
+    0,
+    0
+   ],
+   "radius": [
+    0.0123,
+    0.0302
+   ],
+   "joints": [
+    2,
+    3
+   ]
+  }
+ },
+ "facePartsRequired": [
+  "FaceMouth",
+  "EyeIris",
+  "EyeHighlight",
+  "FaceSkin"
+ ],
+ "tris": [
+  29221,
+  32847
+ ],
+ "colliderLayout": {
+  "spine": [
+   {
+    "u": 0,
+    "v": 0,
+    "r": 0.23224,
+    "t": 0
+   }
+  ],
+  "upperChest": [
+   {
+    "u": 0,
+    "v": 0.019323,
+    "r": 0.193534,
+    "t": 0.003871
+   },
+   {
+    "u": -0.096767,
+    "v": -0.026362,
+    "r": 0.135474,
+    "t": 0.445065
+   },
+   {
+    "u": 0.096767,
+    "v": -0.026362,
+    "r": 0.135474,
+    "t": 0.445065
+   }
+  ],
+  "neck": [
+   {
+    "u": 0,
+    "v": 0.024851,
+    "r": 0.096767,
+    "t": 0.364398
+   }
+  ],
+  "head": [
+   {
+    "u": 0,
+    "v": -0.060645,
+    "r": 0.236115,
+    "a": 0.230713
+   }
+  ],
+  "leftUpperArm": [
+   {
+    "u": -0.019353,
+    "v": 0,
+    "r": 0.096767,
+    "t": 0
+   },
+   {
+    "u": -0.019353,
+    "v": 0,
+    "r": 0.096767,
+    "t": 0.260062
+   },
+   {
+    "u": -0.019353,
+    "v": 0,
+    "r": 0.096767,
+    "t": 0.520124
+   }
+  ],
+  "leftLowerArm": [
+   {
+    "u": 0,
+    "v": 0,
+    "r": 0.05806,
+    "t": 0.000001
+   },
+   {
+    "u": 0,
+    "v": -0.000001,
+    "r": 0.067737,
+    "t": 0.193882
+   },
+   {
+    "u": 0,
+    "v": -0.000002,
+    "r": 0.05806,
+    "t": 0.387764
+   },
+   {
+    "u": -0.000001,
+    "v": -0.000003,
+    "r": 0.05806,
+    "t": 0.581645
+   }
+  ],
+  "leftHand": [
+   {
+    "u": -0.004068,
+    "v": -0.001121,
+    "r": 0.054841,
+    "t": 0.285219
+   }
+  ],
+  "rightUpperArm": [
+   {
+    "u": 0.019354,
+    "v": 0,
+    "r": 0.096767,
+    "t": 0
+   },
+   {
+    "u": 0.019354,
+    "v": 0,
+    "r": 0.096767,
+    "t": 0.260062
+   },
+   {
+    "u": 0.019354,
+    "v": 0,
+    "r": 0.096767,
+    "t": 0.520124
+   }
+  ],
+  "rightLowerArm": [
+   {
+    "u": 0,
+    "v": 0,
+    "r": 0.05806,
+    "t": 0
+   },
+   {
+    "u": 0,
+    "v": -0.000001,
+    "r": 0.067737,
+    "t": 0.193882
+   },
+   {
+    "u": 0,
+    "v": -0.000002,
+    "r": 0.05806,
+    "t": 0.387764
+   },
+   {
+    "u": 0.000001,
+    "v": -0.000003,
+    "r": 0.05806,
+    "t": 0.581645
+   }
+  ],
+  "rightHand": [
+   {
+    "u": 0.004068,
+    "v": -0.001121,
+    "r": 0.054841,
+    "t": 0.285222
+   }
+  ],
+  "leftUpperLeg": [
+   {
+    "u": 0,
+    "v": 0,
+    "r": 0.156762,
+    "t": 0
+   },
+   {
+    "u": 0,
+    "v": 0,
+    "r": 0.156762,
+    "t": 0.297447
+   },
+   {
+    "u": 0,
+    "v": 0,
+    "r": 0.156762,
+    "t": 0.54532
+   }
+  ],
+  "rightUpperLeg": [
+   {
+    "u": 0,
+    "v": 0,
+    "r": 0.156762,
+    "t": 0
+   },
+   {
+    "u": 0,
+    "v": 0,
+    "r": 0.156762,
+    "t": 0.297447
+   },
+   {
+    "u": 0,
+    "v": 0,
+    "r": 0.156762,
+    "t": 0.54532
+   }
+  ]
+ }
+}

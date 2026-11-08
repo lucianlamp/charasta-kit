@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>きゃらすた ビューア</title>
+<link rel="icon" href="/app/icon.svg" type="image/svg+xml">
+<script type="importmap">{"imports":{"three":"/vendor/three.module.js"}}</script>
+<link rel="stylesheet" href="/app/style.css">
+</head>
+<body class="viewer-page">
+<div id="app">
+  <canvas id="view"></canvas>
+  <div id="overlay"></div>
+  <aside>
+    <a class="back" href="/">← ライブラリ</a>
+    <h2>キャラと版</h2>
+    <label class="field">キャラ <select id="charSelect" aria-label="キャラ"></select></label>
+    <label class="field">版 <select id="verSelect" aria-label="版"></select></label>
+    <div id="verNote" class="muted"></div>
+    <details open><summary>モーション</summary><div id="motions"></div></details>
+    <details><summary>武器</summary><div id="weapons"></div></details>
+    <details><summary>表情</summary><div id="expressions"></div></details>
+    <details><summary>口（あいうえお）</summary><div id="visemes"></div></details>
+    <details><summary>セリフ</summary><div id="voices"></div>
+    <div id="speak"><input id="speakText" value="あいうえお" aria-label="話させる文"><button id="speakBtn">話す</button><a id="lineLink" href="/">このキャラのセリフにする</a></div></details>
+    <details><summary>再生の設定</summary>
+    <label><input type="checkbox" id="autoBlink" checked> 自動まばたき</label>
+    <label><input type="checkbox" id="autoExpr" checked> モーションに合わせた表情</label>
+    <label><input type="checkbox" id="follow" checked> カメラをキャラについていかせる</label>
+    <label><input type="checkbox" id="footik" checked> 接地中の足を床に留める</label></details>
+    <div id="status">読み込み中…</div>
+    <div id="credit"></div>
+  </aside>
+</div>
+<script type="module" src="/app/viewer.mjs"></script>
+</body>
+</html>

@@ -1,0 +1,934 @@
+{
+ "_about": "きゃらすたのキットに入れるときの assets/ の PNG の扱い。tools/kit_webp.py が使う。作者のリポジトリは PNG のまま。lossy は WebP の quality、lossless は可逆の WebP、keep は PNG のまま、exclude はキットに入れない。ここに無い PNG があると書き出しは止まる",
+ "lossy_quality": 92,
+ "files": {
+  "classroom/blackboard.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "classroom/blackboard_c.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "classroom/books.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "classroom/ceiling.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "classroom/clock.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "classroom/cork.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "classroom/curtain.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "classroom/desk_wood.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "classroom/floor_albedo.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "classroom/floor_albedo_s.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "classroom/floor_light.png": {
+   "mode": "lossless",
+   "why": "Non-Color で読む(data=True)。数として使う"
+  },
+  "classroom/floor_normal.png": {
+   "mode": "lossless",
+   "why": "Non-Color で読む(data=True)。数として使う"
+  },
+  "classroom/floor_rough.png": {
+   "mode": "lossless",
+   "why": "Non-Color で読む(data=True)。数として使う"
+  },
+  "classroom/floor_wear.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "classroom/floor_wear_s.png": {
+   "mode": "lossless",
+   "why": "Non-Color で読む(data=True)。数として使う"
+  },
+  "classroom/locker.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "classroom/notice_a.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "classroom/notice_b.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "classroom/notice_b_c.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "classroom/notice_c.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "classroom/outside_far.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "classroom/outside_grade.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "classroom/outside_main.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "classroom/outside_main_a.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "classroom/outside_wide.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "classroom/outside_wide_a.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "classroom/poster_a.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "classroom/poster_b.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "classroom/sakura_b.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "classroom/sakura_b_cut.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "classroom/sakura_cut.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "classroom/sakura_near.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "classroom/speaker.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "classroom/wall.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "classroom/wood_panel.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "concert/beam_haze.png": {
+   "mode": "lossless",
+   "why": "Non-Color で読む(data=True)。数として使う"
+  },
+  "concert/floor_normal.png": {
+   "mode": "lossless",
+   "why": "Non-Color で読む(data=True)。数として使う"
+  },
+  "concert/floor_rough.png": {
+   "mode": "lossless",
+   "why": "Non-Color で読む(data=True)。数として使う"
+  },
+  "concert/floor_seams.png": {
+   "mode": "lossless",
+   "why": "Non-Color で読む(data=True)。数として使う"
+  },
+  "concert/led_bolts.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "concert/led_center.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "concert/led_side.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "concert/led_sparks.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "concert/lens_cell.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "concert/smoke_bank.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "concert/smoke_puff.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "concert/speaker_panel.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "concert/truss_metal.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "parkway/bark.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "parkway/bark_t.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "parkway/bench_wood.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "parkway/clump_a.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "parkway/granite.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "parkway/granite_t.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "parkway/gravel.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "parkway/gravel_t.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "parkway/keyaki_clump.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "parkway/keyaki_under.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "parkway/lawn.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "parkway/lawn_t.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "parkway/sky.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "parkway/soil.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "parkway/soil_t.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "parkway/treeline.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "parkway/treeline_a.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "parkway/under_a.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "props/letter.png": {
+   "mode": "keep",
+   "why": "tools/render.py が小道具の手紙に読む。きゃらすたの lib/short.mjs がこの名前でファイルを読んでショートのキャッシュの鍵にするので PNG のまま"
+  },
+  "rooftop/ac_panel.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "rooftop/city_far.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "rooftop/city_far_a.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "rooftop/clouds_a.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "rooftop/clouds_b.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "rooftop/clouds_c.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "rooftop/clouds_d.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "rooftop/clouds_soft.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "rooftop/concrete_albedo.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "rooftop/concrete_height.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "rooftop/f_apart.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "rooftop/f_blue.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "rooftop/f_cool.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "rooftop/f_mixed.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "rooftop/f_navy.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "rooftop/f_tan.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "rooftop/f_tower.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "rooftop/f_warm.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "rooftop/floor_basin.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "rooftop/floor_cracks.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "rooftop/floor_map.png": {
+   "mode": "lossless",
+   "why": "Non-Color で読む(data=True)。数として使う"
+  },
+  "rooftop/floor_n.png": {
+   "mode": "lossless",
+   "why": "Non-Color で読む(data=True)。数として使う"
+  },
+  "rooftop/floor_refl.png": {
+   "mode": "lossless",
+   "why": "Non-Color で読む(data=True)。数として使う"
+  },
+  "rooftop/floor_slab.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "rooftop/floor_wet.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "rooftop/near_cracks.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "rooftop/near_map.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "rooftop/near_sketch.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "rooftop/neon.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "rooftop/pipe_metal.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "rooftop/r_ice.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "rooftop/r_low.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "rooftop/r_navy.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "rooftop/r_sparse.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "rooftop/r_warm.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "rooftop/rust_tank.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "rooftop/signs.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "rooftop/sky_band.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "rooftop/sky_base.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "rooftop/sky_base2.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "rooftop/sky_night.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "rooftop/sky_soft.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "rooftop/steel_paint.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "rooftop/street.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "rooftop/wall_concrete.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "rooftop/wall_plain.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "rooftop/wc_crack_a.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "rooftop/wc_crack_b.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "rooftop/wc_height.png": {
+   "mode": "lossless",
+   "why": "Non-Color で読む(data=True)。数として使う"
+  },
+  "rooftop/wc_rough.png": {
+   "mode": "lossless",
+   "why": "Non-Color で読む(data=True)。数として使う"
+  },
+  "rooftop/wc_wet.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "shrine/bark.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "shrine/bush.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "shrine/bush_a.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "shrine/carving.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "shrine/cedar_a.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "shrine/cedar_clump.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "shrine/cedar_spray.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "shrine/clump_a.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "shrine/cobble_albedo.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "shrine/cobble_height.png": {
+   "mode": "lossless",
+   "why": "Non-Color で読む(data=True)。数として使う"
+  },
+  "shrine/cobble_n.png": {
+   "mode": "lossless",
+   "why": "Non-Color で読む(data=True)。数として使う"
+  },
+  "shrine/cobble_soft.png": {
+   "mode": "lossless",
+   "why": "Non-Color で読む(data=True)。数として使う"
+  },
+  "shrine/flag_albedo.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "shrine/flag_n.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "shrine/goods_a.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "shrine/goods_b.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "shrine/hall_door.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "shrine/iron_worn.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "shrine/lantern_red.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "shrine/lantern_white.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "shrine/mist.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "shrine/mon.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "shrine/moss_ground.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "shrine/moss_stone.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "shrine/old_stone.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "shrine/puddle.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "shrine/rock_wall.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "shrine/roof_tile.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "shrine/rope.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "shrine/sky.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "shrine/smoke.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "shrine/spark.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "shrine/stall_a.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "shrine/stall_b.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "shrine/stone_albedo.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "shrine/stone_n.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "shrine/stripe.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "shrine/stripe_clean.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "shrine/torii_paint.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "shrine/torii_smooth.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "shrine/torii_worn.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "shrine/treeline.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "shrine/treeline_a.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "shrine/wet_blotch.png": {
+   "mode": "lossless",
+   "why": "Non-Color で読む(data=True)。数として使う"
+  },
+  "shrine/wood_dark.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "themepark/bokeh_dots.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "themepark/canopy.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "themepark/core.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "themepark/farband.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "themepark/farband_a.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "themepark/flowers.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "themepark/glint.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "themepark/horse.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "themepark/leaf.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "themepark/mosaic.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "themepark/mosaic_h.png": {
+   "mode": "lossless",
+   "why": "Non-Color で読む(data=True)。数として使う"
+  },
+  "themepark/panel.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "themepark/panel2.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "themepark/petal.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "themepark/puddle.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "themepark/puddle_s.png": {
+   "mode": "lossless",
+   "why": "Non-Color で読む(data=True)。数として使う"
+  },
+  "themepark/shelf_blue.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "themepark/shelf_pink.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "themepark/sky_back.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "themepark/sky_main.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "themepark/stone_cream.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "themepark/stone_dark.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "themepark/stone_n.png": {
+   "mode": "lossless",
+   "why": "Non-Color で読む(data=True)。数として使う"
+  },
+  "themepark/stone_warm.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "themepark/stripe_blue.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "themepark/stripe_pink.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "themepark/tent.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "themepark/town.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "themepark/town_a.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "themepark/wood_plank.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "waterside/beach.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "waterside/bush_leaf.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "waterside/caustics.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "waterside/caustics_thin.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "waterside/caustics_tile.png": {
+   "mode": "lossless",
+   "why": "Non-Color で読む(data=True)。数として使う"
+  },
+  "waterside/drops.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "waterside/hill.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "waterside/hill_a.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "waterside/island_a.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "waterside/island_b.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "waterside/island_c.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "waterside/island_d.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "waterside/islands.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "waterside/jungle.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "waterside/jungle_a.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "waterside/knot.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "waterside/knot_a.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "waterside/linen.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "waterside/palm_bark.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "waterside/palm_leaf.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "waterside/post_wood.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "waterside/rock.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "waterside/rope.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "waterside/seabed.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "waterside/seabed_map.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "waterside/sky_back.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "waterside/sky_env.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "waterside/sky_front.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "waterside/sky_front2.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "waterside/sky_front3.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "waterside/sky_side_a.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "waterside/sky_side_b.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "waterside/thatch.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "waterside/water_height.png": {
+   "mode": "exclude",
+   "why": "どのステージの組み立てでも読まれない(7 ステージを組み立てて読んだ絵を記録し、コードの名前とも照らした)"
+  },
+  "waterside/water_tile.png": {
+   "mode": "lossless",
+   "why": "Non-Color で読む(data=True)。数として使う"
+  },
+  "waterside/wood_albedo.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "waterside/wood_height.png": {
+   "mode": "lossless",
+   "why": "Non-Color で読む(data=True)。数として使う"
+  },
+  "waterside/wood_wet.png": {
+   "mode": "lossless",
+   "why": "Non-Color で読む(data=True)。数として使う"
+  },
+  "waterside/wood_wet_soft.png": {
+   "mode": "lossless",
+   "why": "Non-Color で読む(data=True)。数として使う"
+  }
+ }
+}

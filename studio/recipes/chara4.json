@@ -1,0 +1,26 @@
+{
+  "front": {
+    "size": 2048,
+    "align": ["drawn/neutral.png", "drawn/neutral_bald.png", "drawn/neutral_nocheek.png"],
+    "cheek": {"overlay": "drawn/cheek_final.png", "align": "neutral_bald"},
+    "jaw": {"mouthZ": 1.309, "cuts": 2, "iters": 6}
+  },
+  "build": {
+    "atlas": {
+      "cells": {"neutral": "drawn/neutral_nocheek.png", "blink": "drawn/neutral_nocheek.png", "happy": "drawn/neutral_nocheek.png",
+        "angry": "drawn/neutral_nocheek.png", "sad": "drawn/neutral_nocheek.png", "relaxed": "drawn/neutral_nocheek.png",
+        "surprised": "drawn/neutral_nocheek.png", "aa": "drawn/neutral_nocheek.png", "ih": "drawn/neutral_nocheek.png",
+        "ou": "drawn/neutral_nocheek.png", "ee": "drawn/neutral_nocheek.png", "oh": "drawn/neutral_nocheek.png"},
+      "env": {"ATLAS_RAW": "1"},
+      "overlay": {"file": "drawn/cheek_final.png", "align": "neutral_bald"}
+    },
+    "gaze": {"env": {"GAZE_SIDE": "inner", "MIRROR_TOL": "6", "IRIS_COLOR": "red"}, "holeMask": "drawn/hole_upper.png"},
+    "iris": {
+      "align": "neutral_bald",
+      "irises": [{"file": "drawn/iris_R.png", "box": [660, 500, 1000, 740]}, {"file": "drawn/iris_L.png", "box": [246.39, 504.36, 597.46, 752.2]}],
+      "env": {"IRIS_MATCH_HEIGHT": "1"}
+    }
+  },
+  "video": {"open": "drawn/neutral_v2.png", "drawn": "drawn/expr", "masks": "drawn/masks", "env": {"OPENING_GROW": "40"}},
+  "springTune": ["--colliders", "hair_*=head,chest#0,hips", "--colliders", "lock_*=head,chest#0", "--auto-hit", "hair_*[1:]=0.08", "--auto-hit", "lock_*[1:]=0.08"]
+}

@@ -1,0 +1,9 @@
+[
+  {"id": "concert", "label": "コンサート"},
+  {"id": "themepark", "label": "夜のテーマパーク"},
+  {"id": "waterside", "label": "南の海の桟橋"},
+  {"id": "classroom", "label": "教室"},
+  {"id": "shrine", "label": "神社の祭り"},
+  {"id": "rooftop", "label": "夜の屋上"},
+  {"id": "parkway", "label": "公園の並木道"}
+]

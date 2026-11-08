@@ -1,0 +1,2 @@
+hyperframes-player.global.js と hyperframe.runtime.iife.js は HyperFrames 0.8.33(https://github.com/heygen-com/hyperframes)の配布物 dist/ からコピーした。
+ライセンスは Apache-2.0(パッケージの package.json による)。ショートの編集画面のプレビューだけが使う。

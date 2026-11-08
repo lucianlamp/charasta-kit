@@ -1,0 +1,9 @@
+node_modules/
+config.json
+*.log
+__pycache__/
+.fx-target/
+.venv/
+.DS_Store
+Thumbs.db
+.pytest_cache/

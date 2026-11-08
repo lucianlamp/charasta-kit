@@ -1,0 +1,54 @@
+name: 不具合の報告
+description: 動かない、表示が崩れる、書き出しに失敗するなど
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        報告ありがとうございます。キャラやモーションのファイルそのものは添付しないでください(権利の都合で受け取れないことがあります)。
+  - type: textarea
+    id: what
+    attributes:
+      label: 何が起きたか
+      description: 期待した動きと、実際の動き
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 再現の手順
+      placeholder: |
+        1. キャラの画面を開く
+        2. 「撮る」を押す
+        3. ...
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: OS
+      options:
+        - Windows 11
+        - Windows 10
+        - macOS (Apple Silicon)
+        - macOS (Intel)
+        - その他
+    validations:
+      required: true
+  - type: input
+    id: gpu
+    attributes:
+      label: GPU
+      placeholder: 例 NVIDIA RTX 4070 / Apple M3 / 内蔵 GPU
+  - type: textarea
+    id: versions
+    attributes:
+      label: 版
+      description: "node -v、ffmpeg -version の 1 行目、Blender の版、KIT_VERSION.json の中身"
+      render: text
+  - type: textarea
+    id: log
+    attributes:
+      label: ログ
+      description: ジョブの画面のログや、サーバーのターミナルに出たエラー
+      render: text
