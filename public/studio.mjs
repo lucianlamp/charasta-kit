@@ -1,7 +1,7 @@
 // 表情(docs/expression-studio.md、docs/screens.md): 左に工程、真ん中に選んだ工程の中身、右にできている表情と新しい依頼。
 // 確かめと版にするは仕上げの画面(public/finish.mjs)にある。#studio/<キャラ>/<ID>/<工程> で工程を直接開ける。
 import {h, getJSON, send, elapsedText} from './dom.mjs';
-import {enc, mb, when} from './shared.mjs';
+import {AGENT, enc, mb, when} from './shared.mjs';
 import {missingNote} from './capabilities.mjs';
 
 const STATE = {none: '未実行', queued: '待ち', running: '実行中', done: '完了', failed: '失敗'};
@@ -73,7 +73,7 @@ export async function showStudio({main, char, alive, jobsChanged}, id, stepArg) 
   function stepState(key) {
     if (key.startsWith('req:')) {
       const reqs = st.requests.filter(r => r.step === key.slice(4));
-      return reqs.some(r => r.state === '候補あり') ? '判断待ち' : reqs.some(r => r.state === '未着手') ? 'Claude 待ち' : reqs.some(r => r.state === '採用済み') ? '完了' : '依頼なし';
+      return reqs.some(r => r.state === '候補あり') ? '判断待ち' : reqs.some(r => r.state === '未着手') ? `${AGENT.name} 待ち` : reqs.some(r => r.state === '採用済み') ? '完了' : '依頼なし';
     }
     const s = st.steps[key];
     if (s.state === 'done' && (s.stale || s.sourceChanged || s.upstreamStale)) return '古い';
@@ -146,7 +146,7 @@ export async function showStudio({main, char, alive, jobsChanged}, id, stepArg) 
     });
     const withdraw = REQ_OPEN(r) ? h('button', {class: 'danger'}, '取り下げる') : null;
     if (withdraw) withdraw.onclick = () => { if (confirm(`依頼 ${r.id} を取り下げる？`)) act(() => send('POST', api(charId, id, `/requests/${enc(r.id)}/withdraw`)), '取り下げている…'); };
-    const wait = r.state !== '未着手' ? '' : r.candidates.length ? '（全部却下した。Claude が次の候補を作る）' : '（Claude を待っている。Claude に「きゃらすたの依頼を進めて」と言う）';
+    const wait = r.state !== '未着手' ? '' : r.candidates.length ? `（全部却下した。${AGENT.ga}次の候補を作る）` : `（${AGENT.wo}待っている。${AGENT.ni}「きゃらすたの依頼を進めて」と言う）`;
     return h('section', {class: 'request', 'data-request': r.id, 'data-state': r.state},
       h('div', {class: 'page-head'}, h('h2', {}, `依頼 ${r.id}`), h('code', {}, r.target),
         h('span', {class: 'chip ' + (r.state === '候補あり' ? 'act' : '')}, r.state), withdraw),
@@ -249,7 +249,7 @@ export async function showStudio({main, char, alive, jobsChanged}, id, stepArg) 
     };
     return h('section', {class: 'form-stack', id: 'requestsBox'}, h('h2', {}, `新しい依頼（${REQ_STEP[step]}）`),
       h('label', {}, '替える絵（drawn/ の下）', target, targets), h('label', {}, '依頼の文', text), go, msg,
-      h('p', {class: 'muted'}, '依頼を出したら、Claude に「きゃらすたの依頼を進めて」と言う。採用か却下は人が決める（Claude は採用しない）。'));
+      h('p', {class: 'muted'}, `依頼を出したら、${AGENT.ni}「きゃらすたの依頼を進めて」と言う。採用か却下は人が決める（${AGENT.name}は採用しない）。`));
   }
 
   function render() {

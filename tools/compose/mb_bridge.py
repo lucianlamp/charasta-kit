@@ -5,7 +5,9 @@
 jobs.json: [{"a": "前の区間.npz", "b": "位置を合わせた次の区間.npz", "seconds": 1.6, "out": "つなぎ.npz"}]
 
 context は a の最後の 4 コマ、target は b の最初の 4 コマ。見本の動き（BVH）は context にも target にも使わない。
-エンジンは TensorRT の GPU で動かす（CUDA が要る）。1 本の生成は 1 秒ほどで、エンジンの読み込みは 1 回で済む。
+推論は環境変数 CHARASTA_MB_BACKEND（auto / trt / onnx。tools/mb_onnx_engine.py）で選ぶ。trt は TensorRT の GPU（CUDA が要る）、
+onnx は ONNX Runtime（CPU でも動く。uv run に --with onnxruntime を足す）、auto は TensorRT が動けば trt。
+1 本の生成は 1 秒ほどで、エンジンの読み込みは 1 回で済む。
 生成の長さはトークンの数で決まる: 書き出すコマは 4 × トークン - 8 で、トークンは 6〜16。
 """
 
@@ -21,6 +23,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import clip as C  # noqa: E402
+import mb_onnx_engine as MBE  # noqa: E402
 from soma_vrma import BONES, forward_kinematics, qinv, qmul, qrot, retarget  # noqa: E402
 
 MB = os.environ.get("MOTIONBRICKS_DIR") or sys.exit("MotionBricks の場所が分からない。きゃらすたの設定(motionbricksDir)か、環境変数 MOTIONBRICKS_DIR で指定する")
@@ -55,12 +58,10 @@ def main():
     import warp as wp
     wp.config.log_level = wp.LOG_WARNING
     wp.init()
-    wp.set_device("cuda:0")
-    from motionbricks.inference.builder import TensorRTBuildOptions
+    backend = MBE.select_backend(wp, MBE.env_backend(), lambda m: print(m, flush=True))
     from motionbricks.model.config import MotionBricksInferenceConfig
     from motionbricks.model.contract import ModelRig
     from motionbricks.model.soma.contract import SOMA_N1_FP32_ONNX_PATH
-    from motionbricks.model.soma.engine import MotionBricksSOMAEngine
     from app.runtime.common.rig import load_rig_assets
 
     assets = load_rig_assets(ModelRig.SOMA)
@@ -80,8 +81,9 @@ def main():
         return f
 
     t1 = time.perf_counter()
-    engine = MotionBricksSOMAEngine(SOMA_N1_FP32_ONNX_PATH, model_to_runtime=m2r, build_options=TensorRTBuildOptions(enable_fp16=False), cache_dir=MB + "/.trt-cache")
-    report = {"setupSec": round(t1 - t0, 2), "engineLoadSec": round(time.perf_counter() - t1, 2), "bridges": []}
+    engine, providers = MBE.open_engine(backend, SOMA_N1_FP32_ONNX_PATH, model_to_runtime=m2r, cache_dir=MB + "/.trt-cache")
+    report = {"setupSec": round(t1 - t0, 2), "engineLoadSec": round(time.perf_counter() - t1, 2),
+              "backend": "tensorrt" if backend == "trt" else "onnxruntime", "providers": providers, "bridges": []}
     with engine, wp.ScopedStream(engine.stream):
         context, target, output = engine.create_input(skeleton), engine.create_input(skeleton), engine.create_output(skeleton)
         for job in jobs:

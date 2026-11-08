@@ -1,17 +1,20 @@
-// 仕上げ: 試作を 1 つ選び、確かめの撮影(表情の 72 枚など)を撮って見て、「版にする」(docs/screens.md)。
+// 仕上げ: 試作を 1 つ選び、確かめの撮影(表情の 72 枚など)を撮って見て、「版にする」(docs/screens.md)。体型と揺れものの直し(#adjust、public/adjust.mjs)への入口も置く
 import {h, getJSON, send, elapsedText} from './dom.mjs';
-import {enc} from './shared.mjs';
+import {AGENT, enc} from './shared.mjs';
 
 const api = (c, id, rest = '') => `/api/studio/${enc(c)}/${enc(id)}${rest}`;
+const adjustHref = (c, v) => `#adjust/${enc(c)}/${enc(v)}`;
 const KINDS = [['expr', '表情'], ['mouth', '口の形'], ['gaze', '視線'], ['eg', '表情と視線'], ['grid', '角度の表']];
 let timer = null;
 
-export async function showFinish({main, char, alive, jobsChanged}, studioId) {
+export async function showFinish({main, char, verId, alive, jobsChanged}, studioId) {
   clearTimeout(timer);
   if (!char) { main.replaceChildren(h('div', {class: 'empty page-empty'}, 'キャラがまだない。')); return; }
   if (!studioId) {
     main.replaceChildren(h('div', {class: 'narrow'}, h('h1', {}, '仕上げ'),
-      h('p', {class: 'lead'}, `${char.name} の表情づくりがまだないので、確かめる試作が無い。`), h('a', {class: 'button primary', href: `#expression/${enc(char.id)}`}, '表情づくりへ')));
+      h('p', {class: 'lead'}, `体型（頭、首、肩幅、腕、腰、脚）と揺れもの（髪、スカートなど）を、つまみか、${AGENT.he}頼みごとで直す。直した結果は新しい版になる。`),
+      verId ? h('a', {class: 'button primary', href: adjustHref(char.id, verId)}, '体型と揺れものを直す') : null,
+      h('p', {class: 'muted'}, `${char.name} の表情づくりはまだないので、表情の撮り比べは無い。`), h('a', {class: 'button', href: `#expression/${enc(char.id)}`}, '表情づくりへ')));
     return;
   }
   const charId = char.id, id = studioId;
@@ -42,7 +45,7 @@ export async function showFinish({main, char, alive, jobsChanged}, studioId) {
         return h('option', {value: p.n}, `試作 ${p.n}${i ? '' : '（最新）'}${n ? `・${n} 枚` : ''}`); })) : null;
     if (sel) sel.value = proto;
     head.replaceChildren(...[
-      h('div', {class: 'page-head'}, h('h1', {}, '表情の撮り比べ'), h('span', {class: 'mono muted'}, id), sel, go),
+      h('div', {class: 'page-head'}, h('h1', {}, '表情の撮り比べ'), h('span', {class: 'mono muted'}, id), sel, go, verId ? h('a', {class: 'button', href: adjustHref(charId, verId)}, '体型と揺れものを直す') : null),
       s.stale ? h('div', {class: 'err'}, '入力が変わった。確かめを撮り直す。') : null,
       s.upstreamStale ? h('div', {class: 'err'}, '前の工程が古い。') : null,
       st.steps.copy.sourceChanged ? h('div', {class: 'err'}, 'きゃらくる側が変わった。') : null,

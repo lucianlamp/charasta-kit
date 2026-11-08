@@ -329,6 +329,85 @@ window.viewer.fingerCurl = flex => {
   }));
   return () => { for (const {b, q} of bends) b.quaternion.copy(q); };
 };
+// ---- 体型と揺れものの下見(仕上げの「体型と揺れもの」、public/adjust.mjs、docs/adjust.md) ----
+// 書き換える道具(tools/vrm/body_shape.py)の結果に近い見た目を、読み込んだ VRM のまま作る。版のファイルは変えない。
+//   腕、腰、脚: 骨ごとの逆バインド行列に、骨の軸に垂直な縮めを掛ける(重みで混ざるのは道具と同じ。足首を戻す分と法線は直さない)
+//   頭: 頭の骨の大きさ(中心は頭の骨。道具は首の区間の中ほど)。首: 頭の骨を上へ。肩幅: 上腕の骨を横へ(肩の頂点の帯は直さない)
+//   揺れもの: 揺れ骨の設定(stiffness、dragForce、gravityPower)を節点の番号ごとに入れ替える
+let adjustRest = null;   // 読み込んだときの逆バインド行列、骨の位置、揺れ骨の設定
+function measureAdjust(associations) {
+  vrm.humanoid.resetNormalizedPose(); vrm.scene.updateMatrixWorld(true);
+  const raw = n => vrm.humanoid.getRawBoneNode(n), meshes = [];
+  vrm.scene.traverse(o => { if (o.isSkinnedMesh) meshes.push({mesh: o, inv: o.skeleton.boneInverses.map(m => m.clone())}); });
+  const bones = Object.fromEntries(['head', 'leftUpperArm', 'rightUpperArm'].map(b => [b, {node: raw(b), pos: raw(b).position.clone(), scale: raw(b).scale.clone(),
+    parentQ: raw(b).parent.getWorldQuaternion(new THREE.Quaternion())}]));
+  const springs = [...(vrm.springBoneManager?.joints ?? [])].map(j => ({joint: j, node: associations?.get(j.bone)?.nodes ?? null,
+    settings: {stiffness: j.settings.stiffness, dragForce: j.settings.dragForce, gravityPower: j.settings.gravityPower}}));
+  adjustRest = {meshes, bones, springs, body: null, spring: null};
+}
+// バインドの姿勢の骨の位置(逆バインド行列の逆)。骨が skin に無ければ null
+function bindPos(name) {
+  const bone = vrm.humanoid.getRawBoneNode(name);
+  for (const {mesh, inv} of adjustRest.meshes) {
+    const i = mesh.skeleton.bones.indexOf(bone);
+    if (i >= 0) return new THREE.Vector3().setFromMatrixPosition(inv[i].clone().invert());
+  }
+  return null;
+}
+// 点 p0 を通る向き u の軸に垂直な成分を k 倍にする行列(waist は左右 k、前後は変化を半分)
+function squeeze(p0, u, k, waist = false) {
+  const M = new THREE.Matrix4();
+  if (waist) M.makeScale(k, 1, 1 - (1 - k) / 2);
+  else {
+    const c = (i, j) => (i === j ? k : 0) + (1 - k) * u.getComponent(i) * u.getComponent(j);   // k I + (1 - k) u u^T
+    M.set(c(0, 0), c(0, 1), c(0, 2), 0, c(1, 0), c(1, 1), c(1, 2), 0, c(2, 0), c(2, 1), c(2, 2), 0, 0, 0, 0, 1);
+  }
+  return new THREE.Matrix4().makeTranslation(p0.x, p0.y, p0.z).multiply(M).multiply(new THREE.Matrix4().makeTranslation(-p0.x, -p0.y, -p0.z));
+}
+// values: {head, neck(cm), shoulder(cm、片側。正は広く), arm, waist, leg}(public/adjust-plan.mjs の BODY_FIELDS)。null で元へ戻す
+window.viewer.bodyPreview = values => {
+  if (!adjustRest) return;
+  const v = values ?? {};
+  adjustRest.body = values ? {...values} : null;
+  const squeezeOf = new Map();   // 骨 -> 行列
+  const axis = (b, c, k) => {
+    const p0 = bindPos(b), p1 = bindPos(c);
+    if (p0 && p1 && k != null && Math.abs(k - 1) > 1e-6) squeezeOf.set(vrm.humanoid.getRawBoneNode(b), squeeze(p0, p1.clone().sub(p0).normalize(), k));
+  };
+  for (const s of ['left', 'right']) {
+    axis(`${s}UpperArm`, `${s}LowerArm`, v.arm); axis(`${s}LowerArm`, `${s}Hand`, v.arm);
+    axis(`${s}UpperLeg`, `${s}LowerLeg`, v.leg); axis(`${s}LowerLeg`, `${s}Foot`, v.leg);
+  }
+  const spine = bindPos('spine');
+  if (spine && v.waist != null && Math.abs(v.waist - 1) > 1e-6) squeezeOf.set(vrm.humanoid.getRawBoneNode('spine'), squeeze(spine, null, v.waist, true));
+  for (const {mesh, inv} of adjustRest.meshes) mesh.skeleton.bones.forEach((bone, i) => {
+    const S = squeezeOf.get(bone);
+    mesh.skeleton.boneInverses[i].copy(inv[i]);
+    if (S) mesh.skeleton.boneInverses[i].multiply(S);
+  });
+  const {head, leftUpperArm, rightUpperArm} = adjustRest.bones;
+  const local = (r, x, y, z) => new THREE.Vector3(x, y, z).applyQuaternion(r.parentQ.clone().invert());
+  head.node.scale.copy(head.scale).multiplyScalar(v.head ?? 1);
+  head.node.position.copy(head.pos).add(local(head, 0, (v.neck ?? 0) / 100, 0));
+  leftUpperArm.node.position.copy(leftUpperArm.pos).add(local(leftUpperArm, (v.shoulder ?? 0) / 100, 0, 0));
+  rightUpperArm.node.position.copy(rightUpperArm.pos).add(local(rightUpperArm, -(v.shoulder ?? 0) / 100, 0, 0));
+  vrm.scene.updateMatrixWorld(true);
+};
+// values: {節点の番号: {stiffness, dragForce, gravityPower}}(public/adjust-plan.mjs の springJointValues)。null で元へ戻す。答え: 入れ替えた揺れ骨の数
+window.viewer.springPreview = values => {
+  if (!adjustRest) return 0;
+  adjustRest.spring = values ?? null;
+  let n = 0;
+  for (const {joint, node, settings} of adjustRest.springs) {
+    const want = values?.[node];
+    Object.assign(joint.settings, settings, want ?? {});
+    if (want) n++;
+  }
+  return n;
+};
+// 今の画面の絵(PNG の data URL)。描いた直後に読む(描画の後に消える絵を読まないため)
+window.viewer.snapshot = () => { renderer.render(scene, camera); return canvas.toDataURL('image/png'); };
+
 // 'motion': モーションの表情の時刻表。'neutral': ふだんの顔。感情の名前: その表情に固定
 window.viewer.shotExpression = e => { document.getElementById('autoExpr').checked = e === 'motion'; manual = EMOTIONS.includes(e) ? e : null; };
 // null: ビューアの色と床のグリッド。色: その単色でグリッドを消す
@@ -370,6 +449,7 @@ async function loadModel(url) {
   const boneY = (...names) => vrm.humanoid.getRawBoneNode(names.find(n => vrm.humanoid.getRawBoneNode(n))).getWorldPosition(new THREE.Vector3()).y;
   rest = {height: size.y, headTop: box.max.y - boneY('head'), headH: box.max.y - boneY('neck', 'head', 'chest'), torso: boneY('head') - boneY('hips'), reach: Math.min(size.y, boneY('hips') * WEAPON_HIPS)};
   handRest = {left: measureHand('left'), right: measureHand('right')}; weaponObj = null; weaponSub = []; otherFist = null; wearWeapon();
+  measureAdjust(gltf.parser.associations);
   controls.target.copy(mid); camera.position.set(mid.x, mid.y + size.y * 0.05, mid.z + size.y * 2.4); controls.update();
   followFrom = null; grid.position.set(0, 0, 0);
   const names = Object.keys(vrm.expressionManager?.expressionMap ?? {});

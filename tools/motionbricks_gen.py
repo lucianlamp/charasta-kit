@@ -10,6 +10,11 @@ LocomotionCommand（進む向き・速さ・種類）を渡す。最初は待機
 生成した区間だけを書き出す（クリップのコマそのものは書き出さない）。最後に止まるときは、待機のクリップへの
 つなぎの生成までを書き出す。
 
+推論は --backend で選ぶ。trt は MotionBricks の TensorRT のエンジン（NVIDIA の GPU と CUDA が要る）、onnx は
+同じ ONNX のモデルを ONNX Runtime の CPU で動かす（tools/mb_onnx_engine.py。GPU が無くても動く）。
+auto は TensorRT が動けば trt、動かなければ onnx。onnx には onnxruntime が要る（uv run に --with onnxruntime を足す。
+MotionBricks の環境には入れない）。
+
 --fake は MotionBricks を使わず、決まった作りものの動き（足を振りながら前へ進む）を同じ移し替えで書く（テスト用。
 ふだんの Python と numpy だけで動く）。
 """
@@ -27,6 +32,7 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import mb_onnx_engine as MBE  # noqa: E402
 from soma_vrma import retarget, write_vrma  # noqa: E402
 
 FPS = 30
@@ -66,6 +72,11 @@ def parse_args(argv=None):
     p.add_argument("--ending", choices=["stop", "move"], default="stop", help="stop は止まって終わる、move は動いたまま終わる")
     p.add_argument("--root", choices=["keep", "inplace"], default="keep", help="keep は進む、inplace はその場")
     p.add_argument("--fp16", action="store_true", help="混合 FP16 のモデルを使う（既定は FP32）")
+    p.add_argument("--backend", choices=MBE.BACKENDS, default=MBE.env_backend(),
+                   help="推論。trt は TensorRT（NVIDIA の GPU）、onnx は ONNX Runtime（CPU でも動く）、auto は TensorRT が動けば trt。"
+                        "省くと環境変数 CHARASTA_MB_BACKEND、それも無ければ auto")
+    p.add_argument("--onnx-provider", default="auto",
+                   help="onnx の実行先。auto と cpu は CPU。ほかは ONNX Runtime の実行先の名前（DmlExecutionProvider など。tools/mb_onnx_engine.py）")
     p.add_argument("--fake", action="store_true", help="MotionBricks を使わない作りものの動き（テスト用）")
     a = p.parse_args(argv)
     if not 1.0 <= a.seconds <= 30.0:
@@ -102,13 +113,11 @@ def generate(args, log):
     t0 = time.perf_counter()
     import warp as wp
 
-    wp.config.quiet = True
+    wp.config.log_level = wp.LOG_WARNING
     wp.init()
-    wp.set_device("cuda:0")
-    from motionbricks.inference.builder import TensorRTBuildOptions
+    backend = MBE.select_backend(wp, args.backend, log)  # Warp の device も決める（trt は cuda:0、onnx は cpu）
     from motionbricks.model.contract import ModelRig
     from motionbricks.model.soma.contract import SOMA_N1_FP16_ONNX_PATH, SOMA_N1_FP32_ONNX_PATH
-    from motionbricks.model.soma.engine import MotionBricksSOMAEngine
     from motionbricks.runtime.smart_primitive import InteractionBox, compute_interaction_box_overlaps
 
     from app.runtime.common.io.smart_primitive_document import SmartPrimitiveAssetPool
@@ -126,16 +135,28 @@ def generate(args, log):
 
     assets = load_rig_assets(ModelRig.SOMA)
     pool = SmartPrimitiveAssetPool(assets.clip_registry, assets.reference_pose, assets.model_to_runtime)
-    log(f"エンジンを読み込む（{'混合 FP16' if args.fp16 else 'FP32'}。初回は TensorRT の plan を作るので数分かかる）")
+    precision = "混合 FP16" if args.fp16 else "FP32"
+    log(f"TensorRT のエンジンを読み込む（{precision}。初回は TensorRT の plan を作るので数分かかる）" if backend == "trt"
+        else f"ONNX Runtime のエンジンを読み込む（{precision}）")
     t1 = time.perf_counter()
-    engine = MotionBricksSOMAEngine(
-        SOMA_N1_FP16_ONNX_PATH if args.fp16 else SOMA_N1_FP32_ONNX_PATH,
-        model_to_runtime=assets.model_to_runtime,
-        build_options=TensorRTBuildOptions(enable_fp16=args.fp16),
-        cache_dir=mb / ".trt-cache",
-    )
+    engine, providers = MBE.open_engine(backend, SOMA_N1_FP16_ONNX_PATH if args.fp16 else SOMA_N1_FP32_ONNX_PATH,
+                                        model_to_runtime=assets.model_to_runtime, cache_dir=mb / ".trt-cache",
+                                        fp16=args.fp16, onnx_provider=args.onnx_provider)
+    if providers:
+        log("ONNX Runtime の実行先: " + ", ".join(providers))
     engine_sec = time.perf_counter() - t1
     log(f"エンジンを読み込んだ（{engine_sec:.1f} 秒）")
+
+    # 生成ごとにモデルが選んだ token の数を記録する（trt と onnx の結果を比べるため）
+    tokens, inference_ms = [], []
+    generate_animation = engine.generate_animation
+
+    def counted(*a, **k):
+        out = generate_animation(*a, **k)
+        tokens.append((out.num_frames + 6) // 4)  # コマ数 = token の数 × 4 - 境目の 3 コマ × 2
+        inference_ms.append(engine.timer.milliseconds["inference"])
+        return out
+    engine.generate_animation = counted
 
     skeleton = assets.clip_registry.skeleton
     m2r = assets.model_to_runtime
@@ -224,10 +245,12 @@ def generate(args, log):
     parents = [int(skeleton.joint_parent(i)) for i in range(skeleton.num_joints)]
 
     clips = used_clips(mb, args, mode, idle_clip)
-    stats = {"engine": "fp16" if args.fp16 else "fp32", "speedUsed": round(speed, 3),
+    stats = {"engine": "fp16" if args.fp16 else "fp32", "backend": "tensorrt" if backend == "trt" else "onnxruntime",
+             "providers": providers, "speedUsed": round(speed, 3),
              "speedRange": [mode.minimum_speed, mode.max_speed], "actionStartedSec": action_started,
-             "timings": {"importSec": round(t1 - t0, 2), "engineSec": round(engine_sec, 2), "generateSec": round(gen_sec, 2)},
-             "sampleClips": clips}
+             "timings": {"importSec": round(t1 - t0, 2), "engineSec": round(engine_sec, 2), "generateSec": round(gen_sec, 2),
+                        "inferenceSec": round(sum(inference_ms) / 1000.0, 3)},
+             "tokens": tokens, "sampleClips": clips}
     return skeleton.joint_names, parents, rest, local, stats, np.stack(contacts)
 
 
@@ -282,7 +305,7 @@ def fake_motion(args):
         local[:, j, 3] = np.sin(sign * swing / 2)
         local[:, j, 6] = np.cos(sign * swing / 2)
     local[:, 0, 2] = speed * t  # +Z へ進む
-    stats = {"engine": "fake", "speedUsed": speed, "speedRange": [0, 10], "actionStartedSec": None,
+    stats = {"engine": "fake", "backend": "fake", "providers": [], "tokens": [], "speedUsed": speed, "speedRange": [0, 10], "actionStartedSec": None,
              "timings": {"importSec": 0, "engineSec": 0, "generateSec": 0}, "sampleClips": []}
     contacts = np.tile([0.0, 1.0, 1.0, 0.0], (n, 1))  # 作りもの: 左はかかとを上げ、右はかかとを着く
     return names, parents, rest, local, stats, contacts
@@ -302,7 +325,7 @@ def main(argv=None):
     hips = motion["hips"]
     travel = float(np.linalg.norm(hips[-1, [0, 2]] - hips[0, [0, 2]]))
     info = {**meta, **stats, "fps": FPS, "travelM": round(travel, 3),
-            "options": {k: getattr(args, k) for k in ("kind", "speed", "direction", "turn", "seconds", "action", "ending", "root", "fp16")},
+            "options": {k: getattr(args, k) for k in ("kind", "speed", "direction", "turn", "seconds", "action", "ending", "root", "fp16", "backend")},
             "totalSec": round(time.perf_counter() - t0, 2)}
     if args.info:
         Path(args.info).write_text(json.dumps(info, ensure_ascii=False, indent=2), encoding="utf8")

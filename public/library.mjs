@@ -3,7 +3,7 @@ import {h, getJSON, send} from './dom.mjs';
 import {METHODS, enc, mb, thumb} from './shared.mjs';
 import {can} from './capabilities.mjs';
 import {confirmDialog, moveToTrash, trashIcon} from './confirm.mjs';
-import {RESTYLE_WARNING, STYLE_TABS, bandText, filterByStyleTab, isCreature, loadStyleTab, motionNames, motionSummary, pickStyleTab, saveStyleTab, styleChip, styleChoices, styleLabel, styleStepsBox, styleTabCounts} from './char-style.mjs';
+import {RESTYLE_WARNING, STYLE_IDS, STYLE_TABS, bandText, filterByStyleTab, isCreature, loadStyleTab, motionNames, motionSummary, pickStyleTab, saveStyleTab, styleChip, styleChoices, styleLabel, styleStepsBox, styleTabCounts} from './char-style.mjs';
 
 const STAGE_ROWS = [['create', 'つくる'], ['motion', '動き'], ['expression', '表情'], ['finish', '仕上げ']];
 const STAGE_TEXT = {done: 'できている', doing: '途中', none: 'まだ'};
@@ -64,11 +64,11 @@ function newCharacter(ov, stageHref) {
     setup: ({setDisabled}) => { setReady = () => setDisabled(!style); setReady(); },
     body: [h('div', {class: 'form-stack'},
       h('fieldset', {class: 'style-field'}, h('legend', {}, 'スタイル'),
-        h('p', {class: 'muted'}, `あとから変えられるが、${RESTYLE_WARNING}。版を取り込んだあとは、生き物とほかのスタイルのあいだでは変えられない。`), choices.box, steps.box),
+        h('p', {class: 'muted'}, `あとから変えられるが、${RESTYLE_WARNING}。${STYLE_IDS.includes('creature') ? '版を取り込んだあとは、生き物とほかのスタイルのあいだでは変えられない。' : ''}`), choices.box, steps.box),
       methodField,
       h('label', {}, 'キャラ ID（英小文字・数字・ハイフン）', id), h('label', {}, '名前', name))],
     run: async () => {
-      if (!style) throw Error(`スタイル(${['standard', 'chibi', 'creature'].map(styleLabel).join('、')}のどれか)を選ぶ`);
+      if (!style) throw Error(`スタイル(${STYLE_IDS.map(styleLabel).join('、')}のどれか)を選ぶ`);   // キットには生き物が無い(public/app.mjs が STYLE_IDS から外す)
       if (!id.value.trim() || !name.value.trim()) throw Error('ID と名前を入れる');
       if (style === 'creature') {   // きゃらくるは VRM の作り方なので開かない
         try {

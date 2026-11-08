@@ -1,5 +1,5 @@
 // サムネイル撮影: 版の正面の全身を 512x512 で撮り、保管場所の versions/<ver>/thumb.png に書く。
-// node tools/thumb.mjs --char <キャラ> --ver <版>   （サーバーが動いている前提）
+// node tools/thumb.mjs --char <キャラ> --ver <版> [--port <ポート>]   （サーバーが動いている前提。--port は設定と違うポートで動いているとき）
 import fs from 'node:fs';
 import path from 'node:path';
 import {loadConfig, loadPlaywright, parseArgs, needId, viewerUrl, openViewer, HIDE_PANEL_CSS} from './common.mjs';
@@ -15,7 +15,7 @@ const {browser} = await launchGPU(chromium);
 try {
   const page = await browser.newPage({viewport: {width: 512, height: 512}});
   page.on('console', m => { if (m.type() === 'error') console.log('PAGE', m.text()); });
-  await openViewer(page, viewerUrl({char, ver}, config));
+  await openViewer(page, viewerUrl({char, ver, port: args.port}, config));
   await page.addStyleTag({content: HIDE_PANEL_CSS + ' canvas{position:fixed!important;left:0;top:0;width:100vw!important;height:100vh!important;z-index:99}'});
   await page.evaluate(() => {
     const v = window.viewer; v.paused = true; dispatchEvent(new Event('resize'));

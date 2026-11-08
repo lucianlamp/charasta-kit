@@ -32,6 +32,7 @@ import clip as C  # noqa: E402
 from fbx_clip import fbx_to_clip, find_rest  # noqa: E402
 import fingers  # noqa: E402
 import grip as Grip  # noqa: E402
+from mb_onnx_engine import uv_python as mb_uv_python  # noqa: E402
 import neck as Neck  # noqa: E402
 from records import BRIDGE_LICENSE, KIMODO_LICENSE, merge_licenses, motionbricks_license  # noqa: E402
 from soma_vrma import retarget, write_vrma  # noqa: E402
@@ -275,11 +276,12 @@ def make_motionbricks(segs, cache, fake):
                 run([sys.executable, *args, "--fake"])
             else:
                 mb = P.need(MOTIONBRICKS_DIR, "MotionBricks", "MOTIONBRICKS_DIR")
-                run([UV, "run", "--project", mb, "--no-sync", "python", *args, "--motionbricks", mb], cwd=mb)
+                # 推論（TensorRT か ONNX Runtime）は環境変数 CHARASTA_MB_BACKEND で選ぶ（motionbricks_gen.py の --backend の既定）
+                run([UV, *mb_uv_python(mb), *args, "--motionbricks", mb], cwd=mb)
         info = json.loads(info_f.read_text(encoding="utf8"))
         s["path"], s["contactsPath"] = str(vrma), str(contacts)
         s["licenseRecord"] = motionbricks_license(info.get("sampleClips", []))
-        s["motionbricksRecord"] = {"tool": "MotionBricks", "version": None if fake else mb_version(), "model": "試しの動き" if fake else MB_MODEL, "engine": info.get("engine"),
+        s["motionbricksRecord"] = {"tool": "MotionBricks", "version": None if fake else mb_version(), "model": "試しの動き" if fake else MB_MODEL, "engine": info.get("engine"), "backend": info.get("backend"),
                                    "frames": info.get("frames"), "fps": info.get("fps"), "travelM": info.get("travelM"), "speedUsed": info.get("speedUsed"),
                                    "actionStartedSec": info.get("actionStartedSec"), "timings": info.get("timings"), "sampleClips": info.get("sampleClips", [])}
 
@@ -472,12 +474,13 @@ def join(segs, clips, work, fake):
         f, r = work / "bridge-jobs.json", work / "bridge-report.json"
         f.write_text(json.dumps(jobs), encoding="utf8")
         mb = P.need(MOTIONBRICKS_DIR, "MotionBricks", "MOTIONBRICKS_DIR")
-        run([UV, "run", "--project", mb, "--no-sync", "python", HERE / "mb_bridge.py", f, r], cwd=mb)
-        reports = iter(json.loads(r.read_text(encoding="utf8"))["bridges"])
+        run([UV, *mb_uv_python(mb), HERE / "mb_bridge.py", f, r], cwd=mb)
+        report = json.loads(r.read_text(encoding="utf8"))
+        reports = iter(report["bridges"])
         for b in bridges:
             if b["method"] == "motionbricks":
                 rep = next(reports)
-                b.update(tokens=rep["tokens"], frames=rep["frames"], generateSec=rep["generateSec"], endGapCm=rep["endGapCm"])
+                b.update(tokens=rep["tokens"], frames=rep["frames"], generateSec=rep["generateSec"], endGapCm=rep["endGapCm"], backend=report.get("backend"))
         for p in parts:
             if isinstance(p["clip"], Path):
                 p["clip"] = C.load(p["clip"])

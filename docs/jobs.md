@@ -35,6 +35,7 @@
 | `motion-recipe` | 区間をつないだモーションを作る | `docs/motion-compose.md` |
 | `studio-front`、`studio-build`、`studio-video`、`studio-checks` | 表情づくりの工程 | `docs/expression-studio.md` |
 | `face-check` | シェイプキー方式の版の確かめの撮影 | `docs/expression-studio.md` |
+| `adjust` | 体型と揺れものを変えた新しい版を作る | `docs/adjust.md` |
 
 ## 試しの動き
 

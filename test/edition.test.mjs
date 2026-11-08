@@ -51,12 +51,14 @@ test('キット: overview は版の種類と名前を返し、Kimi は出さな�
   assert.deepEqual(ov.labels.methods.map(m => m[0]), ['tripo']);
   assert.equal(ov.labels.methods[0][1], 'きゃらくる（Tripo Studio）');
   assert.doesNotMatch(JSON.stringify(ov.labels), /Kimi|本家|顔の出来/);
-  assert.deepEqual(ov.labels.styles, {standard: 'スタンダード体型', chibi: 'チビ体型', creature: '生き物'});
+  assert.deepEqual(ov.labels.styles, {standard: 'スタンダード体型', chibi: 'チビ体型'}, '生き物のスタイルはキットに無い');
   assert.deepEqual(ov.labels.shortStyles, {drama: '対話型', dance: 'ダンス MV'});
   assert.equal(ov.labels.newShortStyle, 'drama');
+  assert.equal(ov.labels.agent.ni, 'エージェントに', 'キットは Codex でも使うので「Claude」と書かない');
+  assert.doesNotMatch(JSON.stringify(ov.labels.agent), /Claude/);
   const caps = (await s.api('GET', '/api/capabilities')).json;
   assert.equal(caps.edition, 'kit');
-  for (const k of ['kimodo', 'rgbmocap', 'figureImageGen', 'gameExport', 'shortDraft', 'shortFigures', 'talkStyles']) assert.deepEqual(caps[k], {available: false, setting: 'edition', note: '配布版には無い機能'}, k);
+  for (const k of ['kimodo', 'rgbmocap', 'figureImageGen', 'gameExport', 'shortDraft', 'shortFigures', 'talkStyles', 'creature']) assert.deepEqual(caps[k], {available: false, setting: 'edition', note: '配布版には無い機能'}, k);
   assert.deepEqual(caps.motionRecipe, {available: true, setting: 'edition'}, 'モーションをつなぐはキットにも残す');
   assert.equal(caps.motionbricks.available, true, 'MotionBricks はキットにも残す(道具の設定で決まる)');
   assert.equal(caps.videoMotion.available, true);
@@ -162,6 +164,22 @@ test('キット: ショートは対話型(型 drama)とダンス MV だけ。型
   assert.equal(dance.status, 201, JSON.stringify(dance.json));
 });
 
+test('キット: 生き物は無い。キャラのスタイル creature とショートの生き物(take.creature、カットの動き、生き物のカメラ)を 400 で断る', async t => {
+  const s = await server('kit');
+  t.after(() => s.close());
+  assert.ok(kitRefusal(await s.api('POST', '/api/characters', {id: 'crow', name: 'カラス', style: 'creature'})));
+  assert.ok(kitRefusal(await s.api('PATCH', '/api/characters/c1', {style: 'creature'})));
+  assert.equal((await s.api('PATCH', '/api/characters/c1', {style: 'chibi'})).status, 200, 'ほかのスタイルへは変えられる');
+  const take = {motions: ['talk'], mark: [0, 0, 0]};
+  const walk = await s.api('POST', '/api/shorts', short({take}));
+  assert.equal(walk.status, 201, '生き物の無い歩く 1 テイクは作れる: ' + JSON.stringify(walk.json));
+  const crow = {charId: 'crow', perch: 0, path: [[0, 0, 0], [1, 0, 0], [2, 0, 0]]};
+  for (const body of [short({take: {...take, creature: crow}}), short({cuts: [{...CUT, creature: 'tilt'}]}), short({cuts: [{...CUT, camera: 'crow_close'}]}), short({cuts: [{...CUT, camera: 'crow_takeoff'}]})]) {
+    assert.ok(kitRefusal(await s.api('POST', '/api/shorts', body)), JSON.stringify(body));
+    assert.ok(kitRefusal(await s.api('PUT', '/api/shorts/' + walk.json.id, {...walk.json, ...body, take: body.take ?? walk.json.take})), 'PUT ' + JSON.stringify(body));
+  }
+});
+
 test('作者の版: overview は full と今までの名前、外す機能もサーバーは断らない', async t => {
   const s = await server();
   t.after(() => s.close());
@@ -169,15 +187,19 @@ test('作者の版: overview は full と今までの名前、外す機能もサ
   assert.equal(ov.edition, 'full');
   assert.deepEqual(ov.labels.methods.map(m => m[0]), ['tripo', 'kimi']);
   assert.deepEqual(ov.labels.styles, {standard: 'スタンダード', chibi: 'チビ', creature: '生き物'});
+  assert.equal(ov.labels.agent.ni, 'Claude に');
   assert.equal(ov.labels.shortStyles.trivia, '雑学');
   assert.equal(ov.labels.newShortStyle, 'trivia');
-  for (const k of ['motionRecipe', 'gameExport', 'shortDraft', 'shortFigures', 'talkStyles']) assert.equal(ov.capabilities[k].available, true, k);
+  for (const k of ['motionRecipe', 'gameExport', 'shortDraft', 'shortFigures', 'talkStyles', 'creature']) assert.equal(ov.capabilities[k].available, true, k);
   assert.equal(ov.capabilities.edition, 'full');
   for (const type of REMOVED_JOBS) assert.ok(!kitRefusal(await s.api('POST', '/api/jobs', {type, charId: 'c1', verId: 'v1'})), type);
   assert.equal((await s.api('GET', '/api/motion-recipes')).status, 200);
   assert.equal((await s.api('GET', '/api/characters/c1/versions/v1/game-exports')).status, 200);
   assert.ok((await s.api('GET', '/api/video-motions')).json.engines.exmr, '試しの動きでは ExMR を使える');
   assert.equal((await s.api('POST', '/api/characters', {id: 'c2', name: 'に', style: 'standard', method: 'kimi'})).status, 201);
+  assert.equal((await s.api('POST', '/api/characters', {id: 'crow', name: 'カラス', style: 'creature'})).status, 201, '生き物は作者の版で作れる');
+  const crowCut = await s.api('POST', '/api/shorts', short({cuts: [{...CUT, camera: 'crow_close', creature: 'tilt'}]}));
+  assert.equal(crowCut.status, 201, '生き物のカメラと動きは作者の版で断らない: ' + JSON.stringify(crowCut.json));
   const trivia = await s.api('POST', '/api/shorts', short());
   assert.equal(trivia.status, 201);
   assert.equal(trivia.json.style, 'trivia');

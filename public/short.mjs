@@ -1,6 +1,6 @@
 // ショート動画: 一覧(#shorts)と編集画面(#short/<ID>)。ジョブは lib/short.mjs(docs/shorts.md)、画面は docs/shorts.md。
 import {h, getJSON, send} from './dom.mjs';
-import {enc, figuresReport, jobActive, pendingRow, thumb, uploadAudio, viewerFrame, viewerReady, watchJobs} from './shared.mjs';
+import {AGENT, enc, figuresReport, jobActive, pendingRow, thumb, uploadAudio, viewerFrame, viewerReady, watchJobs} from './shared.mjs';
 import {moveToTrash} from './confirm.mjs';
 import {can, missingNote} from './capabilities.mjs';
 import {MAX_AUDIO_BYTES} from './shoot-plan.mjs';
@@ -262,12 +262,12 @@ export async function showShort({main, alive, jobsChanged}, id) {
   function askBox(target, aria, placeholder) {
     const area = h('textarea', {rows: '2', maxlength: '200', placeholder, 'aria-label': aria}, target.ask ?? '');
     const waiting = h('span', {class: 'se-wait', hidden: !asked(target)}, '頼んだ直し: 対応待ち');
-    const btn = h('button', {type: 'button', class: 'outline', disabled: !target.ask?.trim()}, 'Claude に頼む');
+    const btn = h('button', {type: 'button', class: 'outline', disabled: !target.ask?.trim()}, `${AGENT.ni}頼む`);
     area.oninput = () => { target.ask = area.value; if (!area.value.trim()) delete target.askedAt; btn.disabled = !area.value.trim(); waiting.hidden = !asked(target); touch(); };
     // 頼み直すと前の返事は消す(返事は次に頼むまで残す)
     btn.onclick = () => { target.ask = area.value.trim(); target.askedAt = new Date().toISOString(); delete target.reply; delete target.repliedAt; reply?.remove(); waiting.hidden = false; renderLive(); save().catch(() => {}); };
     // Claude が直したあとの返事
-    const reply = target.reply ? h('p', {class: 'se-reply'}, h('strong', {}, `Claude の対応${target.repliedAt ? `(${new Date(target.repliedAt).toLocaleString('ja-JP', {month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit'})})` : ''}: `), target.reply) : null;
+    const reply = target.reply ? h('p', {class: 'se-reply'}, h('strong', {}, `${AGENT.no}対応${target.repliedAt ? `(${new Date(target.repliedAt).toLocaleString('ja-JP', {month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit'})})` : ''}: `), target.reply) : null;
     return [area, h('div', {class: 'actions'}, btn, waiting), reply];
   }
 
@@ -671,8 +671,8 @@ export async function showShort({main, alive, jobsChanged}, id) {
     : !can(overview, 'talkStyles') ? h('p', {class: 'muted'}, `型: ${STYLE_LABEL[s.style] ?? s.style}（変えられない。ダンス MV は「ダンス MV を作る」から）`)
     : select('型', DRAFT_STYLES.map(k => [k, STYLE_LABEL[k]]), () => s.style ?? 'trivia', v => { s.style = v; touch(); renderAll(); });
 
-  // 歩く 1 テイクだけ: 枝に止まる生き物を選ぶ。選ぶと動画の種類が変わり、カメラと右の欄の「生き物の動き」が変わる
-  const creatureBox = s.take && !dance ? creaturePanel(s.take, overview.chars, () => { kind = shortKind(s); kindChip.textContent = KIND_LABEL[kind]; touch(); renderRight(); renderTimeline(); }) : null;
+  // 歩く 1 テイクだけ: 枝に止まる生き物を選ぶ。選ぶと動画の種類が変わり、カメラと右の欄の「生き物の動き」が変わる。キットには生き物が無いので出さない
+  const creatureBox = s.take && !dance && can(overview, 'creature') ? creaturePanel(s.take, overview.chars, () => { kind = shortKind(s); kindChip.textContent = KIND_LABEL[kind]; touch(); renderRight(); renderTimeline(); }) : null;
   const left = h('aside', {class: 'se-left', 'aria-label': '素材'},
     dancing?.box,
     sec('出演者', castList, more('出演者を直す', false, castBox)),

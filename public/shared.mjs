@@ -12,6 +12,8 @@ export const sortVersions = c => [...(c.versions || [])].sort((a, b) => (b.order
 
 // 3D の作り方: [鍵, 名前, 説明]。キットでは public/app.mjs が /api/overview の labels の表に入れ替える(public/edition.mjs)
 export const METHODS = editionLabels('full').methods;
+// 頼みごとを受けるエージェントの呼び方。キットでは public/app.mjs が「エージェント」に入れ替える
+export const AGENT = editionLabels('full').agent;
 
 export function thumb(src, alt, cls = 'thumb') {
   if (!src) return h('div', {class: cls + ' none'}, 'なし');
@@ -24,7 +26,7 @@ export function thumb(src, alt, cls = 'thumb') {
 const FRAMING = {face: '顔', upper: '上半身'};
 export const JOB_STATE = {queued: '待ち', running: '実行中', done: '完了', failed: '失敗'};
 const JOB_LABEL = {voice: '声', video: '動画', shoot: '撮る', mv: 'MV', short: 'ショート', 'short-draft': 'ショートの下書き', 'short-figures': 'ショートの図', 'motion-gen': 'モーションを作る', 'video-motion': '動画から作る', 'motion-text': '文章から作る', 'studio-front': '表情づくり: 正面を撮る', 'studio-build': '表情づくり: 組み立て',
-  'studio-video': '表情づくり: 中割り', 'studio-checks': '表情づくり: 確かめ', 'face-check': '版の顔の確かめ', 'game-export': 'ゲーム用の書き出し'};
+  'studio-video': '表情づくり: 中割り', 'studio-checks': '表情づくり: 確かめ', 'face-check': '版の顔の確かめ', 'game-export': 'ゲーム用の書き出し', adjust: '体型と揺れもの'};
 const FACE_SET = {grid: '格子と表情', keys: 'キー別', motion: 'モーション'};
 const REVIEW = {waiting: '確認待ち', imported: '取り込んだ', discarded: '捨てた'};
 export const jobActive = j => j.state === 'queued' || j.state === 'running';
@@ -35,6 +37,7 @@ const jobWhat = j => j.type === 'voice' ? `「${j.input?.text ?? ''}」` : j.typ
   : j.type === 'mv' ? [j.input?.motionId, (j.input?.stages ?? []).join(' + '), j.input?.quality === 'final' ? '本番' : '試し'].join('・')
   : j.type === 'motion-gen' || j.type === 'video-motion' || j.type === 'motion-text' ? j.input?.label ?? ''
   : j.type === 'game-export' ? [j.input?.verId, ...(j.input?.motions ?? [])].join('・')
+  : j.type === 'adjust' ? h('a', {href: `#adjust/${enc(j.input?.charId)}/${enc(j.state === 'done' ? j.input?.newVerId : j.input?.verId)}`}, `${j.input?.verId} から ${j.input?.newVerId}`)
   : j.type === 'face-check' ? h('a', {href: `#face/${enc(j.input?.charId)}/${enc(j.input?.verId)}`}, [j.input?.verId, FACE_SET[j.input?.set], j.input?.motionId].filter(Boolean).join('・'))
   : h('a', {href: `#studio/${enc(j.input?.charId)}/${enc(j.input?.studioId)}`}, j.input?.studioId ?? '');
 // ジョブ short-figures の結果の文

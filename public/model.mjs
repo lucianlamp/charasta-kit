@@ -59,7 +59,7 @@ export async function showModel({main, ov, char, verId, alive, jobsChanged}) {
     h('section', {class: 'center'},
       h('div', {class: 'stage shoot'}, panel?.box ?? h('div', {class: 'empty'}, 'このキャラには版がまだない。つくるの画面で取り込む。')), panel?.timeline,
       ver ? h('div', {class: 'stage-foot'}, h('a', {class: 'link', href: viewerHref(c.id, ver.id), target: '_blank'}, '全部の操作があるビューアを開く')) : null),
-    h('aside', {class: 'pane pane-right', 'aria-label': '撮る'}, h('h2', {}, '撮る'), panel?.controls ?? [h('div', {class: 'empty small'}, '版がまだない'), ...more], ver ? h('a', {class: 'button', href: `#mv/${enc(c.id)}/${enc(ver.id)}`}, 'ダンス MV を作る') : null, ver ? checkPanel(c, ver) : null, ver && can(ov, 'gameExport') ? gameExportPanel(c, ver, {jobsChanged}) : null, ver ? exportLinks(c, ver) : null)));
+    h('aside', {class: 'pane pane-right', 'aria-label': '撮る'}, h('h2', {}, '撮る'), panel?.controls ?? [h('div', {class: 'empty small'}, '版がまだない'), ...more], ver ? h('a', {class: 'button', href: `#mv/${enc(c.id)}/${enc(ver.id)}`}, 'ダンス MV を作る') : null, ver ? h('a', {class: 'button', href: `#adjust/${enc(c.id)}/${enc(ver.id)}`}, '体型と揺れものを直す') : null, ver ? checkPanel(c, ver) : null, ver && can(ov, 'gameExport') ? gameExportPanel(c, ver, {jobsChanged}) : null, ver ? exportLinks(c, ver) : null)));
   renderMade();
   await watcher.poll();
 }

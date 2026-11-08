@@ -24,7 +24,10 @@ import {motionRecipeOptions} from './lib/motion-recipe.mjs';
 import {videoTerms} from './lib/terms.mjs';
 import {overview} from './lib/overview.mjs';
 import {Trash} from './lib/trash.mjs';
-import {mvOptions, stageThumb} from './lib/stages.mjs';
+import {mvOptions, stageOverview, stageThumb} from './lib/stages.mjs';
+import {adjustInfo} from './lib/adjust.mjs';
+import {MAX_SHOT_BYTES, adjustShotFile, cancelAdjustRequest, createAdjustRequest, getAdjustRequest, listAdjustRequests, setAdjustShot, withShotUrl} from './lib/adjust-requests.mjs';
+import {MAX_REF_BYTES, addStageRef, cancelStageRequest, createStageRequest, getStageRequest, listStageRequests, stageRefFile, withRefUrls} from './lib/stage-requests.mjs';
 import {graphicCatalog, graphicDefaults, supportsGraphic} from './lib/graphic-mv.mjs';
 import {draftImportCheck, draftRequest} from './lib/short-draft.mjs';
 import {DANCE_CAMERAS} from './public/short-camera.mjs';
@@ -160,7 +163,7 @@ export function createServer(config) {
   const studio = new Studio(lib, {charakuruApp: config.charakuruApp, blender: config.blender, env: config.env ?? {}});
   const edition = editionOf(config);   // 版の種類(docs/edition.md)。キットで外した機能の API とジョブは断る
   const jobs = new JobQueue({lib, studio, edition, env: config.env ?? {}, getPort: () => server.address()?.port ?? config.port,
-    tools: {blender: config.blender, kit: config.charakuruApp, patchVrm: config.patchVrm, springTune: config.springTune, motionbricksDir: config.motionbricksDir, vrmaPipelineDir: config.vrmaPipelineDir, rgbmocapDir: config.rgbmocapDir,
+    tools: {blender: config.blender, kit: config.charakuruApp, patchVrm: config.patchVrm, springTune: config.springTune, motionbricksDir: config.motionbricksDir, motionbricksBackend: config.motionbricksBackend, motionbricksOnnxRuntime: config.motionbricksOnnxRuntime, vrmaPipelineDir: config.vrmaPipelineDir, rgbmocapDir: config.rgbmocapDir,
       kimodoDir: config.kimodoDir, hfCacheDir: config.hfCacheDir, stageStudioDir: config.stageStudioDir, voicevoxDir: config.voicevoxDir, hyperframesCli: config.hyperframesCli, hyperframesBrowser: config.hyperframesBrowser, figureImageGen: config.figureImageGen, gitBash: config.gitBash}});
 
   const trash = new Trash(lib, jobs);
@@ -204,6 +207,8 @@ export function createServer(config) {
       if (faceRoute && get) return json(res, 200, await faceInfo(lib, safeDecode(faceRoute[1]), safeDecode(faceRoute[2])));
       const checkRoute = /^\/api\/characters\/([^/]+)\/versions\/([^/]+)\/check$/.exec(url.pathname);   // 版の検査: スタイルごと(スタンダード=VRoid 形式、チビ=軽い版と三角形など)
       if (checkRoute && get) return json(res, 200, await versionCheck(lib, safeDecode(checkRoute[1]), safeDecode(checkRoute[2]), {edition}));
+      const adjustRoute = /^\/api\/characters\/([^/]+)\/versions\/([^/]+)\/adjust$/.exec(url.pathname);   // 体型と揺れものの直し(docs/adjust.md)。直すのはジョブ adjust
+      if (adjustRoute && get) return json(res, 200, await adjustInfo(lib, safeDecode(adjustRoute[1]), safeDecode(adjustRoute[2])));
       const gameRoute = /^\/api\/characters\/([^/]+)\/versions\/([^/]+)\/game-exports$/.exec(url.pathname);   // 版のゲーム用の書き出し(docs/game-export.md)。作るのはジョブ game-export
       if (gameRoute && get) return json(res, 200, await listGameExports(lib, safeDecode(gameRoute[1]), safeDecode(gameRoute[2])));
       const verRoute = /^\/api\/characters\/([^/]+)\/versions$/.exec(url.pathname);   // きゃらくるのプロジェクトから版を取り込む
@@ -406,6 +411,49 @@ export function createServer(config) {
       if (p === '/api/mv') {   // MV で選べるシーン
         if (!get) { res.writeHead(405, {Allow: 'GET'}); return res.end(); }
         return json(res, 200, await mvOptions(config.stageStudioDir));
+      }
+      if (p === '/api/stages') {   // ステージの画面: シーンの一覧と、それぞれを使うショートと MV(読むだけ)
+        if (!get) { res.writeHead(405, {Allow: 'GET'}); return res.end(); }
+        return json(res, 200, await stageOverview(config.stageStudioDir, lib));
+      }
+      // ステージの頼みごと(docs/stages.md): 一覧と作る、参考の絵を足す(本文は絵そのもの、ヘッダ x-filename)、取り下げ、参考の絵を見る
+      if (p === '/api/stage-requests') {
+        if (get) return json(res, 200, {requests: (await listStageRequests(lib.dir)).map(withRefUrls)});
+        if (req.method !== 'POST') { res.writeHead(405, {Allow: 'GET, POST'}); return res.end(); }
+        return json(res, 201, withRefUrls(await createStageRequest(lib.dir, await readJsonBody(req))));
+      }
+      const stageReq = /^\/api\/stage-requests\/([^/]+)(\/refs(?:\/([^/]+))?)?$/.exec(p);
+      if (stageReq) {
+        const id = safeDecode(stageReq[1]);
+        if (stageReq[3]) {
+          if (!get) { res.writeHead(405, {Allow: 'GET'}); return res.end(); }
+          return await sendFile(req, res, await stageRefFile(lib.dir, id, safeDecode(stageReq[3])));
+        }
+        if (stageReq[2]) {
+          if (req.method !== 'POST') { res.writeHead(405, {Allow: 'POST'}); return res.end(); }
+          return json(res, 201, await addStageRef(lib.dir, id, {name: safeDecode(String(req.headers['x-filename'] ?? '')), data: await readBody(req, MAX_REF_BYTES)}));
+        }
+        if (get) return json(res, 200, withRefUrls(await getStageRequest(lib.dir, id)));
+        if (req.method !== 'DELETE') { res.writeHead(405, {Allow: 'GET, DELETE'}); return res.end(); }
+        return json(res, 200, await cancelStageRequest(lib.dir, id));
+      }
+      // 直しの頼みごと(docs/adjust.md): 一覧(?char= で絞る)と作る、今の見た目の絵を付ける(本文は絵そのもの)、取り下げ、絵を見る
+      if (p === '/api/adjust-requests') {
+        if (get) return json(res, 200, {requests: (await listAdjustRequests(lib.dir, {charId: url.searchParams.get('char') || null})).map(withShotUrl)});
+        if (req.method !== 'POST') { res.writeHead(405, {Allow: 'GET, POST'}); return res.end(); }
+        return json(res, 201, withShotUrl(await createAdjustRequest(lib, await readJsonBody(req))));
+      }
+      const adjustReq = /^\/api\/adjust-requests\/([^/]+)(\/shot)?$/.exec(p);
+      if (adjustReq) {
+        const id = safeDecode(adjustReq[1]);
+        if (adjustReq[2]) {
+          if (get) return await sendFile(req, res, await adjustShotFile(lib.dir, id));
+          if (req.method !== 'POST') { res.writeHead(405, {Allow: 'GET, POST'}); return res.end(); }
+          return json(res, 201, await setAdjustShot(lib.dir, id, await readBody(req, MAX_SHOT_BYTES)));
+        }
+        if (get) return json(res, 200, withShotUrl(await getAdjustRequest(lib.dir, id)));
+        if (req.method !== 'DELETE') { res.writeHead(405, {Allow: 'GET, DELETE'}); return res.end(); }
+        return json(res, 200, await cancelAdjustRequest(lib.dir, id));
       }
       const mvThumb = /^\/api\/mv\/stages\/([^/]+)\.jpg$/.exec(p);
       if (mvThumb) {

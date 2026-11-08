@@ -427,6 +427,51 @@ dialog.dialog::backdrop { background: rgba(0, 0, 0, .6); }
 .trash-actions { display: flex; gap: 4px; margin-left: auto; }
 .video .quiet { min-height: 44px; }
 
+/* ---- ステージ(#stages) ---- */
+.stages-page { width: 100%; max-width: 1320px; margin: 0 auto; padding: 28px 20px 40px; display: flex; flex-direction: column; gap: 14px; }
+.stages-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 420px); gap: 20px; align-items: start; }
+.stage-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.stage-card { display: flex; gap: 12px; align-items: center; min-height: 44px; padding: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+.stage-card:hover { border-color: var(--line-strong); }
+.stage-card[aria-current="true"] { background: var(--selected); border-color: var(--act); }
+.stage-thumb { width: 54px; height: 96px; object-fit: cover; border-radius: 6px; flex: none; background: var(--stage); }
+.stage-thumb.none { display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--muted); }
+.stage-card-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.stage-card-name { font-weight: 700; overflow-wrap: anywhere; }
+.stage-detail { position: sticky; top: 16px; display: flex; flex-direction: column; gap: 10px; padding: 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+.stage-detail-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.stage-detail-head h2 { font-size: 20px; }
+.stage-detail h3 { margin: 6px 0 0; font-size: 14px; }
+.stage-big-box { display: flex; justify-content: center; padding: 12px; background: var(--stage); border-radius: 8px; }
+.stage-big { width: 100%; max-width: 270px; aspect-ratio: 9 / 16; object-fit: contain; border-radius: 6px; }
+.stage-big.none { display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 13px; }
+.stage-supports { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; margin: 0; font-size: 13px; }
+.stage-supports dd { margin: 0; }
+.stage-supports dt { color: var(--soft); }
+.stage-uses { display: flex; flex-direction: column; gap: 6px; }
+.stage-use { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; }
+.stage-use:hover { border-color: var(--line-strong); background: var(--raised); }
+.stage-use-text { display: flex; flex-direction: column; min-width: 0; overflow-wrap: anywhere; }
+/* 新しいステージの頼みごと */
+.stage-req-form { max-width: 720px; padding: 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+.stage-req-form[hidden] { display: none; }
+.stage-req-label { display: flex; justify-content: space-between; gap: 10px; }
+.stage-req-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.stage-reqs { display: flex; flex-direction: column; gap: 10px; padding-top: 8px; border-top: 1px solid var(--line); }
+.stage-reqs h2 { font-size: 18px; }
+.stage-req-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 10px; align-items: start; }
+.stage-req { display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 12px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+.stage-req-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; overflow-wrap: anywhere; }
+.stage-req-head .muted { margin-left: auto; font-size: 12px; }
+.stage-req .chip.state-done { color: var(--on-act); background: var(--act); border-color: var(--act); }
+.stage-req .chip.state-working { color: var(--run); border-color: var(--run); }
+.stage-req .chip.state-declined { color: var(--muted); }
+.stage-req-desc { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; color: var(--soft); }
+.stage-req-refs { display: flex; flex-wrap: wrap; gap: 6px; }
+.stage-req-refs img { width: 64px; height: 64px; object-fit: cover; border-radius: 6px; border: 1px solid var(--line); }
+.stage-req-reply { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; background: var(--raised); border-radius: 8px; font-size: 13px; }
+.stage-req-reply p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+
 /* ---- スマホの幅 ---- */
 @media (max-width: 700px) {
   .viewer-page:not(.embed) #app { grid-template-columns: 1fr; grid-template-rows: 55% 45%; }
@@ -444,7 +489,7 @@ dialog.dialog::backdrop { background: rgba(0, 0, 0, .6); }
   .switch { flex: 1 1 auto; min-width: 0; }
   .menu { width: calc(100vw - 32px); }
   #phoneNav { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); position: sticky; bottom: 0; z-index: 10; background: var(--panel); border-top: 1px solid var(--line); }
-  #phoneNav a { display: flex; align-items: center; justify-content: center; min-height: 56px; font-size: 13px; color: var(--soft); }
+  #phoneNav a { display: flex; align-items: center; justify-content: center; min-height: 56px; font-size: 12px; color: var(--soft); white-space: nowrap; }   /* 6 つ並ぶ(ステージを足した)ので、390px でも「ライブラリ」が切れない大きさ */
   #phoneNav a[aria-current="page"] { font-weight: 700; color: var(--act); }
   .pane { flex-basis: 100%; border: 0; border-top: 1px solid var(--line); }
   .center { flex-basis: 100%; order: -1; }
@@ -467,6 +512,10 @@ dialog.dialog::backdrop { background: rgba(0, 0, 0, .6); }
   .creature-pic { max-width: 360px; width: 100%; justify-self: center; }
   .style-tab { flex-wrap: wrap; gap: 0 4px; padding: 0 4px; font-size: 13px; }
   .trash-page { padding: 16px; }
+  .stages-page { padding: 16px; }
+  .stages-body { grid-template-columns: minmax(0, 1fr); }
+  .stage-detail { position: static; order: -1; }   /* 選んだシーンを一覧より先に出す(押すと画面の上へ戻る) */
+  .stage-list { grid-template-columns: minmax(0, 1fr); }
   .stage { flex: 0 0 340px; min-height: 340px; }
   .stage.shoot { flex: 0 0 auto; min-height: 340px; padding: 12px; }
   .candidates { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
@@ -705,3 +754,18 @@ dialog.dialog::backdrop { background: rgba(0, 0, 0, .6); }
 .game-export fieldset { border: 1px solid var(--line, #444); margin: 0; }
 .game-export label { display: flex; flex-direction: column; gap: 2px; }
 .game-export .chips label { flex-direction: row; align-items: center; gap: 4px; }
+
+/* ---- 体型と揺れもの(public/adjust.mjs) ---- */
+.adjust-slider { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.adjust-slider-head { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; }
+.adjust-value { color: var(--text); }
+.adjust-slider .small { font-size: 12px; }
+.adjust-group { border: 1px solid var(--line); border-radius: 10px; padding: 0 12px; }
+.adjust-group > summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 700; }
+.adjust-group > .form-stack { padding-bottom: 12px; }
+.adjust-summary { margin: 0; font-size: 13px; color: var(--soft); overflow-wrap: anywhere; }
+.adjust-foot { justify-content: flex-start; padding-top: 10px; }
+.adjust-motion { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.adjust-motion select { max-width: 220px; }
+.adjust-note { flex: 1 1 200px; text-align: right; font-size: 12px; }
+.adjust-req-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }

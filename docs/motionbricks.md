@@ -17,13 +17,34 @@
   ```
 
   `git lfs pull` は約 2.5 GB（ONNX のモデル、見本の動き、文書の画像と動画）。Hugging Face の checkpoint は要らない（ONNX のモデルが入っている）。
-- TensorRT の plan は初回に作り、`<motionbricksDir>/.trt-cache/` に置く（FP32 で約 2 分、765 MB。MotionBricks の `.gitignore` に入っている）。
-- NVIDIA の GPU（CUDA）が要る。
+- NVIDIA の GPU は要らない。推論は TensorRT（NVIDIA の GPU）か ONNX Runtime（CPU）で、設定の `motionbricksBackend` で選ぶ（下の「推論」）。
+- TensorRT で動かすときは、plan を初回に作り、`<motionbricksDir>/.trt-cache/` に置く（FP32 で約 2 分、765 MB。MotionBricks の `.gitignore` に入っている）。
+- ONNX Runtime で動かすときは、`onnxruntime` を `uv run --with` で足す（MotionBricks の環境には入れない。初回だけ約 14 MB を取ってくる）。
+
+## 推論（TensorRT か ONNX Runtime）
+
+MotionBricks のモデルは同じ ONNX のファイル（`mmm_v6_soma_fp32.onnx`）で、動かし方を 2 つから選ぶ。
+
+| 設定の `motionbricksBackend` | 動き |
+|---|---|
+| `auto`（既定） | TensorRT が動けば TensorRT、動かなければ ONNX Runtime（CUDA の device が無い、`tensorrt` を読み込めない、driver が古いなど。理由をジョブのログに出す） |
+| `trt` | TensorRT（MotionBricks の `MotionBricksSOMAEngine`）。NVIDIA の GPU と CUDA が要る |
+| `onnx` | ONNX Runtime の CPU（`tools/mb_onnx_engine.py` の `OnnxSOMAEngine`）。GPU を使わない |
+
+- ONNX Runtime の経路は、MotionBricks の `MotionBricksSOMAEngine` を継いで推論だけを差し替える。入力の組み立て（向きのそろえ）、出力の読み取り（境目のコマを除く、足の接地）、端の直し（生成の最初と最後を文脈と目標のポーズに合わせる）は MotionBricks の Warp の kernel を CPU で動かす。MotionBricks のリポジトリは変えない。
+- CUDA が要るのは MotionBricks の `InferenceEngine`（TensorRT の plan、GPU の buffer、CUDA graph）と、生成の時間を測る CUDA の event だけで、ONNX Runtime の経路はどちらも通さない。`tensorrt` を読み込めない環境では、MotionBricks の inference の import が通るだけの空の `tensorrt` を入れる。
+- `auto` と `onnx` のときは、ジョブが `uv run --project <motionbricksDir> --no-sync --with onnxruntime==1.30.0 python …` で動かす。版は設定の `motionbricksOnnxRuntime` で替えられる。`trt` は `--with` を付けない。
+- ONNX Runtime の実行先は CPU だけを使う（`tools/motionbricks_gen.py` の `--onnx-provider` で名前を指定できるが、DirectML はこのモデルで動かなかった）。
+- 生成の速さ: 作者の PC（Ryzen 7 5700X）では、CPU でも 1 回の推論は 40〜60 ms で、ジョブ全体の時間は TensorRT とほとんど変わらなかった。TensorRT の plan を作る初回の約 2 分は要らないが、初回は Warp の CPU の kernel を組み立てるので約 1 分かかる（2 回目からは Warp のキャッシュを使う）。
+- 結果は TensorRT と少し違う。MotionBricks は TensorRT で TF32（行列の掛け算を少ない桁で計算する）を許しているので、同じ入力でも、生成のところどころで選ぶ動きが変わる（モデルが選ぶ token の数は同じ）。TF32 を切った TensorRT と ONNX Runtime の CPU は、関節の位置の差が 0.1 mm 以下で同じになる。どちらの結果も MotionBricks の生成としては正しい。
+- ONNX Runtime の CPU の結果は、同じ条件なら毎回同じ（CUDA を隠して動かしても同じ）。
+- 使える機能の一覧（`GET /api/capabilities`）の `motionbricks.backend` に、どちらで動く見込みかを出す（`tensorrt`、`onnxruntime`、試しの動きは `fake`）。`auto` は `nvidia-smi` が PATH にあれば `tensorrt` とみなす。実際に使ったものは `generated.json` の `backend`。
+- macOS は確かめていない（MotionBricks の依存に `tensorrt-cu12` があり、`uv sync` が通るかを確かめていない）。
 
 ## 流れ（ジョブ `motion-gen`）
 
 1. 画面（動きの画面）か `POST /api/jobs` で積む。
-2. `uv run --project <motionbricksDir> --no-sync python tools/motionbricks_gen.py …` を MotionBricks のフォルダで動かす。
+2. `uv run --project <motionbricksDir> --no-sync [--with onnxruntime==1.30.0] python tools/motionbricks_gen.py … --backend <motionbricksBackend>` を MotionBricks のフォルダで動かす（`--with` は上の「推論」）。
    - MotionBricks のデモ Scene Preview と同じ作りで、`SOMACharacter`（`app/runtime/soma/character.py`）に毎コマ（1/30 秒）進む向き・速さ・種類を渡す。
    - 最初は待機の見本の動き（`idle_loop_001`、しゃがみは `crouch_idle_001`）から始まる。書き出すのは生成した区間だけで、見本の動きのコマそのものは書き出さない。「止まって終わる」は、待機の見本の動きへつなぐ生成までを書き出す。
    - 途中の動作（跳び越す・くぐる）は、動く長さの 4 割の時点で、体の前（速さ×1.2 m、2 m 以上）に Smart Primitive を置き、Scene Preview と同じく、体の前の判定の箱が触れたら始める。
@@ -67,7 +88,7 @@
 - `redistribution: false`、`evaluationOnly: true`（評価・テスト用のみで、作ったモーションを使った動画の公開も不可。意味は docs/motions.md の motion.json）。
 - `terms`: 部分ごとの許諾。見本の動きは、使った BVH の一覧（`clips`。待機の見本と、種類の目標と、途中の動作の Smart Primitive が読む BVH）。
 
-`generated` には、条件（`options`）、モデル、MotionBricks の版、コマ数、進んだ距離、かかった時間、ジョブの ID を残す。
+`generated` には、条件（`options`）、モデル、MotionBricks の版、推論（`backend`: `tensorrt` か `onnxruntime`、`providers`: ONNX Runtime の実行先）、生成ごとにモデルが選んだ token の数（`tokens`）、コマ数、進んだ距離、かかった時間（`timings.inferenceSec` は推論だけの合計）、ジョブの ID を残す。推論が違っても、使ったモデルと見本の動きは同じなので、ライセンスの記録は変わらない。
 
 ## 確かめの道具
 

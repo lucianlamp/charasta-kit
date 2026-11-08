@@ -8,9 +8,9 @@
 |---|---|
 | `characters.md` | キャラと版、保管場所の形、`character.json` と `version.json`、サーバーの API、ごみ箱、取り込みの CLI |
 | `character-style.md` | キャラのスタイル（スタンダード体型、チビ体型）、スタイルの画面、版の検査 |
-| `creature.md` | 生き物（Blender の骨と動きのキャラ）の版、取り込み、ショートから使う書き方、生き物のページ |
 | `edition.md` | 版の種類（作者の版 full と配るキット kit）、キットで外した機能、決め方 |
-| `screens.md` | 画面の全体（ファイル、URL、ジョブの引き出し、ビューア、4 工程の進み具合、完成モデルとプロフィール、デザインと違えた所、削除とごみ箱） |
+| `adjust.md` | 体型と揺れもの（仕上げの中の画面、下見、ジョブ `adjust`、揺れものの組、直しの頼みごと `adjust-requests/` と `scripts/adjust-requests.mjs`、エージェントの手順） |
+| `screens.md` | 画面の全体（ファイル、URL、ジョブの引き出し、ビューア、4 工程の進み具合、完成モデルとプロフィール、デザインと違えた所、ステージ、削除とごみ箱） |
 | `jobs.md` | ジョブの動き方、形と API、ジョブの種類と、それぞれの文書 |
 
 ## 撮ると声
@@ -43,6 +43,7 @@
 
 | 文書 | 中身 |
 |---|---|
+| `stages.md` | ステージの頼みごと（「新しいステージを頼む」、`stage-requests/`、API、`scripts/stage-requests.mjs`、エージェントが stage-studio にシーンを足す手順） |
 | `shorts.md` | ショート（対話型）の編集画面、`short` ジョブ、歩く 1 テイク、声の提供元、2 人の描画、timeline と自動演出、合成、図 |
 | `shorts-dance-mv.md` | ダンス MV（型 `dance`）、拍から割る、演出 `music.look`、前からの `mv` ジョブ |
 | `shorts-graphic-mv.md` | グラフィック MV（`music.look = graphic`）、切り抜いた踊る人と大きな文字 |
@@ -51,7 +52,7 @@
 
 | 文書 | 中身 |
 |---|---|
-| `vrm-edits.md` | VRM の glTF を直接書き換える道具（首の長さ、primitive をまとめる、UV の余白） |
+| `vrm-edits.md` | VRM の glTF を直接書き換える道具（体型、首の長さ、primitive をまとめる、UV の余白） |
 
 ## `adr/`
 

@@ -1,32 +1,37 @@
 // きゃらすたの画面の本体: 上部バーと、URL の # から画面を選ぶ部分(docs/screens.md)。
 //   #chars(既定) ライブラリ、#jobs 今の画面のままジョブの引き出しを開く(画面ではない)
 //   #create/<キャラ>[/<版>] つくる、#motions[/<キャラ>[/<版>]] 動き、#expression/<キャラ> 表情(今の表情づくりへ移る)
-//   #studio/<キャラ>/<表情づくり>[/<工程>] 表情、#finish/<キャラ>[/<表情づくり>] 仕上げ
+//   #studio/<キャラ>/<表情づくり>[/<工程>] 表情、#finish/<キャラ>[/<表情づくり>] 仕上げ、#adjust/<キャラ>[/<版>] 仕上げの中の体型と揺れもの
 //   #face/<キャラ>[/<版>] 表情(シェイプキー方式の版の確認)
 //   #gallery 動画ギャラリー、#mv/<キャラ>[/<版>] ダンス MV のショートを作って #short/<ID> へ移る、#shorts ショートの一覧、#short/<ID> カット表の編集
 //   #trash ごみ箱。#model/<キャラ>[/<版>] 完成モデル。#model/<キャラ>/<版>/export と #char/<キャラ> は完成モデルへ移す(前の URL)
+//   #stages[/<シーン>] ステージ(stage-studio のシーンの一覧と、選んだシーン。読むだけ)
 //   生き物のキャラ(docs/creature.md)は #model が生き物のページ。VRM の工程の画面(つくる、動き、表情、仕上げ、MV)は短い案内とキャラのページへのリンクだけ
 import {h, getJSON} from './dom.mjs';
-import {METHODS, enc, thumb, sortVersions, jobActive, jobRow} from './shared.mjs';
+import {AGENT, METHODS, enc, thumb, sortVersions, jobActive, jobRow} from './shared.mjs';
 import {showLibrary} from './library.mjs';
 import {showCreate} from './create.mjs';
 import {showMotion} from './motion.mjs';
 import {showStudio, showStudioStart} from './studio.mjs';
 import {showFaceCheck} from './face-check.mjs';
 import {showFinish} from './finish.mjs';
+import {showAdjust} from './adjust.mjs';
 import {showModel} from './model.mjs';
 import {showTrash} from './trash.mjs';
 import {showGallery} from './gallery.mjs';
 import {showShorts, showShort} from './short.mjs';
 import {startDanceShort} from './short-dance.mjs';
 import {showCreature} from './creature.mjs';
-import {CHAR_STYLES, STYLE_TABS, isCreature, styleLabel} from './char-style.mjs';
+import {showStages} from './stages.mjs';
+import {CHAR_STYLES, STYLE_IDS, STYLE_TABS, isCreature, styleLabel} from './char-style.mjs';
 import {STYLE_LABEL} from './short-direct.mjs';
+import {CAMERA_AXES, CAMERA_COMBOS} from './short-camera.mjs';
+import {can} from './capabilities.mjs';
 
 const main = document.getElementById('main'), bar = document.getElementById('appbar'), phoneNav = document.getElementById('phoneNav');
 const STAGES = [['create', '1', 'つくる'], ['motion', '2', '動き'], ['expression', '3', '表情'], ['finish', '4', '仕上げ']];
 // VRM が前提の画面。生き物のキャラでは開かない
-const VRM_PAGES = {create: 'つくる', motions: '動き', expression: '表情', studio: '表情', face: '表情', finish: '仕上げ', mv: 'ダンス MV'};
+const VRM_PAGES = {create: 'つくる', motions: '動き', expression: '表情', studio: '表情', face: '表情', finish: '仕上げ', adjust: '体型と揺れもの', mv: 'ダンス MV'};
 const chosenVer = {}, chosenStudio = {};   // キャラごとに、画面を移っても保つ版と表情づくり
 const store = {   // 最後に見たキャラ。残せない環境でも動く
   get() { try { return localStorage.getItem('charasta.char'); } catch { return null; } },
@@ -76,12 +81,14 @@ function renderBar(ov, stage, c, verId) {
   const brand = h('a', {class: 'brand', href: '#chars'}, h('img', {src: '/app/icon.svg', alt: '', width: '28', height: '28'}), 'きゃらすた');
   renderPhoneNav(stage, c);
   const gallery = h('a', {class: 'model-link', href: '#gallery', 'aria-current': /^#(gallery|short)/.test(location.hash) ? 'page' : null}, '動画');
-  if (stage === 'none') { bar.replaceChildren(brand, h('div', {class: 'grow'}), gallery, jobsButton, drawer); return; }
+  const scenes = h('a', {class: 'model-link', href: '#stages', 'aria-current': /^#stages/.test(location.hash) ? 'page' : null}, 'ステージ');
+  if (stage === 'none') { bar.replaceChildren(brand, h('div', {class: 'grow'}), scenes, gallery, jobsButton, drawer); return; }
   const close = () => { sw.open = false; };
   const creature = isCreature(c);
-  const pickVersion = v => e => {   // 表情と仕上げの URL は版を持たないので、同じ URL のまま読み直す
+  const pickVersion = v => e => {   // 表情と仕上げの URL は版を持たないので、同じ URL のまま読み直す。表情の確認と体型と揺れものは版の URL へ
     e.preventDefault(); close(); chosenVer[c.id] = v.id;
-    const next = location.hash.startsWith('#face/') ? `#face/${enc(c.id)}/${enc(v.id)}` : stageHref(stage, c);
+    const page = /^#(face|adjust)\//.exec(location.hash)?.[1];
+    const next = page ? `#${page}/${enc(c.id)}/${enc(v.id)}` : stageHref(stage, c);
     if (next === location.hash) route(); else location.hash = next;
   };
   const sw = h('details', {class: 'switch'},
@@ -100,7 +107,7 @@ function renderBar(ov, stage, c, verId) {
   const tab = ([id, n, label]) => h('a', {class: 'tab', href: stageHref(id, c), 'aria-current': id === stage ? 'page' : null}, h('span', {class: 'mono n'}, n), h('span', {}, label));
   // 生き物は 4 工程のタブを出さず、キャラのページへのリンクだけ
   bar.replaceChildren(brand, sw, creature ? h('div', {class: 'grow'}) : h('nav', {class: 'tabs', 'aria-label': '工程'}, STAGES.map(tab)),
-    h('a', {class: 'model-link', href: stageHref('model', c), 'aria-current': stage === 'model' ? 'page' : null}, creature ? 'キャラのページ' : '完成モデル'), gallery, jobsButton, drawer);
+    h('a', {class: 'model-link', href: stageHref('model', c), 'aria-current': stage === 'model' ? 'page' : null}, creature ? 'キャラのページ' : '完成モデル'), scenes, gallery, jobsButton, drawer);
 }
 
 // スマホの下のナビ。ジョブは上部バーの引き出し、つくると仕上げはキャラの切り替えの欄とライブラリのカードから入る
@@ -110,7 +117,7 @@ function renderPhoneNav(stage, c) {
   const creature = isCreature(c);
   phoneNav.replaceChildren(link('#chars', 'ライブラリ', stage === 'none'),
     creature ? null : link(stageHref('motion', c), '動き', stage === 'motion'), creature ? null : link(stageHref('expression', c), '表情', stage === 'expression'),
-    link(stageHref('model', c), creature ? 'キャラ' : '完成モデル', stage === 'model'), link('#gallery', '動画', /^#(gallery|short)/.test(location.hash)));
+    link(stageHref('model', c), creature ? 'キャラ' : '完成モデル', stage === 'model'), link('#stages', 'ステージ', /^#stages/.test(location.hash)), link('#gallery', '動画', /^#(gallery|short)/.test(location.hash)));
 }
 
 // 生き物のキャラで VRM の画面を開いたときの案内
@@ -121,14 +128,34 @@ function creatureNotice(char, page) {
     h('a', {class: 'button primary', href: '#model/' + enc(char.id)}, 'キャラのページへ戻る'));
 }
 
+// キットには生き物が無い(使える機能の creature が使えない。docs/edition.md)。新しいキャラとスタイルを変える欄の生き物、ライブラリの生き物のタブ、
+// 生き物だけのカメラ(と、それだけが持つ軸の値「生き物」「見上げる」)を表から外す。何度呼んでも同じ
+function hideCreatures() {
+  const drop = (list, bad) => { for (let i = list.length - 1; i >= 0; i--) if (bad(list[i])) list.splice(i, 1); };
+  drop(STYLE_IDS, s => s === 'creature');
+  drop(STYLE_TABS, t => t[0] === 'creature');
+  drop(CAMERA_COMBOS, c => c.kinds.every(k => k === 'creature'));
+  for (const a of CAMERA_AXES) drop(a.values, v => !CAMERA_COMBOS.some(c => c[a.key] === v));
+}
+
+// キットで生き物のキャラの URL を開いたときの案内(前の保管場所に生き物のキャラが残っているとき)
+function kitCreatureNotice(id) {
+  return h('div', {class: 'page-empty route-notice'},
+    h('h1', {}, `${id} は生き物のキャラ`),
+    h('p', {}, '生き物は配布版には無い機能なので、このキャラのページは開けない。'),
+    h('a', {class: 'button primary', href: '#chars'}, 'ライブラリへ戻る'));
+}
+
 // 版の種類の名前(/api/overview の labels、public/edition.mjs)を画面の表に入れる。版の種類は動いている間に変わらないので、読むたびに同じ値を入れ直すだけ
-function applyEdition({labels}) {
+function applyEdition({labels, capabilities}) {
+  if (capabilities && !can({capabilities}, 'creature')) hideCreatures();
   if (!labels) return;   // 古いサーバー
   METHODS.splice(0, METHODS.length, ...labels.methods);
   for (const [k, v] of Object.entries(labels.styles)) if (CHAR_STYLES[k]) CHAR_STYLES[k].label = v;
   for (const t of STYLE_TABS) if (labels.styles[t[0]]) t[1] = labels.styles[t[0]];
   for (const k of Object.keys(STYLE_LABEL)) delete STYLE_LABEL[k];
   Object.assign(STYLE_LABEL, labels.shortStyles);
+  if (labels.agent) Object.assign(AGENT, labels.agent);
 }
 
 // ---- 画面の切り替え ----
@@ -147,8 +174,18 @@ async function route(e) {
     const ov = await getJSON('/api/overview');
     if (!alive()) return;
     applyEdition(ov);
+    // キットは生き物のキャラをどの画面にも出さない(ライブラリ、切り替えの欄、ショートの欄)
+    const hiddenCreatures = can(ov, 'creature') ? [] : ov.chars.filter(isCreature).map(x => x.id);
+    if (hiddenCreatures.length) ov.chars = ov.chars.filter(x => !isCreature(x));
     const pick = id => ov.chars.find(x => x.id === id) ?? null;
-    const stage = {create: 'create', motions: 'motion', expression: 'expression', studio: 'expression', face: 'expression', finish: 'finish', model: 'model', mv: 'mv'}[page] ?? 'none';
+    const stage = {create: 'create', motions: 'motion', expression: 'expression', studio: 'expression', face: 'expression', finish: 'finish', adjust: 'finish', model: 'model', mv: 'mv'}[page] ?? 'none';
+    if (a && stage !== 'none' && hiddenCreatures.includes(a)) {
+      renderBar(ov, 'none', null, null);
+      refreshJobs();
+      if (alive()) main.replaceChildren(kitCreatureNotice(a));
+      scrollTo(0, 0);
+      return;
+    }
     if (a && stage !== 'none' && !pick(a)) throw Error(`キャラ ${a} が無い`);
     // VRM の画面をキャラ ID なしで開いたときは、生き物でないキャラを選ぶ(覚えたキャラが生き物なら最初の VRM のキャラ)
     const vrmPage = Object.hasOwn(VRM_PAGES, page), stored = pick(store.get());
@@ -156,7 +193,7 @@ async function route(e) {
     if (char) {
       store.set(char.id);
       char.versions = (await getJSON('/api/characters/' + enc(char.id))).versions;
-      if (['create', 'motions', 'model', 'face', 'mv'].includes(page) && b) chosenVer[char.id] = b;
+      if (['create', 'motions', 'model', 'face', 'adjust', 'mv'].includes(page) && b) chosenVer[char.id] = b;
       if (['studio', 'finish'].includes(page) && b) chosenStudio[char.id] = b;
       if (chosenVer[char.id] && !char.versions.some(v => v.id === chosenVer[char.id])) delete chosenVer[char.id];   // 消した版や、無い版の URL は最新の版へ戻す
       if (!chosenStudio[char.id] && char.studios.length) chosenStudio[char.id] = char.studios.at(-1).id;
@@ -184,9 +221,11 @@ async function route(e) {
     else if (page === 'studio') await showStudio(ctx, b, c);
     else if (page === 'face') await showFaceCheck(ctx);
     else if (page === 'finish') await showFinish(ctx, char && chosenStudio[char.id]);
+    else if (page === 'adjust') await showAdjust(ctx);
     else if (page === 'model') await (char && isCreature(char) ? showCreature(ctx) : showModel(ctx));
     else if (page === 'trash') await showTrash(ctx);
     else if (page === 'gallery') await showGallery(ctx);
+    else if (page === 'stages') await showStages(ctx, a);
     else if (page === 'mv') await startDanceShort(ctx);
     else if (page === 'shorts') await showShorts(ctx);
     else if (page === 'short') await showShort(ctx, a);

@@ -27,10 +27,11 @@
 <保管場所>/
   characters/<charId>/
     character.json
-    versions/<verId>/model.vrm, version.json, thumb.png, check.json(検査の結果。消してよい)      (生き物の版は model.blend, creature.json, version.json, thumb.png。docs/creature.md)
+    versions/<verId>/model.vrm, version.json, thumb.png, check.json(検査の結果。消してよい), adjust.json(体型と揺れものの直しで作った版の値。docs/adjust.md)
     lines/<lineId>/audio.(mp3|wav|m4a), line.json
   motions/<motionId>/
     motion.vrma, motion.json
+  adjust-requests/<ID>/request.json, shot.png(直しの頼みごと。docs/adjust.md)
   trash/<ごみ箱 ID>/
     trash.json, files/<元のパス>
   server.pid
@@ -52,7 +53,7 @@
 
 `vrmMeta` は任意で、VRM の meta に入れる作者と利用条件(`authors`、`commercialUsage`、`allowRedistribution`、`modification`、`avatarPermission`、`creditNotation`、`licenseUrl`)。`PATCH` で丸ごと置き換え、`null` か空で消す。
 
-`style` はキャラのスタイルで、`standard`（スタンダード体型、表情はシェイプキー）、`chibi`（チビ体型、表情は画像）、`creature`（生き物、Blender の骨と動き）のどれか。仕様は `docs/character-style.md` と `docs/creature.md`。新しいキャラは作るときに必ず選ぶ（`POST /api/characters` と `scripts/new-character.mjs --style` で必須。ライブラリ層の `createCharacter` は省略できる）。前からのキャラで character.json に `style` が無いものは、`GET` の応答で `style: null`（未設定）になる。自動では決めない。`PATCH /api/characters/<id>` で `standard` / `chibi` / `creature` に変えられる。それ以外の値と `null` は `bad-input`。版があるキャラは、`creature` とそれ以外のあいだを行き来できない（`bad-input`。VRM の版と生き物の版は中身が違う）。
+`style` はキャラのスタイルで、`standard`（スタンダード体型、表情はシェイプキー）、`chibi`（チビ体型、表情は画像）のどれか。仕様は `docs/character-style.md`。新しいキャラは作るときに必ず選ぶ（`POST /api/characters` と `scripts/new-character.mjs --style` で必須。ライブラリ層の `createCharacter` は省略できる）。前からのキャラで character.json に `style` が無いものは、`GET` の応答で `style: null`（未設定）になる。自動では決めない。`PATCH /api/characters/<id>` で `standard` / `chibi` に変えられる。それ以外の値と `null` は `bad-input`。
 
 ### version.json
 
@@ -63,8 +64,6 @@
 ```
 
 `order` は同じキャラの中での並び（古い順に 1 から）。
-
-生き物の版の version.json は、上の形に `"kind": "creature"` を足したもの（`source.charakuruProject` は `null`）。前からの VRM の版には `kind` が無い。API の応答では VRM の版にも `kind: "vrm"` を足す。生き物の版のフォルダには `model.blend`（取り込んだ blend のコピー。sha256 を記録）、`creature.json`（生き物そのものの値。`rest`、`clips`、`fly`、`scale`、`drop`、`fps`、`yaw`）、`thumb.png`（512×512、rest の姿勢、背景は透明）があり、`model.vrm` と `model-lite.vrm` は無い。取り込めるのは `style` が `creature` のキャラだけで、`creature` のキャラに VRM の版（`importVersion`、きゃらくるからの取り込み、表情づくりの「版にする」）は取り込めない（`bad-input`）。
 
 ### line.json と motion.json
 
@@ -77,11 +76,12 @@
 | `GET /` | ギャラリーの画面（`public/index.html`） |
 | `GET /viewer?char=<id>&ver=<id>` | ビューアの画面（`public/viewer.html`）。ver を省くと最新の版 |
 | `GET /api/characters` | `[{ id, name, note, style, latest: { id, label, thumb }, versionCount, lineCount }]` |
-| `GET /api/characters/<id>` | `{ ...character, tags, style, versions: [...version.json に kind、thumb、model の URL を足したもの。生き物の版は `model` と `modelLite` が `null` で、`blend`（model.blend の URL）と `creature`（`{ rest, fly, clips, clipNames, scale, drop, fps, yaw }`）が付く], lines: [...line.json に audio の URL を足したもの], appearances: [{ shortId, title, style, updatedAt }] }`。`appearances` は `shorts/*/short.json` のうち `cast[].charId`、`charId`、`take.creature.charId` のどれかがこのキャラのもので、`updatedAt` の新しい順。読めない short.json は飛ばす |
+| `GET /api/characters/<id>` | `{ ...character, tags, style, versions: [...version.json に kind、thumb、model の URL を足したもの], lines: [...line.json に audio の URL を足したもの], appearances: [{ shortId, title, style, updatedAt }] }`。`appearances` は `shorts/*/short.json` のうち `cast[].charId`、`charId` のどれかがこのキャラのもので、`updatedAt` の新しい順。読めない short.json は飛ばす |
 | `POST /api/characters` | 本文 `{ id, name, style, note?, voice?, method? }`。`style` は必須（`standard` か `chibi`、無いか不正なら 400 `bad-input`）。成功は 201 で character.json を返す |
 | `PATCH /api/characters/<id>` | 本文に `voice` / `note` / `latestVersion` / `method` / `tags` / `style` / `vrmMeta` のどれかを入れる。成功は 200 で `GET /api/characters/<id>` と同じ形を返す |
-| `GET /api/overview` の `chars[]` | 各キャラに `style`（`standard` / `chibi` / `creature` / `null`）と `kind`（`creature` か `vrm`）を含む。生き物には `creature`（最新の版の `{ rest, fly, clips, clipNames, scale, drop, fps, yaw }`、版が無ければ `null`）が付き、`thumb` は最新の版の thumb.png の URL。`finished[]` の各版にも `kind` と `creature` が付き、生き物の版の `model` は `null`。`stages` は VRM の 4 工程なので、生き物では使わない |
-| `GET /api/characters/<id>/versions/<ver>/check` | 版の検査。`{ charId, verId, style, applicable, reason?, unavailable?, items: [{id, label, level, detail}], summary: {ok, warn, ng, unknown, total}, cached, checkedAt }`。`style` が `standard` なら VRoid 形式の検査、`chibi` ならチビの検査(軽い版、三角形、材質、テクスチャ、表情の方式)。`creature` と未設定は `applicable: false` で `reason` を返す。スタンダードで手本(`studio/vroid/reference.json`)が無ければ `unavailable` に理由を入れて `items` は空。版が無ければ 404。結果は版のフォルダの `check.json` に置き、model.vrm と model-lite.vrm の大きさと更新時刻が同じなら読み直さない（docs/character-style.md） |
+| `GET /api/overview` の `chars[]` | 各キャラに `style`（`standard` / `chibi` / `null`）と `kind`（`vrm`）を含む。 |
+| `GET /api/characters/<id>/versions/<ver>/check` | 版の検査。`{ charId, verId, style, applicable, reason?, unavailable?, items: [{id, label, level, detail}], summary: {ok, warn, ng, unknown, total}, cached, checkedAt }`。`style` が `standard` なら VRoid 形式の検査、`chibi` ならチビの検査(軽い版、三角形、材質、テクスチャ、表情の方式)。未設定は `applicable: false` で `reason` を返す。スタンダードで手本(`studio/vroid/reference.json`)が無ければ `unavailable` に理由を入れて `items` は空。版が無ければ 404。結果は版のフォルダの `check.json` に置き、model.vrm と model-lite.vrm の大きさと更新時刻が同じなら読み直さない（docs/character-style.md） |
+| `GET /api/characters/<id>/versions/<ver>/adjust` | 体型を直せるかと、揺れものの組と今の値（`docs/adjust.md`）。直すのはジョブ `adjust` |
 | `GET /api/motions` | `[...motion.json に file の URL を足したもの]` |
 | `POST /api/motions` | VRMA の取り込み。本文は VRMA そのもの、ヘッダ `x-filename`（元の名前）と `x-license`（JSON: holder、summary、redistribution）。返すのは作った motion.json |
 | `GET /lib/<保管場所の中のパス>` | 保管場所のファイル（読むだけ。パスの外へ出るものは 404） |
@@ -142,11 +142,10 @@ trash/<日時>-<種類>-<ID>/files/<元のパス>   例 files/characters/c1/vers
 ```bash
 node scripts/import-version.mjs --char chara1 --id v2-expressions --label "表情を入れた" --note "..." --src <path.vrm> [--charakuru-project <id>] [--latest]
 node scripts/import-version.mjs --char chara2 ... --src-charakit <project.charakit> --member documents/vrm/<sha>.vrm   # 正本の中の VRM を読み出す（unzip、読むだけ）
-node scripts/new-character.mjs --id chara1 --name キャラ1 --style standard|chibi|creature --note "..." [--voice grok:eve]
-node scripts/import-creature.mjs --char crow --id v1 --label "..." --note "..." --src <model.blend> --spec <creature.json> [--latest] [--no-thumb]   # 生き物の版。Action の名前を Blender で確かめ、thumb.png も Blender で撮る
+node scripts/new-character.mjs --id chara1 --name キャラ1 --style standard|chibi --note "..." [--voice grok:eve]
 node scripts/import-motion.mjs --id vrma-02 --label 挨拶 --src <path.vrma> --license-json <file> [--expressions-json <file>]
 node scripts/import-line.mjs --char chara1 --id hello --text "こんにちは、よろしくね！" [--emotion relaxed] --voice grok:eve --src <audio>
 node tools/thumb.mjs --char chara1 --ver v2-expressions   # サーバーが動いている前提。thumb.png を書く（512×512、正面の全身）
 ```
 
-同じ ID が既にあれば止まる（上書きしない）。`import-creature.mjs` は `--spec` の Action の名前が blend に無いと、何も作らずに終了コード 1 で止まる。Blender は設定の `blender`（環境変数 `CHARASTA_BLENDER` で上書き）。サムネイルは `tools/creature_thumb.py` が GPU（OPTIX、無ければ CUDA、無ければ CPU）で描く。撮れなかったときは版を残し、理由を出す。VRM の版を前提にする `tools/thumb.mjs` などの撮影の道具は、生き物のキャラには使えない（断って止まる）。
+同じ ID が既にあれば止まる（上書きしない）。
