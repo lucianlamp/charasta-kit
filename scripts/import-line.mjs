@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// node scripts/import-line.mjs --char chara4 --id hello --text "こんにちは、よろしくね！" [--emotion relaxed] --voice grok:eve --src <audio>
+// node scripts/import-line.mjs --char <キャラ> --id hello --text "こんにちは、よろしくね！" [--emotion relaxed] --voice grok:eve --src <audio>
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {cliArgs, need, openLibrary, run} from '../lib/cli.mjs';

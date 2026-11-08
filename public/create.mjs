@@ -1,4 +1,4 @@
-// つくる: キャラの版、作り方の記録、きゃらくるのプロジェクト(読むだけ)、版の取り込み(docs/ui.md、ADR 0001)。新しいキャラはライブラリから作る。
+// つくる: キャラの版、作り方の記録、きゃらくるのプロジェクト(読むだけ)、版の取り込み(docs/screens.md、ADR 0001)。新しいキャラはライブラリから作る。
 import {h, getJSON, send} from './dom.mjs';
 import {METHODS, enc, fmtDate, sortVersions, thumb, viewerHref} from './shared.mjs';
 import {moveToTrash} from './confirm.mjs';

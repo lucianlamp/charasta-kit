@@ -1,5 +1,5 @@
 // きゃらすたのビューアの撮影: 顔テクスチャ方式の VRM の角度・表情・視線・口・まばたきの連続写真。
-// node tools/shots.mjs --char chara4 [--ver v3-smile-mouth] --out OUT_DIR   （サーバーが動いている前提）
+// node tools/shots.mjs --char <キャラ> [--ver <版>] --out OUT_DIR   （サーバーが動いている前提）
 // SHOTS=grid,expr,gaze（既定）, eg（表情中の視線）, mouth, blinkseq, sweep（SWEEP=表情名）, closedgrid, lip, skin
 // grid: 顔の周りのカメラ yaw -45/0/25/45/65/90 x pitch +25/0/-25、expr: 正面の寄り、gaze: lookAt の向き。
 // 表情は window.lock で固定する（ビューア自身の自動まばたきと表情ボタンが毎フレーム上書きするため）。

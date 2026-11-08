@@ -1,4 +1,4 @@
-// キャラのスタイルのタブの絞り込みと数、最初に開くタブ、タブの下の 1 行、生き物の動きの名前と表(public/char-style.mjs)。docs/char-style.md、docs/creature.md
+// キャラのスタイルのタブの絞り込みと数、最初に開くタブ、タブの下の 1 行、生き物の動きの名前と表(public/char-style.mjs)。docs/character-style.md、docs/creature.md
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {CHAR_STYLES, STYLE_TABS, bandText, filterByStyleTab, isCreature, motionNames, motionRows, motionSummary, pickStyleTab, restyleChoices, styleLabel, styleOf, styleTabCounts, takeCreatureExample, vrmChars} from '../public/char-style.mjs';

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // 版をゲーム用に書き出す(docs/game-export.md)。サーバーなしで、ジョブ game-export と同じ処理を動かす。
-//   node scripts/game-export.mjs --char nurse --ver v12-slim [--motions knight-attack1,archer-run] [--target 20000] [--springs skirt=1.5,0.6,0.3] [--springs hair=2,0.5,0.1]
+//   node scripts/game-export.mjs --char <キャラ> --ver <版> [--motions <モーション>,<モーション>] [--target 20000] [--springs skirt=1.5,0.6,0.3] [--springs hair=2,0.5,0.1]
 // 結果は 保管場所/characters/<キャラ>/versions/<版>/game/<書き出し ID>/ に置く。--springs を一つでも渡すと、既定(skirt=1.5,0.6,0.3)は使わない。
 import os from 'node:os';
 import fs from 'node:fs/promises';

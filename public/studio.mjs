@@ -1,4 +1,4 @@
-// 表情(docs/expression-studio.md、docs/ui.md): 左に工程、真ん中に選んだ工程の中身、右にできている表情と新しい依頼。
+// 表情(docs/expression-studio.md、docs/screens.md): 左に工程、真ん中に選んだ工程の中身、右にできている表情と新しい依頼。
 // 確かめと版にするは仕上げの画面(public/finish.mjs)にある。#studio/<キャラ>/<ID>/<工程> で工程を直接開ける。
 import {h, getJSON, send, elapsedText} from './dom.mjs';
 import {enc, mb, when} from './shared.mjs';

@@ -1,5 +1,5 @@
 // 撮るジョブの撮影: モーションとセリフを決まった時刻で進め、1 コマずつ JPEG に撮る。音は付けない(lib/shoot.mjs が ffmpeg でまとめる)。
-//   node tools/shoot.mjs --char chara4 [--ver v4-natural-hair] [--motion illit-itsme-b] [--line hello --line-seconds 2.1] --seconds 21.92 --out DIR
+//   node tools/shoot.mjs --char <キャラ> [--ver <版>] [--motion <モーション>] [--line hello --line-seconds 2.1] --seconds 21.92 --out DIR
 //     [--framing full|upper|face] [--aspect 9:16] [--width 1080 --height 1920] [--fps 30] [--expression motion] [--background viewer|#rrggbb] [--port 8870]
 // 再生の速さに左右されないよう、ビューア自身の描画を止め、時刻を手で進める。揺れ骨は dt で振る舞いが変わる(drag は 1 歩ごとに掛かる)ので、
 // 画面で見ているのと同じ 1/60 秒の歩みに揃え、30 fps は 2 歩で 1 コマにする。最初のコマの前に、最初の姿勢のまま揺れ骨を落ち着かせる。

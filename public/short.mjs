@@ -1,4 +1,4 @@
-// ショート動画: 一覧(#shorts)と編集画面(#short/<ID>)。ジョブは lib/short.mjs(docs/voice-and-jobs.md)、画面は docs/ui.md。
+// ショート動画: 一覧(#shorts)と編集画面(#short/<ID>)。ジョブは lib/short.mjs(docs/shorts.md)、画面は docs/shorts.md。
 import {h, getJSON, send} from './dom.mjs';
 import {enc, figuresReport, jobActive, pendingRow, thumb, uploadAudio, viewerFrame, viewerReady, watchJobs} from './shared.mjs';
 import {moveToTrash} from './confirm.mjs';
@@ -107,7 +107,7 @@ export async function showShorts({main, ov, reload, alive}) {
 }
 
 // ---- 編集画面(#short/<ID>) ----
-//   人は確かめて少し直し、直しを頼んで、確認済みにする。上の欄、左の素材、中央のプレビュー、右の選んだカット、下のタイムライン。スマホは縦に積む(docs/ui.md の「ショート」)
+//   人は確かめて少し直し、直しを頼んで、確認済みにする。上の欄、左の素材、中央のプレビュー、右の選んだカット、下のタイムライン。スマホは縦に積む(docs/shorts.md の「ショート」)
 const CAST_COLOR = ['#B79CFF', '#7FD8A6', '#F2A0C4'], NARRATION_COLOR = '#C3C9D3';
 const SFX_LABEL = {...SOUND_LABEL, pop: 'ポン', whoosh: 'シュッ', impact: 'ドン', glitch: 'ザザッ', ding: 'チン', sparkle: 'キラッ', soft: 'フワッ', scuff: 'ザッ', caw: 'カラス', crows: 'カラスの群れ'};
 const ICON = {back: '<path d="M15 18l-6-6 6-6"></path>', prev: '<path d="M19 20L9 12l10-8z"></path><path d="M5 19V5"></path>', next: '<path d="M5 4l10 8-10 8z"></path><path d="M19 5v14"></path>',
@@ -142,7 +142,7 @@ export async function showShort({main, alive, jobsChanged}, id) {
   const [short, shortOptions, motions, overview] = await Promise.all([getJSON('/api/shorts/' + enc(id)), getJSON('/api/short-options'), getJSON('/api/motions'), getJSON('/api/overview')]);
   let s = {...short, cast: castOf(short)}, picked = 0, timer = null;
   let kind = shortKind(s);   // 生き物を選ぶと walk と creature のあいだで変わる(左の「生き物」)
-  const dance = kind === 'dance';   // ダンス MV: 声が無く、カットは「拍から割る」で作る(docs/dance-short.md)
+  const dance = kind === 'dance';   // ダンス MV: 声が無く、カットは「拍から割る」で作る(docs/shorts-dance-mv.md)
   let dancing = null;   // 左の列の「曲とシーン」(dance のときだけ)
   const graphicLook = () => dance && s.music?.look === 'graphic';   // グラフィック MV: カットは場面、ワイプ、言葉。シーン、カメラ、テロップは使わない
   let faceHits = [];   // 最後に書き出したグラフィック MV で、顔に文字がかかったコマの数(カットごと)

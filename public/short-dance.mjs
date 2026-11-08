@@ -1,4 +1,4 @@
-// ダンス MV(ショートの型 dance)の画面: 編集画面の「曲とシーン」の欄と、#mv/<キャラ>[/<版>] からショートを作る入口。docs/dance-short.md、docs/ui.md の「ショート」。
+// ダンス MV(ショートの型 dance)の画面: 編集画面の「曲とシーン」の欄と、#mv/<キャラ>[/<版>] からショートを作る入口。docs/shorts-dance-mv.md、docs/shorts-dance-mv.md の「ショート」。
 //   シーンを選ぶボタンとカット割りの帯は、前の MV を撮る画面(public/mv.mjs、消した)のものを移した
 import {getJSON, h, send} from './dom.mjs';
 import {enc} from './shared.mjs';

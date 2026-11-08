@@ -1,4 +1,4 @@
-// ごみ箱の画面(#trash): 移したものの一覧、戻す、完全に消す、空にする(docs/ui.md)。
+// ごみ箱の画面(#trash): 移したものの一覧、戻す、完全に消す、空にする(docs/screens.md)。
 import {h, getJSON, send} from './dom.mjs';
 import {enc, when} from './shared.mjs';
 import {confirmDialog} from './confirm.mjs';

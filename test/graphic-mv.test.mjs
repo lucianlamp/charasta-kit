@@ -1,4 +1,4 @@
-// グラフィック MV(ダンス MV の演出 music.look === 'graphic')。値の検査、既定値、作業の鍵、画面の計算、ジョブ(make_graphic_mv.py の偽物)。docs/dance-short.md の「グラフィック」。
+// グラフィック MV(ダンス MV の演出 music.look === 'graphic')。値の検査、既定値、作業の鍵、画面の計算、ジョブ(make_graphic_mv.py の偽物)。docs/shorts-graphic-mv.md の「グラフィック」。
 //   stage-studio は一時のフォルダに作った偽物。偽の make_graphic_mv.py は引数と spec を記録し、ffmpeg で無地のコマと shots.json と report.json を書く
 import test from 'node:test';
 import {findPython} from '../lib/platform.mjs';

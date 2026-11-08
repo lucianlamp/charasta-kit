@@ -1,5 +1,5 @@
 // サムネイル撮影: 版の正面の全身を 512x512 で撮り、保管場所の versions/<ver>/thumb.png に書く。
-// node tools/thumb.mjs --char chara4 --ver v3-smile-mouth   （サーバーが動いている前提）
+// node tools/thumb.mjs --char <キャラ> --ver <版>   （サーバーが動いている前提）
 import fs from 'node:fs';
 import path from 'node:path';
 import {loadConfig, loadPlaywright, parseArgs, needId, viewerUrl, openViewer, HIDE_PANEL_CSS} from './common.mjs';

@@ -12,7 +12,7 @@ JPEG の画像は PNG で書き出して mimeType を image/png に変える(JPE
 次は読み込みの段階で止める: --mesh が無い、primitive が無い、texCoord != 0、KHR_texture_transform、16 ビットの PNG。
 パレット PNG の透明(tRNS)は RGBA にして残す。
 
-ナース(2026-11-07)では v12-slim の首の中央(前と後ろ)の縦の継ぎ目に使った。島の中の色は左右で 3 以内で一致していたが、
+例: 首の中央(前と後ろ)の縦の継ぎ目。島の中の色は左右で 3 以内で一致していたが、
 余白は後ろで (230,139,136)、前で (251,204,200) と、島の中の (238,180,178) から離れていた。
 """
 from __future__ import annotations

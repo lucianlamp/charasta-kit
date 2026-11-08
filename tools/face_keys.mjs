@@ -1,5 +1,5 @@
 // シェイプキー方式の版の、Fcl_ のキーを 1 つずつ撮る(docs/expression-studio.md)。サーバーが動いている前提。
-//   node tools/face_keys.mjs --char chara4 --ver own4 --out DIR [--port 8870]
+//   node tools/face_keys.mjs --char <キャラ> --ver <版> --out DIR [--port 8870]
 // 全部のキーと、開いた口でないと見えない歯のキーの組み合わせを、正面の寄りで撮る。DIR/index.json に lib/face-check.mjs の keyPlan の一覧を書く。
 // VRM の表情の更新は止め、モーフの重みを直接置く(プリセットに割り当てていないキーも同じに撮るため)。
 import fs from 'node:fs';

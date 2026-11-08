@@ -313,12 +313,14 @@ test('大きすぎる本文は 413 で断り、サーバーは落ちない(Conte
     // chunked で超える(長さを宣言しない)
     const chunk = Buffer.alloc(1024 * 1024);
     const r = await post('/api/audio', {'x-filename': 'a.wav', 'transfer-encoding': 'chunked'}, Array.from({length: 66}, () => chunk));
-    assert.ok(r === 413 || r === 'ECONNRESET' || r === 'EPIPE', String(r));
+    // 断られて接続が切れたときの code は OS で違う(Windows は書き込み中に切れると ECANCELED のことがある)
+    const CUT = [413, 'ECONNRESET', 'EPIPE', 'ECANCELED'];
+    assert.ok(CUT.includes(r), String(r));
     await alive();
     // JSON の上限は 1 MB
     assert.equal(await post('/api/jobs', {'content-type': 'application/json', 'content-length': 1024 * 1024 + 1}, [Buffer.alloc(1024)]), 413);
     const r2 = await post('/api/jobs', {'content-type': 'application/json', 'transfer-encoding': 'chunked'}, Array.from({length: 3}, () => chunk));
-    assert.ok(r2 === 413 || r2 === 'ECONNRESET' || r2 === 'EPIPE', String(r2));
+    assert.ok(CUT.includes(r2), String(r2));
     await alive();
   } finally { await s.close(); }
 });

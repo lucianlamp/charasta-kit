@@ -1,4 +1,4 @@
-// キャラのスタイル(スタンダード、チビ、生き物)の名前、決まること、ライブラリのタブの絞り込みと数(docs/char-style.md、docs/creature.md、docs/ui.md)。
+// キャラのスタイル(スタンダード、チビ、生き物)の名前、決まること、ライブラリのタブの絞り込みと数(docs/character-style.md、docs/creature.md、docs/character-style.md)。
 // 生き物の動きの名前、動きの表の行、ショートから使う書き方の見本もここに置く。
 // 絞り込みと数は DOM を使わない(テストが読み込める)。札と選ぶボタンは呼ばれたときだけ DOM を使う。
 import {h} from './dom.mjs';

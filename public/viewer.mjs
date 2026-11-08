@@ -24,7 +24,7 @@ addEventListener('unhandledrejection', e => note('エラー: ' + (e.reason?.mess
 canvas.addEventListener('webglcontextlost', () => note('WebGL が止まった（端末のメモリが足りない可能性）。版を軽いものにするか、読み込み直す。', 'err', 'gl'));
 const renderer = new THREE.WebGLRenderer({canvas, antialias: true});
 renderer.setPixelRatio(Math.min(devicePixelRatio, /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? 1.5 : 2)); renderer.outputColorSpace = THREE.SRGBColorSpace;
-// ?embed=1: きゃらすたの画面(動き、完成モデル)の iframe の中で、キャンバスだけを出す(docs/ui.md)。背景は周りの画面の色に合わせる
+// ?embed=1: きゃらすたの画面(動き、完成モデル)の iframe の中で、キャンバスだけを出す(docs/screens.md)。背景は周りの画面の色に合わせる
 const EMBED = new URLSearchParams(location.search).get('embed') === '1';
 if (EMBED) document.body.classList.add('embed');
 const BACKGROUND = EMBED ? 0x0b0d10 : 0x11151c;

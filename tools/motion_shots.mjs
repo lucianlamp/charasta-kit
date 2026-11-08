@@ -1,5 +1,5 @@
 // モーションの確かめ: キャラにモーションを当てて、横と正面から決まった時刻で撮り、足・膝・腕・向きを測る。
-// node tools/motion_shots.mjs --char chara4 [--ver ID] --motion mb-walk-1 --out DIR [--port 8871] [--times 0.5,1,1.5] [--every 0.5] [--footik 0] [--views side,front,feet]
+// node tools/motion_shots.mjs --char <キャラ> [--ver ID] --motion <モーション> --out DIR [--port 8870] [--times 0.5,1,1.5] [--every 0.5] [--footik 0] [--views side,front,feet]
 //   -> DIR/<motion>-side-t1.50.jpg、-front-…、<motion>-side.jpg（横に並べた 1 枚）、<motion>.json（測った値）
 //   views の feet は足元の拡大。カメラは最初の時刻の足元に固定する（hips についていかないので、留まった足は床のグリッドの上で動かない）
 // モーションはビューアの再生を止め、この道具が自分の AnimationMixer で時刻を決めて当てる（撮るたびに同じ姿勢になる）。

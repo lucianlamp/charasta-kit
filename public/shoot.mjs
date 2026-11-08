@@ -1,4 +1,4 @@
-// 完成モデルの「撮る」: 枠とプレビュー、タイムライン、撮る条件の欄(よく使う 2 つのほかは細かい条件に畳む)。ジョブは lib/shoot.mjs(docs/voice-and-jobs.md)、画面の決めごとは docs/ui.md。
+// 完成モデルの「撮る」: 枠とプレビュー、タイムライン、撮る条件の欄(よく使う 2 つのほかは細かい条件に畳む)。ジョブは lib/shoot.mjs(docs/shoot.md)、画面の決めごとは docs/shoot.md。
 import {h, getJSON, send} from './dom.mjs';
 import {libUrl, uploadAudio, viewerFrame, viewerReady} from './shared.mjs';
 import {MAX_SECONDS, MAX_AUDIO_BYTES, shootSeconds} from './shoot-plan.mjs';

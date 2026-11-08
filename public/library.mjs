@@ -1,4 +1,4 @@
-// ライブラリ: スタイルのタブ、キャラのカード(4 工程の進み具合、スタイルの札、タグ。生き物は動きの名前)、判断待ちの帯、新しいキャラ、ごみ箱へのリンク(docs/ui.md)。
+// ライブラリ: スタイルのタブ、キャラのカード(4 工程の進み具合、スタイルの札、タグ。生き物は動きの名前)、判断待ちの帯、新しいキャラ、ごみ箱へのリンク(docs/screens.md)。
 import {h, getJSON, send} from './dom.mjs';
 import {METHODS, enc, mb, thumb} from './shared.mjs';
 import {can} from './capabilities.mjs';
@@ -49,7 +49,7 @@ function waitBand(w) {
 // スタイルは必須。選ぶまで「作り始める」を押せない
 // 生き物は 3D の作り方(Tripo / Kimi)を隠し、きゃらくるを開かずに記録だけ作ってキャラのページへ移る。版は scripts/import-creature.mjs で取り込む
 function newCharacter(ov, stageHref) {
-  let method = 'tripo';   // 2026-11-04 ナースの比較で、顔は本家(Tripo Studio)の方がよかった
+  let method = 'tripo';   // 顔の仕上がりは Tripo Studio の方がよかったので、既定にする
   let style = null, setReady = () => {};
   const steps = styleStepsBox();
   const choices = styleChoices(style, s => { style = s; steps.set(s); methodField.hidden = s === 'creature'; setReady(); });

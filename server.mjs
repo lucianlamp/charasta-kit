@@ -207,7 +207,7 @@ export function createServer(config) {
         if (req.method !== 'POST') { res.writeHead(405, {Allow: 'POST'}); return res.end(); }
         return json(res, 201, await studio.importProjectVersion(safeDecode(verRoute[1]), await readJsonBody(req)));
       }
-      // 消す操作(ごみ箱へ移す)と、消す前の影響の一覧(末尾に /impact)。docs/library.md の「ごみ箱」
+      // 消す操作(ごみ箱へ移す)と、消す前の影響の一覧(末尾に /impact)。docs/characters.md の「ごみ箱」
       const target = trashTarget(url.pathname);
       if (target?.impact) {
         if (!get) { res.writeHead(405, {Allow: 'GET'}); return res.end(); }
@@ -335,7 +335,7 @@ export function createServer(config) {
         if (req.method === 'POST') { const body = await newShortBody(lib, config.stageStudioDir, await readJsonBody(req)); return json(res, 201, await lib.saveShort('s' + Date.now().toString(36), body)); }
         res.writeHead(405, {Allow: 'GET, POST'}); return res.end();
       }
-      if (p === '/api/dance-shorts') {   // ダンス MV のショートを新しく作る(#mv/<キャラ> の入口)。docs/dance-short.md
+      if (p === '/api/dance-shorts') {   // ダンス MV のショートを新しく作る(#mv/<キャラ> の入口)。docs/shorts-dance-mv.md
         if (req.method !== 'POST') { res.writeHead(405, {Allow: 'POST'}); return res.end(); }
         return json(res, 201, await newDanceShort({lib, stageDir: config.stageStudioDir}, await readJsonBody(req)));
       }

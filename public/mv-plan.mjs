@@ -22,7 +22,7 @@ export function mvCuts({seconds, bpm, stages, beatsPerShot = 8, shotsPerScene = 
   return cuts.slice(1).map((end, k) => ({start: cuts[k], end, stage: stages.length ? stages[Math.floor(k / shotsPerScene) % stages.length] : null}));
 }
 
-// ---- ダンス MV のショート(型 dance)の編集画面の計算。docs/dance-short.md ----
+// ---- ダンス MV のショート(型 dance)の編集画面の計算。docs/shorts-dance-mv.md ----
 export const DANCE_MUSIC_DEFAULTS = {bpm: 120, seed: 1, beatsPerShot: 8, shotsPerScene: 1, audioStart: 0, look: 'anime'};
 export const DANCE_SECONDS = {min: 3, initial: 15};
 const round6 = n => Math.round(n * 1e6) / 1e6;
@@ -66,9 +66,9 @@ export function toggleStage(stages, id) {
 // #mv/<キャラ>[/<版>] から作るダンス MV のショートの本文(POST /api/dance-shorts)
 export const danceShortBody = (char, verId) => ({charId: char.id, ...(verId ? {verId} : {}), title: `${char.name ?? char.id} のダンス MV`});
 
-// ---- グラフィック MV(music.look === 'graphic')。docs/dance-short.md の「グラフィック」 ----
+// ---- グラフィック MV(music.look === 'graphic')。docs/shorts-graphic-mv.md の「グラフィック」 ----
 // 試しと本番。試しは踊る人を pct 50、16 サンプルで描き、1080x1920 の配置のまま重ねて 540x960 に縮める。本番は試作 v12 と同じ
-//   sec は 1 コマあたりの秒(踊る人は描き方ごと、重ねるは CPU 8 並列)。本番は v12 の実測(RTX 4070、18 秒)。試しは 2026-11-07 のナース 8 秒の実測で、Blender の起動を含む(docs/dance-short.md)
+//   sec は 1 コマあたりの秒(踊る人は描き方ごと、重ねるは CPU 8 並列)。本番は v12 の実測(RTX 4070、18 秒)。試しは 8 秒の実測で、Blender の起動を含む(docs/notes/shorts-graphic-mv.md)
 export const GRAPHIC_QUALITIES = {
   preview: {label: '試し', pct: 50, samples: 16, width: 540, height: 960, sec: {full: 0.44, mid: 0.83, face: 0.57, compose: 0.16}, encode: 20},
   final: {label: '本番', pct: 100, samples: 64, width: 1080, height: 1920, sec: {full: 1.25, mid: 1.8, face: 2.69, compose: 0.23}, encode: 40},

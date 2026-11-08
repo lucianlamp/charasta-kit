@@ -7,7 +7,7 @@ import fs from 'node:fs/promises';
 import {parseArgs} from 'node:util';
 import {fail, run, openLibrary} from '../lib/cli.mjs';
 import {root} from '../lib/config.mjs';
-import {readGlbJson} from '../lib/face-check.mjs';
+import {readGlbJson} from '../lib/glb.mjs';
 import {profileOf, referenceOf, checkVroid, summary} from '../lib/vroid-format.mjs';
 import {colliderLayout} from '../lib/vroid-conform.mjs';
 

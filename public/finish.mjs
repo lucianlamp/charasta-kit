@@ -1,4 +1,4 @@
-// 仕上げ: 試作を 1 つ選び、確かめの撮影(表情の 72 枚など)を撮って見て、「版にする」(docs/ui.md)。
+// 仕上げ: 試作を 1 つ選び、確かめの撮影(表情の 72 枚など)を撮って見て、「版にする」(docs/screens.md)。
 import {h, getJSON, send, elapsedText} from './dom.mjs';
 import {enc} from './shared.mjs';
 

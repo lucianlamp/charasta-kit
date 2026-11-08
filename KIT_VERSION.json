@@ -2,10 +2,10 @@
   "exportedAt": "2026-11-08",
   "charasta": {
     "ref": "HEAD",
-    "commit": "3e42179dd09fb8e4209be0fae44f3cca04392b40"
+    "commit": "319824569f80aa4e04e9d5ad02ec3f6224815899"
   },
   "stageStudio": {
-    "ref": "feat/kit-portable",
+    "ref": "HEAD",
     "commit": "ba2ce98a5813355b7ef3183f031b067f68746361"
   }
 }

@@ -1,4 +1,4 @@
-// プロフィール: 完成モデル(生き物はキャラのページ)の上の欄。名前、スタイル、タグ、声、メモ、出演した動画を出す(docs/ui.md)。保存は PATCH /api/characters/<キャラ>
+// プロフィール: 完成モデル(生き物はキャラのページ)の上の欄。名前、スタイル、タグ、声、メモ、出演した動画を出す(docs/screens.md)。保存は PATCH /api/characters/<キャラ>
 import {h, send} from './dom.mjs';
 import {enc, fmtDate} from './shared.mjs';
 import {STYLE_LABEL} from './short-direct.mjs';

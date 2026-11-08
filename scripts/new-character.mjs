@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// node scripts/new-character.mjs --id chara4 --name キャラ4 --style standard|chibi|creature --note "..." [--voice grok:eve]
+// node scripts/new-character.mjs --id chara1 --name キャラ1 --style standard|chibi|creature --note "..." [--voice grok:eve]
 import {cliArgs, need, openLibrary, run} from '../lib/cli.mjs';
 
 const v = cliArgs({id: {type: 'string'}, name: {type: 'string'}, note: {type: 'string'}, voice: {type: 'string'}, style: {type: 'string'}});

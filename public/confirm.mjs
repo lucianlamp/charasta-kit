@@ -1,5 +1,5 @@
 // 確認の枠(<dialog>)と、ごみ箱へ移す操作。alert / confirm は使わない。
-// moveToTrash は影響の一覧(GET .../impact)を箇条書きで見せ、「ごみ箱へ移す」で DELETE を送る(docs/library.md の「ごみ箱」)。
+// moveToTrash は影響の一覧(GET .../impact)を箇条書きで見せ、「ごみ箱へ移す」で DELETE を送る(docs/characters.md の「ごみ箱」)。
 import {h, getJSON, send} from './dom.mjs';
 import {enc} from './shared.mjs';
 

@@ -1,4 +1,4 @@
-/* きゃらすたの画面の見た目(デザインの正本の値。docs/ui.md)。 */
+/* きゃらすたの画面の見た目(デザインの正本の値。docs/screens.md)。 */
 :root { color-scheme: dark; --bg: #0D0F12; --panel: #15181D; --raised: #1C2027; --selected: #262B33; --stage: #0B0D10; --line: #2A2F38; --line-strong: #6E7786;
   --text: #EDEFF3; --soft: #C3C9D3; --muted: #A3ABB8; --act: #D4F25A; --on-act: #14170A; --warn: #FFB454; --run: #6CB6FF; --creature: #5FD38D;
   --sans: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic UI", "Meiryo", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace; }
@@ -147,7 +147,7 @@ legend { font-size: 13px; color: var(--soft); padding: 0; margin-bottom: 6px; }
 /* キャラのタグ。長いタグは省略して title で全文を出す */
 .char-tags { display: flex; flex-wrap: wrap; gap: 4px; padding-top: 6px; min-width: 0; }
 .char-tags .tag { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
-/* キャラのスタイル(docs/char-style.md)。タブ、タブの下の 1 行、札、新しいキャラの選ぶボタンと「このスタイルで決まること」 */
+/* キャラのスタイル(docs/character-style.md)。タブ、タブの下の 1 行、札、新しいキャラの選ぶボタンと「このスタイルで決まること」 */
 .style-tabs { display: flex; flex-wrap: wrap; gap: 6px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
 .style-tab { gap: 8px; min-width: 0; border-color: transparent; color: var(--soft); }
 .style-tab[aria-selected="true"] { background: var(--selected); border-color: var(--act); color: var(--text); font-weight: 700; }
@@ -402,7 +402,7 @@ body.embed { overflow: hidden; }
 body.embed #app { grid-template-columns: 1fr; }
 body.embed aside { display: none; }
 
-/* ---- 削除とごみ箱(docs/ui.md)。色の強調は確定のボタンだけ ---- */
+/* ---- 削除とごみ箱(docs/screens.md)。色の強調は確定のボタンだけ ---- */
 button.quiet { border-color: transparent; color: var(--muted); font-size: 13px; padding: 0 10px; }
 button.quiet:hover { color: var(--text); border-color: var(--line); }
 .icon-btn { flex: none; width: 44px; padding: 0; border-color: transparent; color: var(--muted); }

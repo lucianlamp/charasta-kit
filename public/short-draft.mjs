@@ -1,4 +1,4 @@
-// ショートの下書き: 一覧の「テーマから作る」、編集画面の事実の確認の欄と連載の欄。ジョブは lib/short-draft.mjs(docs/voice-and-jobs.md)、画面は docs/ui.md。
+// ショートの下書き: 一覧の「テーマから作る」、編集画面の事実の確認の欄と連載の欄。ジョブは lib/short-draft.mjs(docs/shorts-draft.md)、画面は docs/shorts-draft.md。
 import {h, getJSON, send} from './dom.mjs';
 import {enc, pendingRow, watchJobs} from './shared.mjs';
 import {DRAFT_STYLES, pendingClaims, scriptChanged, scriptKey} from './short-direct.mjs';

@@ -1,6 +1,6 @@
 // 表情づくりの確かめの撮影(工程 8)と、試作と版の撮り比べ。サーバーが動いている前提。
-//   node tools/studio_checks.mjs --char chara4 --studio rebuild-v4 --proto 2 --out DIR [--port 8871] [--set full|accept]
-//   node tools/studio_checks.mjs --char chara4 --ver v4-natural-hair --out DIR [--port 8871] [--set accept]
+//   node tools/studio_checks.mjs --char <キャラ> --studio <表情づくり> --proto 2 --out DIR [--port 8870] [--set full|accept]
+//   node tools/studio_checks.mjs --char <キャラ> --ver <版> --out DIR [--port 8870] [--set accept]
 // 撮り方: 休めの姿勢(腕は下ろす)、ビューアの face(0.6)(頭の 7cm 上を、0.6m 前から)を、頭のまわりに yaw / pitch だけ回す。
 // 720x720、視野はビューアの既定(30°)。1 枚ごとに揺れ骨を初めに戻し、1/60 秒を 30 回進めてから撮る(撮る順や時刻で髪が変わらない)。
 // ビューア自身の毎フレームの描画は止め、表情は window.lock で固定する(自動まばたきと表情ボタンの上書きを避ける)。

@@ -1,4 +1,4 @@
-// ショートのカメラを「誰を撮る / 距離 / 角度と動き」の 3 つの軸で選ぶ。対応表はデザイン案 Main.dc.html の COMBOS(docs/ui.md の「ショート」)。
+// ショートのカメラを「誰を撮る / 距離 / 角度と動き」の 3 つの軸で選ぶ。対応表はデザイン案 Main.dc.html の COMBOS(docs/shorts.md の「ショート」)。
 //   26 のカメラは lib/short.mjs の SHORT_CAMERAS。動画の種類: talk は立って話す、walk は歩く 1 テイク(short.take)、creature は枝の生き物がいる歩くテイク(take.creature)、dance はダンス MV(style が dance。stage-studio の lib/shots.py の FLOW のカメラ)
 //   DOM は構図の絵(cameraSketch)を呼んだときだけ使う(テストが読み込める)
 

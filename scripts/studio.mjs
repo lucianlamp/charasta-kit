@@ -2,19 +2,19 @@
 // 表情づくり(docs/expression-studio.md)の CLI。保管場所を直接読み書きする。ジョブ(run)と候補(candidate)は動いているサーバーに送る。
 // 同じ表情づくりを持つサーバーが動いている間は、work.json を書く rects・options・video もサーバーの API を通す
 // (サーバーのジョブや画面の書き込みと取り合わないため)。adopt は API が無いので、その間は断る(画面か API で行う、またはサーバーを止めてから)。
-//   node scripts/studio.mjs create   --char chara4 [--id ID] [--note "..."]
-//   node scripts/studio.mjs list     --char chara4
-//   node scripts/studio.mjs status   --char chara4 --id ID
+//   node scripts/studio.mjs create   --char <キャラ> [--id ID] [--note "..."]
+//   node scripts/studio.mjs list     --char <キャラ>
+//   node scripts/studio.mjs status   --char <キャラ> --id ID
 //   node scripts/studio.mjs projects                                   きゃらくるのプロジェクトの一覧(読むだけ)
-//   node scripts/studio.mjs copy     --char chara4 --id ID (--project <きゃらくるのプロジェクト ID> | --from-studio <ID>)
-//   node scripts/studio.mjs adopt    --char chara4 --id ID --from <フォルダかファイル> [--to <drawn/ の下>] [--pattern '*.png'] [--note "..."]
-//   node scripts/studio.mjs rects    --char chara4 --id ID --json rects.json
-//   node scripts/studio.mjs options  --char chara4 --id ID --json options.json   (front / build / video / springTune。2 段目まで重ねる)
-//   node scripts/studio.mjs video    --char chara4 --id ID (--name blink --src blink.mp4 | --dir <NAME.mp4 のフォルダ>)
-//   node scripts/studio.mjs run      --char chara4 --id ID --step front|build|video|checks [--proto N] [--set accept|full] [--wait] [--port 8870]
-//   node scripts/studio.mjs promote  --char chara4 --id ID --proto N --ver <版 ID> --label "..." --note "変えたこと" [--latest]
-//   node scripts/studio.mjs requests [--char chara4] [--id ID] [--all]  未着手の依頼(Claude が読む。--all で全部の状態)。却下した候補と理由も出す
-//   node scripts/studio.mjs candidate --char chara4 --id ID --request r001 --file cand.png [--note "..."] [--port 8870]
+//   node scripts/studio.mjs copy     --char <キャラ> --id ID (--project <きゃらくるのプロジェクト ID> | --from-studio <ID>)
+//   node scripts/studio.mjs adopt    --char <キャラ> --id ID --from <フォルダかファイル> [--to <drawn/ の下>] [--pattern '*.png'] [--note "..."]
+//   node scripts/studio.mjs rects    --char <キャラ> --id ID --json rects.json
+//   node scripts/studio.mjs options  --char <キャラ> --id ID --json options.json   (front / build / video / springTune。2 段目まで重ねる)
+//   node scripts/studio.mjs video    --char <キャラ> --id ID (--name blink --src blink.mp4 | --dir <NAME.mp4 のフォルダ>)
+//   node scripts/studio.mjs run      --char <キャラ> --id ID --step front|build|video|checks [--proto N] [--set accept|full] [--wait] [--port 8870]
+//   node scripts/studio.mjs promote  --char <キャラ> --id ID --proto N --ver <版 ID> --label "..." --note "変えたこと" [--latest]
+//   node scripts/studio.mjs requests [--char <キャラ>] [--id ID] [--all]  未着手の依頼(Claude が読む。--all で全部の状態)。却下した候補と理由も出す
+//   node scripts/studio.mjs candidate --char <キャラ> --id ID --request r001 --file cand.png [--note "..."] [--port 8870]
 //                                                                      候補を置く(動いているサーバーを通す。work.json をサーバーと取り合わないため)
 // 候補の採用と却下は画面で人が決める(CLI には無い)。
 import fs from 'node:fs/promises';

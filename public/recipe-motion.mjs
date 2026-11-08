@@ -1,4 +1,4 @@
-// 動きの「モーションを足す」の「つくる」の札と、つないだ結果の確認の欄(docs/motion-compose.md の「画面からつなぐ」、docs/ui.md)。
+// 動きの「モーションを足す」の「つくる」の札と、つないだ結果の確認の欄(docs/motion-compose.md の「画面からつなぐ」、docs/screens.md)。
 // 区間を並べて 1 本にする。区間の種類は、保管場所のモーション、確認待ちの結果(文章の候補、動画、MotionBricks)、MotionBricks の条件、文章(Kimodo)、動画。
 // 区間が 1 つなら、その種類の単体のジョブ(motion-gen、motion-text、video-motion)を積む。2 つ以上なら motion-recipe を積み、区間の間を MotionBricks(か補間)でつなぐ。
 // 文章と動画の区間は 2 つ以上のときには使えない(先にその区間だけで作り、確認待ちの結果を区間にする)。結果はどれも確認の欄で見てから取り込む。

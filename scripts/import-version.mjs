@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// node scripts/import-version.mjs --char chara4 --id v3-smile-mouth --label "..." --note "..." --src <path.vrm> [--charakuru-project <id>] [--latest]
+// node scripts/import-version.mjs --char <キャラ> --id <版> --label "..." --note "..." --src <path.vrm> [--charakuru-project <id>] [--latest]
 // node scripts/import-version.mjs --char chara2 --id v1-shapekeys ... --src-charakit <project.charakit> --member documents/vrm/<sha>.vrm
 // 元のファイルは読むだけ。保管場所へコピーして sha256 を記録する。
 import fs from 'node:fs/promises';

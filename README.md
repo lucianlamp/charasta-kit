@@ -139,5 +139,5 @@ node tools/thumb.mjs --char chara4 --ver v3
 - `public/`: 画面
 - `tools/`、`scripts/`、`studio/`: 撮影、取り込み、表情づくりの道具
 - `test/`: テスト
-- `docs/adr/`: 設計の決めごとの記録
+- `docs/`: 機能ごとの仕様(目次は [`docs/README.md`](docs/README.md))。`docs/adr/` は設計の決めごとの記録
 - `stage-studio/`: MV とショートの 3D シーンを Blender で描く道具(`stage-studio/README.md`)

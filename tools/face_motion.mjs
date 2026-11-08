@@ -1,5 +1,5 @@
 // モーション中の顔の寄りを撮る(docs/expression-studio.md)。表情を順に出し、カメラは頭に追従する。サーバーが動いている前提。
-//   node tools/face_motion.mjs --char chara4 --ver own4 --motion ID --out DIR [--seconds 24] [--every 16] [--port 8870]
+//   node tools/face_motion.mjs --char <キャラ> --ver <版> --motion ID --out DIR [--seconds 24] [--every 16] [--port 8870]
 // 正面と斜め下(yaw 45、pitch -15)を交互に撮る。DIR/index.json に lib/face-check.mjs の motionPlan の一覧を書く。
 // 表情は window.lock で固定する(ビューアの毎フレームのまばたきと口の値が上書きするため。tools/studio_checks.mjs と同じ)。
 // index.json の value は撮ったときの表情の値、camDist は描いたカメラと頭の距離(m)、camYaw は頭の向きから見た描いたカメラの方位(度)。ラベルどおりに撮れたかを test/face-check-real.test.mjs が見る。

@@ -1,4 +1,4 @@
-// 完成モデル: 工程の外の別ページ。上にプロフィール(public/profile.mjs)、その下に作ったものの一覧、モーションつきの動画を撮る(public/shoot.mjs)、VRM の書き出し(畳みの中のリンク)を 1 画面に置く(docs/ui.md)。
+// 完成モデル: 工程の外の別ページ。上にプロフィール(public/profile.mjs)、その下に作ったものの一覧、モーションつきの動画を撮る(public/shoot.mjs)、VRM の書き出し(畳みの中のリンク)を 1 画面に置く(docs/screens.md)。
 import {h, getJSON, send} from './dom.mjs';
 import {enc, mb, pendingRow, sortVersions, thumb, viewerHref, watchJobs} from './shared.mjs';
 import {shootPanel, CAMERAS, QUALITIES} from './shoot.mjs';

@@ -1,4 +1,4 @@
-// 動画ギャラリー: 全キャラの撮った動画、ショート、MV の一覧(docs/ui.md)。カードを押すとその場で再生する。試しからは本番を積める(前の MV の試しは mv ジョブの previewOf)。
+// 動画ギャラリー: 全キャラの撮った動画、ショート、MV の一覧(docs/screens.md)。カードを押すとその場で再生する。試しからは本番を積める(前の MV の試しは mv ジョブの previewOf)。
 import {h, getJSON, send} from './dom.mjs';
 import {pendingRow, when, watchJobs} from './shared.mjs';
 import {moveToTrash} from './confirm.mjs';

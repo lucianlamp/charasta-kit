@@ -1,4 +1,4 @@
-// 版の検査の欄(キャラのページ、docs/char-style.md)。GET /api/characters/<キャラ>/versions/<版>/check を開いたときに読み、項目と状態を並べる。
+// 版の検査の欄(キャラのページ、docs/character-style.md)。GET /api/characters/<キャラ>/versions/<版>/check を開いたときに読み、項目と状態を並べる。
 // スタンダードは VRoid 形式の検査、チビは軽い版と三角形などの検査。生き物とスタイル未設定は検査なしの理由だけを出す。
 import {h, getJSON} from './dom.mjs';
 import {enc} from './shared.mjs';

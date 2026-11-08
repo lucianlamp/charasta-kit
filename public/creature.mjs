@@ -1,4 +1,4 @@
-// 生き物のキャラのページ(#model/<キャラ>[/<版>] で、キャラが生き物のとき)。docs/creature.md、docs/ui.md
+// 生き物のキャラのページ(#model/<キャラ>[/<版>] で、キャラが生き物のとき)。docs/creature.md、docs/creature.md
 // 3D のビューアは載せない(/viewer は VRM だけ)。サムネイル、プロフィール、版の一覧、動きの表、ショートから使う書き方を出す。
 import {h, getJSON} from './dom.mjs';
 import {enc, fmtDate, sortVersions, thumb} from './shared.mjs';

@@ -1,4 +1,4 @@
-# image_gen で一部だけ描き直させた絵から、その所だけを元の絵に貼り込む(docs/face_atlas.md「ふだんの口は微笑みにする」)。
+# image_gen で一部だけ描き直させた絵から、その所だけを元の絵に貼り込む(docs/face-atlas.md「ふだんの口は微笑みにする」)。
 #   python paste_area.py BASE.png EDIT.png OUT.png --box X0,Y0,X1,Y1 [--feather 16] [--max-band-diff 24]
 # BASE と EDIT は同じキャンバス(image_gen の編集は元の絵と同じ大きさで返る。違えば止める)。
 # 四角の中は EDIT、外は BASE。四角の縁から内側へ feather 画素かけて混ぜ、境目を見せない。

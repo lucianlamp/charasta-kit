@@ -1,4 +1,4 @@
-// 動き: モーションの一覧(出どころで絞る、利用条件の札)、真ん中のビューア(iframe)と再生のバー、モーションを足す(つくる・ファイル)(docs/ui.md)。
+// 動き: モーションの一覧(出どころで絞る、利用条件の札)、真ん中のビューア(iframe)と再生のバー、モーションを足す(つくる・ファイル)(docs/screens.md)。
 import {h, getJSON} from './dom.mjs';
 import {pendingRow, viewerFrame, viewerReady, viewerHref, watchJobs} from './shared.mjs';
 import {showReviews} from './video-motion.mjs';
