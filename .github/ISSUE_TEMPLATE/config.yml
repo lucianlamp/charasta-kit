@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: 導入の手順(README)
-    url: https://github.com/lucianlamp/charasta-kit#インストール
+  - name: Install guide (README)
+    url: https://github.com/lucianlamp/charasta-kit#install
+    about: If setup fails, first check the install steps and the "Optional features" table in the README.
+  - name: 導入の手順(README.ja.md)
+    url: https://github.com/lucianlamp/charasta-kit/blob/main/README.ja.md#インストール
     about: 導入でつまずいたら、まず README の手順と「任意の機能」の表を確かめてください。
