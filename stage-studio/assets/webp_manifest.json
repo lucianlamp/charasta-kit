@@ -929,6 +929,34 @@
   "waterside/wood_wet_soft.png": {
    "mode": "lossless",
    "why": "Non-Color で読む(data=True)。数として使う"
+  },
+  "gym/ceiling.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "gym/curtain.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "gym/floor.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "gym/outside.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "gym/panel.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "gym/wall.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
+  },
+  "gym/wood.png": {
+   "mode": "lossy",
+   "why": "sRGB の色の絵"
   }
  }
 }

@@ -164,6 +164,7 @@ export function createServer(config) {
   const edition = editionOf(config);   // 版の種類(docs/edition.md)。キットで外した機能の API とジョブは断る
   const jobs = new JobQueue({lib, studio, edition, env: config.env ?? {}, getPort: () => server.address()?.port ?? config.port,
     tools: {blender: config.blender, kit: config.charakuruApp, patchVrm: config.patchVrm, springTune: config.springTune, motionbricksDir: config.motionbricksDir, motionbricksBackend: config.motionbricksBackend, motionbricksOnnxRuntime: config.motionbricksOnnxRuntime, vrmaPipelineDir: config.vrmaPipelineDir, rgbmocapDir: config.rgbmocapDir,
+      sam3dPython: config.sam3dPython, sam3dCkptDir: config.sam3dCkptDir, sam3dSrc: config.sam3dSrc, dinov3Src: config.dinov3Src,
       kimodoDir: config.kimodoDir, hfCacheDir: config.hfCacheDir, stageStudioDir: config.stageStudioDir, voicevoxDir: config.voicevoxDir, hyperframesCli: config.hyperframesCli, hyperframesBrowser: config.hyperframesBrowser, figureImageGen: config.figureImageGen, gitBash: config.gitBash}});
 
   const trash = new Trash(lib, jobs);
@@ -318,7 +319,7 @@ export function createServer(config) {
         return json(res, 200, await jobs.discardRecipeMotion(id));
       }
       if (p === '/api/video-motions') {   // 動画からモーションを作る: GET は使えるかどうかと確認待ち、POST は手元の動画を受け取って積む
-        if (get) return json(res, 200, {...videoOptions(edition, await videoMotionOptions(config.vrmaPipelineDir, jobs.env, config.rgbmocapDir)), waiting: await jobs.videoMotionsWaiting()});
+        if (get) return json(res, 200, {...videoOptions(edition, await videoMotionOptions(config.vrmaPipelineDir, jobs.env, config.rgbmocapDir, config)), waiting: await jobs.videoMotionsWaiting()});
         if (req.method === 'POST') return await postVideoMotion(req, res, lib, jobs);
         res.writeHead(405, {Allow: 'GET, POST'}); return res.end();
       }

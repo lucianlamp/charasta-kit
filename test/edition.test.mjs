@@ -58,7 +58,7 @@ test('キット: overview は版の種類と名前を返し、Kimi は出さな�
   assert.doesNotMatch(JSON.stringify(ov.labels.agent), /Claude/);
   const caps = (await s.api('GET', '/api/capabilities')).json;
   assert.equal(caps.edition, 'kit');
-  for (const k of ['kimodo', 'rgbmocap', 'figureImageGen', 'gameExport', 'shortDraft', 'shortFigures', 'talkStyles', 'creature']) assert.deepEqual(caps[k], {available: false, setting: 'edition', note: '配布版には無い機能'}, k);
+  for (const k of ['kimodo', 'rgbmocap', 'sam3d', 'figureImageGen', 'gameExport', 'shortDraft', 'shortFigures', 'talkStyles', 'creature']) assert.deepEqual(caps[k], {available: false, setting: 'edition', note: '配布版には無い機能'}, k);
   assert.deepEqual(caps.motionRecipe, {available: true, setting: 'edition'}, 'モーションをつなぐはキットにも残す');
   assert.equal(caps.motionbricks.available, true, 'MotionBricks はキットにも残す(道具の設定で決まる)');
   assert.equal(caps.videoMotion.available, true);
@@ -80,6 +80,8 @@ test('キット: 外した機能のジョブと API を 400 で断り、MotionBr
   assert.equal(vm.defaultEngine, 'mediapipe');
   const video = {type: 'video-motion', charId: 'c1', verId: 'v1', url: 'https://example.com/v.mp4', rights: '自分で撮った動画'};
   assert.equal((await s.api('POST', '/api/jobs', {...video, engine: 'exmr'})).status, 400);
+  assert.equal((await s.api('POST', '/api/jobs', {...video, engine: 'sam3d'})).status, 400, 'SAM 3D Body は NVIDIA の GPU 専用でキットに無い');
+  assert.ok(!('sam3d' in vm.engines));
   const mp = await s.api('POST', '/api/jobs', video);
   assert.equal(mp.status, 201, JSON.stringify(mp.json));
   assert.equal(mp.json.input.engine, 'mediapipe');
@@ -196,6 +198,8 @@ test('作者の版: overview は full と今までの名前、外す機能もサ
   assert.equal((await s.api('GET', '/api/motion-recipes')).status, 200);
   assert.equal((await s.api('GET', '/api/characters/c1/versions/v1/game-exports')).status, 200);
   assert.ok((await s.api('GET', '/api/video-motions')).json.engines.exmr, '試しの動きでは ExMR を使える');
+  assert.ok((await s.api('GET', '/api/video-motions')).json.engines.sam3d, '試しの動きでは SAM 3D Body を使える');
+  assert.equal(ov.capabilities.sam3d.available, true);
   assert.equal((await s.api('POST', '/api/characters', {id: 'c2', name: 'に', style: 'standard', method: 'kimi'})).status, 201);
   assert.equal((await s.api('POST', '/api/characters', {id: 'crow', name: 'カラス', style: 'creature'})).status, 201, '生き物は作者の版で作れる');
   const crowCut = await s.api('POST', '/api/shorts', short({cuts: [{...CUT, camera: 'crow_close', creature: 'tilt'}]}));

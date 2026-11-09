@@ -5,5 +5,6 @@
   {"id": "classroom", "label": "教室"},
   {"id": "shrine", "label": "神社の祭り"},
   {"id": "rooftop", "label": "夜の屋上"},
-  {"id": "parkway", "label": "公園の並木道"}
+  {"id": "parkway", "label": "公園の並木道"},
+  {"id": "gym", "label": "放課後の体育館"}
 ]

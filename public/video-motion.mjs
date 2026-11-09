@@ -19,15 +19,17 @@ export function videoFields({char, verId, o}, onChange = () => {}) {
   const speed = h('input', {type: 'number', step: '0.05', min: String(o.speed[0]), max: String(o.speed[1]), value: '1', 'aria-label': '動画の速さ'});
   // 変換の方法。exmr は RGB MoCap の ExMR(既定)、mediapipe は vrma-pipeline。奥行きと両手の間隔は mediapipe だけの条件
   // engines に exmr が無い(キット、docs/edition.md)ときは ExMR を出さない
-  const engines = o.engines ?? {mediapipe: o.available}, exmr = 'exmr' in engines;
+  // sam3d(SAM 3D Body)は既定にしない。engines.sam3d が使えるときだけ出す
+  const engines = o.engines ?? {mediapipe: o.available}, exmr = 'exmr' in engines, sam3d = !!engines.sam3d;
   const engine = h('select', {'aria-label': '変換の方法'},
     exmr ? h('option', {value: 'exmr', disabled: !engines.exmr}, 'RGB MoCap の ExMR（指まで。教育・研究・非営利の条件のモデル）') : null,
+    sam3d ? h('option', {value: 'sam3d'}, 'SAM 3D Body（指まで。NVIDIA の GPU 専用。SAM License の重みを自分で取って使う）') : null,
     h('option', {value: 'mediapipe', disabled: !engines.mediapipe}, 'MediaPipe（vrma-pipeline）'));
   engine.value = o.defaultEngine ?? 'mediapipe';
   const depthOff = h('input', {type: 'checkbox'});
   const bodyFix = h('input', {type: 'checkbox'});
   const grip = h('input', {type: 'number', step: '1', min: '0', max: '100', placeholder: '使わない', 'aria-label': '両手の間隔'});
-  const sync = () => { const mp = engine.value === 'mediapipe'; depthOff.disabled = !mp; bodyFix.disabled = mp; if (mp) bodyFix.checked = false; grip.disabled = !mp || depthOff.checked; if (grip.disabled) grip.value = ''; if (!mp) depthOff.checked = false; };
+  const sync = () => { const mp = engine.value === 'mediapipe'; depthOff.disabled = !mp; bodyFix.disabled = engine.value !== 'exmr'; if (bodyFix.disabled) bodyFix.checked = false; grip.disabled = !mp || depthOff.checked; if (grip.disabled) grip.value = ''; if (!mp) depthOff.checked = false; };
   depthOff.onchange = sync; engine.onchange = sync; sync();
   const start = h('input', {type: 'number', step: '0.01', min: '0', value: '0', 'aria-label': '開始の秒'});
   const end = h('input', {type: 'number', step: '0.01', min: '0', placeholder: '最後まで', 'aria-label': '終了の秒'});

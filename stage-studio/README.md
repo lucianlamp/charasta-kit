@@ -19,7 +19,7 @@
 python tools/make_mv.py --stage concert --char avatar-sample-b --ver v2-official --motion illit-itsme-b --seconds 15 --out out/mv1 --seed 1 --audio song.m4a --audio-start 12
 ```
 
-- ステージは `concert`、`classroom`、`themepark`、`rooftop`、`shrine`、`waterside`、`parkway`。seed を変えるとカメラの順番と角度が変わる
+- ステージは `concert`、`classroom`、`themepark`、`rooftop`、`shrine`、`waterside`、`parkway`、`gym`。seed を変えるとカメラの順番と角度が変わる
 - `--audio` があれば拍を音楽から求め、切り替えと照明を拍に合わせる。無ければ `--bpm`
 - まとめて作るときは `python tools/make_batch.py batch.json --out out/batch`
 - 止まっても同じ命令で続きから描く

@@ -1,11 +1,11 @@
 {
-  "exportedAt": "2026-11-08",
+  "exportedAt": "2026-11-09",
   "charasta": {
     "ref": "HEAD",
-    "commit": "6241a4bc978a0e69bc59b92338aebea76930584e"
+    "commit": "f3588b5b16fd195cffd30b85f5de58a52709e501"
   },
   "stageStudio": {
     "ref": "HEAD",
-    "commit": "ba2ce98a5813355b7ef3183f031b067f68746361"
+    "commit": "95d67ad4f932024bdbe271a6c0a1717207ed0a0e"
   }
 }

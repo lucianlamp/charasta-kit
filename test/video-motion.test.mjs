@@ -6,8 +6,9 @@ import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {Library} from '../lib/library.mjs';
 import {JobQueue} from '../lib/jobs.mjs';
-import {convertArgs, cutArgs, videoMotionTimeoutMs} from '../lib/video-motion.mjs';
+import {convertArgs, cutArgs, videoMotionTimeoutMs, videoMotionInput, videoMotionOptions, sam3dReady, VIDEO_ENGINES} from '../lib/video-motion.mjs';
 import {limitOf, videoTerms} from '../lib/terms.mjs';
+import {venvPython, rgbmocapPython} from '../lib/platform.mjs';
 import {tempDir, startServer, fakeGlb} from './helpers.mjs';
 
 const FAKE = {CHARASTA_FAKE_VRMA_PIPELINE: '1'};
@@ -185,7 +186,7 @@ test('API: 手元の動画を送ると積まれ、比較の動画を見て取り
     await addChar(lib);
     const opt = await (await fetch(s.base + '/api/video-motions')).json();
     assert.equal(opt.available, true); assert.equal(opt.maxClipSec, 120);
-    assert.deepEqual(opt.engines, {exmr: true, mediapipe: true}); assert.equal(opt.defaultEngine, 'exmr');
+    assert.deepEqual(opt.engines, {exmr: true, sam3d: true, mediapipe: true}); assert.equal(opt.defaultEngine, 'exmr');
     const file = path.join(s.libraryDir, 'clip in.mp4');
     await makeVideo(file);
     const post = (headers, data) => fetch(s.base + '/api/video-motions', {method: 'POST', headers, body: data});
@@ -227,4 +228,97 @@ test('API: 手元の動画を送ると積まれ、比較の動画を見て取り
 test('パイプラインの場所が無く、試しの動きでもなければ available は false', async () => {
   const s = await startServer({vrmaPipelineDir: path.join(await tempDir(), 'none')});
   try { assert.equal((await (await fetch(s.base + '/api/video-motions')).json()).available, false); } finally { await s.close(); }
+});
+
+// SAM 3D Body の 4 つの場所に見立てた空のファイルとフォルダ(中身は読まない)
+async function fakeSam3d() {
+  const d = await tempDir();
+  const sam3dPython = path.join(d, 'python.exe'), sam3dCkptDir = path.join(d, 'ckpt'), sam3dSrc = path.join(d, 'sam'), dinov3Src = path.join(d, 'dino');
+  await fs.mkdir(sam3dCkptDir); await fs.mkdir(path.join(sam3dSrc, 'sam_3d_body'), {recursive: true}); await fs.mkdir(dinov3Src);
+  await fs.writeFile(sam3dPython, ''); await fs.writeFile(path.join(sam3dCkptDir, 'model.ckpt'), ''); await fs.writeFile(path.join(dinov3Src, 'hubconf.py'), '');
+  return {dir: d, cfg: {sam3dPython, sam3dCkptDir, sam3dSrc, dinov3Src}};
+}
+
+test('sam3d: 4 つの場所がそろったときだけ使える', async t => {
+  const {dir, cfg} = await fakeSam3d();
+  t.after(() => fs.rm(dir, {recursive: true, force: true}));
+  assert.equal(sam3dReady(cfg), true);
+  assert.equal(sam3dReady({}), false); assert.equal(sam3dReady(), false);
+  assert.equal(sam3dReady({...cfg, sam3dPython: path.join(dir, 'none.exe')}), false);
+  assert.equal(sam3dReady({...cfg, sam3dCkptDir: dir}), false);   // model.ckpt が無い
+  assert.equal(sam3dReady({...cfg, sam3dSrc: dir}), false);       // sam_3d_body が無い
+  assert.equal(sam3dReady({...cfg, dinov3Src: dir}), false);      // hubconf.py が無い
+  for (const k of Object.keys(cfg)) assert.equal(sam3dReady({...cfg, [k]: undefined}), false, k);
+});
+
+test('sam3d: GET /api/video-motions の engines と既定。パイプラインが無ければ使えない。既定の変換にならない', async t => {
+  const {dir, cfg} = await fakeSam3d();
+  t.after(() => fs.rm(dir, {recursive: true, force: true}));
+  const pipe = await tempDir(), rgb = path.join(await tempDir(), 'none');
+  t.after(() => fs.rm(pipe, {recursive: true, force: true}));
+  await fs.mkdir(path.dirname(venvPython(pipe)), {recursive: true});
+  await fs.writeFile(venvPython(pipe), '');
+  const o = await videoMotionOptions(pipe, {}, rgb, cfg);
+  assert.deepEqual(o.engines, {exmr: false, sam3d: true, mediapipe: true}); assert.equal(o.defaultEngine, 'mediapipe');
+  assert.equal((await videoMotionOptions(pipe, {}, rgb, {})).engines.sam3d, false);
+  assert.equal((await videoMotionOptions(path.join(pipe, 'none'), {}, rgb, cfg)).engines.sam3d, false);   // vrma-pipeline が無い
+  assert.equal((await videoMotionOptions(null, FAKE, null, {})).engines.sam3d, true, '試しの動きでは使える');
+  // exmr も使える環境でも、既定は exmr のまま(sam3d にならない)
+  const rgbOk = await tempDir();
+  t.after(() => fs.rm(rgbOk, {recursive: true, force: true}));
+  await fs.mkdir(path.dirname(rgbmocapPython(rgbOk)), {recursive: true}); await fs.writeFile(rgbmocapPython(rgbOk), '');
+  assert.equal((await videoMotionOptions(pipe, {}, rgbOk, cfg)).defaultEngine, 'exmr');
+  assert.ok(VIDEO_ENGINES.includes('sam3d'));
+});
+
+test('sam3d: 入力の確かめ。使えるときだけ受け付け、mediapipe だけの条件と手のめり込みの直しは断る。engine を省いても sam3d にならない', () => {
+  const lib = null, input = {charId: 'c1', verId: 'v1'}, b = extra => ({url, rights: RIGHTS, ...extra});
+  const v = (extra, avail = {}) => videoMotionInput(lib, input, b(extra), {exmrAvailable: true, sam3dAvailable: true, ...avail});
+  assert.equal(v({engine: 'sam3d'}).engine, 'sam3d');
+  assert.throws(() => v({engine: 'sam3d'}, {sam3dAvailable: false}), {code: 'bad-input'});
+  assert.throws(() => videoMotionInput(lib, input, b({engine: 'sam3d'})), {code: 'bad-input'});   // sam3dAvailable を渡さなければ使えない扱い
+  assert.throws(() => v({engine: 'sam3d', depthOpt: false}), {code: 'bad-input'});
+  assert.throws(() => v({engine: 'sam3d', grip: 22}), {code: 'bad-input'});
+  assert.throws(() => v({engine: 'sam3d', handBodyFix: true}), {code: 'bad-input'});
+  assert.equal(v({engine: 'sam3d', unmirror: true, speed: 0.5, trimEnd: 3}).unmirror, true);
+  assert.equal(v({}).engine, 'exmr'); assert.equal(v({}, {exmrAvailable: false}).engine, 'mediapipe');
+  assert.equal(v({depthOpt: false}).engine, 'mediapipe');
+  assert.equal(videoMotionInput(lib, input, b({}), {exmrAvailable: false, sam3dAvailable: true}).engine, 'mediapipe', 'sam3d が使えても既定にしない');
+});
+
+test('sam3d: 使えないときジョブを積めず、使えるときは積める', async t => {
+  const {dir, cfg} = await fakeSam3d();
+  t.after(() => fs.rm(dir, {recursive: true, force: true}));
+  const none = await setup(t, {}, {rgbmocapDir: path.join(dir, 'none'), vrmaPipelineDir: path.join(dir, 'none')});
+  assert.equal(none.q.sam3dAvailable(), false);
+  await assert.rejects(none.q.enqueue(body({engine: 'sam3d'})), {code: 'bad-input'});
+  await assert.rejects(none.q.checkVideoMotion({charId: 'c1', url, rights: RIGHTS, engine: 'sam3d'}), {code: 'bad-input'});
+  const ok = await setup(t, {}, {...cfg, rgbmocapDir: path.join(dir, 'none'), vrmaPipelineDir: path.join(dir, 'none')});
+  assert.equal(ok.q.sam3dAvailable(), true);
+  assert.equal((await ok.q.enqueue(body())).input.engine, 'mediapipe', 'RGB MoCap が無いので既定は mediapipe。sam3d にならない');
+  const j = await ok.q.enqueue(body({engine: 'sam3d'}));
+  assert.equal(j.input.engine, 'sam3d');
+  await ok.q.whenIdle();   // 場所が無いパイプラインなので、ジョブは失敗で終わる(積めることだけを確かめる)
+});
+
+test('sam3d: 試しの動きで取り込むまで通り、記録に SAM License、DINOv3、MHR の条件と利用者が確かめることが残る', async t => {
+  const {q} = await setup(t);
+  const job = await q.enqueue(body({engine: 'sam3d'}));
+  await q.whenIdle();
+  const done = await q.get(job.id);
+  assert.equal(done.state, 'done', done.error + '\n' + done.logTail);
+  assert.equal(done.result.options.engine, 'sam3d'); assert.equal(done.result.license.redistribution, false);
+  const parts = done.result.license.terms.map(x => x.part + ' ' + x.license).join('\n');
+  assert.match(parts, /SAM License/); assert.match(parts, /DINOv3 License/); assert.match(parts, /MHR[\s\S]*Apache-2\.0/); assert.match(parts, /ゲート付き/);
+  assert.ok(done.result.license.terms.some(x => x.part === '利用者が確かめること' && /重みを取った自分の承認/.test(x.license) && /動画の権利/.test(x.license)));
+  assert.ok(!done.result.license.terms.some(x => /ExMR|非営利の利用に限る/.test(x.license)), 'ExMR の条件は混ぜない');
+  const m = await q.importVideoMotion(job.id, {motionId: 'sam-clip'});
+  assert.equal(m.generated.tool, 'sam3d'); assert.match(m.generated.model, /SAM 3D Body/); assert.match(m.source.pack, /SAM 3D Body/);
+  assert.equal(limitOf(m).warn, true);
+});
+
+test('sam3d: 時間の上限は 600 秒 + 1 コマ 4 秒', () => {
+  assert.equal(videoMotionTimeoutMs(100, 'sam3d'), 1000000);
+  assert.equal(videoMotionTimeoutMs(0, 'sam3d'), 600000);
+  assert.equal(videoMotionTimeoutMs(100, 'exmr'), 2300000);   // 既存の式は変わらない
 });
