@@ -1,8 +1,4 @@
 {
   "port": 8870,
-  "allowedHosts": [],
-  "sam3dPython": null,
-  "sam3dCkptDir": null,
-  "sam3dSrc": null,
-  "dinov3Src": null
+  "allowedHosts": []
 }
