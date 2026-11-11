@@ -11,7 +11,7 @@ const run = promisify(execFile);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const cli = (lib, script, ...args) => run(process.execPath, [path.join(root, 'scripts', script), ...args], {env: {...process.env, CHARASTA_LIBRARY: lib}});
 
-test('CLI: キャラ作成、版(--src と --src-charakit)、モーション、セリフ、同じ ID で止まる', async () => {
+test('CLI: キャラ作成、バージョン(--src と --src-charakit)、モーション、セリフ、同じ ID で止まる', async () => {
   const lib = await tempDir(), work = await tempDir('charasta-src-');
   const vrm = path.join(work, 'a.vrm'), audio = path.join(work, 'hello.mp3'), charakit = path.join(work, 'p.charakit');
   const inner = fakeGlb({inner: 1});

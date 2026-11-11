@@ -23,7 +23,7 @@ test('パスの外へ出る指定を拒否する', () => {
   assert.throws(() => inside(base, 'a\0b'), {code: 'outside'});
 });
 
-test('キャラ作成・版の取り込み: コピーと sha256、order、最新の版', async () => {
+test('キャラ作成・バージョンの取り込み: コピーと sha256、order、最新バージョン', async () => {
   const lib = new Library(await tempDir());
   await lib.createCharacter({id: 'chara4', name: 'キャラ4', note: 'n', voice: 'grok:eve'});
   const a = fakeGlb({a: 1}), b = fakeGlb({b: 2});
@@ -43,7 +43,7 @@ test('キャラ作成・版の取り込み: コピーと sha256、order、最新
   assert.equal(ch.versions[0].thumb, null);
 });
 
-test('最初の版は --latest が無くても最新になり、後の版は --latest が無ければ変わらない', async () => {
+test('最初のバージョンは --latest が無くても最新になり、後のバージョンは --latest が無ければ変わらない', async () => {
   const lib = new Library(await tempDir());
   await lib.createCharacter({id: 'c', name: 'C'});
   await lib.importVersion({charId: 'c', id: 'v1', data: fakeGlb()});
@@ -69,7 +69,7 @@ test('VRM でないデータは取り込まず、空のフォルダも残さな�
   await assert.rejects(fs.access(path.join(lib.dir, 'characters/c/versions/v1')));
 });
 
-test('キャラが無いと版は取り込めない', async () => {
+test('キャラが無いとバージョンは取り込めない', async () => {
   const lib = new Library(await tempDir());
   await assert.rejects(lib.importVersion({charId: 'nope', id: 'v1', data: fakeGlb()}), {code: 'not-found'});
 });

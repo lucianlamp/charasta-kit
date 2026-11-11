@@ -120,7 +120,7 @@ test('ジョブの積み方: 前の工程が無ければ断り、続けて積む
       assert.equal(await raw(p), 404, p);
     assert.equal(await raw('/lib/studio/c1/s1/out/002%2Fmodel.vrm'), 200);
 
-    // 版にする
+    // バージョンにする
     const p = await call(s.base, 'POST', '/api/studio/c1/s1/promote', {proto: 2, verId: 'v1-face', label: 'L', note: '表情づくりから'});
     assert.equal(p.status, 201); assert.equal(p.body.version.id, 'v1-face');
     assert.equal((await call(s.base, 'GET', '/api/characters/c1')).body.versions[0].id, 'v1-face');

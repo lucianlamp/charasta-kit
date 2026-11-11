@@ -44,7 +44,7 @@ test('カット割り: 最初のカットまで beatsPerShot 拍、末尾の短�
 test('入力: シーン、長さ、カット、モーションを確かめる', async () => {
   const {q} = await setup();
   await fail(q, {stages: []}, /stages/);
-  await fail(q, {stages: ['nowhere']}, /知らないシーン/);
+  await fail(q, {stages: ['nowhere']}, /知らないステージ/);
   await fail(q, {stages: ['concert', 'concert']}, /2 回/);
   await fail(q, {seconds: 1}, /seconds/);
   await fail(q, {seconds: 500}, /seconds/);

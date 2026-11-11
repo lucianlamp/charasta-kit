@@ -5,7 +5,7 @@ import {can} from './capabilities.mjs';
 import {confirmDialog, moveToTrash, trashIcon} from './confirm.mjs';
 import {RESTYLE_WARNING, STYLE_IDS, STYLE_TABS, bandText, filterByStyleTab, isCreature, loadStyleTab, motionNames, motionSummary, pickStyleTab, saveStyleTab, styleChip, styleChoices, styleLabel, styleStepsBox, styleTabCounts} from './char-style.mjs';
 
-const STAGE_ROWS = [['create', 'つくる'], ['motion', '動き'], ['expression', '表情'], ['finish', '仕上げ']];
+const STAGE_ROWS = [['create', 'つくる'], ['motion', 'モーション'], ['expression', '表情'], ['finish', '仕上げ']];
 const STAGE_TEXT = {done: 'できている', doing: '途中', none: 'まだ'};
 
 const deleteButton = (c, reload) => h('button', {type: 'button', class: 'icon-btn', 'aria-label': `${c.name} を削除`, onclick: async () => { if (await moveToTrash({kind: 'character', charId: c.id}, c.name)) reload(); }}, trashIcon());
@@ -16,10 +16,10 @@ function creatureCard(c, reload) {
   return h('article', {class: 'char-card creature-card', 'data-char': c.id},
     h('a', {class: 'char-pic', href: open, tabindex: '-1', 'aria-hidden': 'true'}, thumb(c.thumb, '', 'char-thumb creature-thumb')),
     h('div', {class: 'char-body'},
-      h('a', {class: 'char-title', href: open}, h('span', {class: 'char-name'}, c.name), h('span', {class: 'mono muted char-ver'}, c.latest?.id ?? '版なし')),
+      h('a', {class: 'char-title', href: open}, h('span', {class: 'char-name'}, c.name), h('span', {class: 'mono muted char-ver'}, c.latest?.id ?? 'バージョンなし')),
       h('div', {class: 'char-tags', 'aria-label': 'スタイルとタグ'}, styleChip('creature'), (c.tags ?? []).map(t => h('span', {class: 'tag', title: t}, t))),
       h('div', {class: 'char-foot'},
-        h('a', {class: 'char-model creature-motions', href: open, title: names.join('、') || null}, motionSummary(c.creature) ?? (c.versionCount ? '動きの記録なし' : '版なし')),
+        h('a', {class: 'char-model creature-motions', href: open, title: names.join('、') || null}, motionSummary(c.creature) ?? (c.versionCount ? '動きの記録なし' : 'バージョンなし')),
         deleteButton(c, reload))));
 }
 
@@ -29,9 +29,9 @@ function charCard(c, stageHref, reload) {
   return h('article', {class: 'char-card', 'data-char': c.id},
     h('a', {class: 'char-pic', href: open, tabindex: '-1', 'aria-hidden': 'true'}, thumb(c.thumb, '', 'char-thumb')),
     h('div', {class: 'char-body'},
-      h('a', {class: 'char-title', href: open}, h('span', {class: 'char-name'}, c.name), h('span', {class: 'mono muted char-ver'}, c.latest?.id ?? '版なし')),
+      h('a', {class: 'char-title', href: open}, h('span', {class: 'char-name'}, c.name), h('span', {class: 'mono muted char-ver'}, c.latest?.id ?? 'バージョンなし')),
       h('div', {class: 'stages'}, STAGE_ROWS.map(([k, label]) => h('a', {class: 'stage-cell', href: stageHref(k, c), title: `${label}: ${STAGE_TEXT[c.stages[k]]}`, 'aria-label': `${label}: ${STAGE_TEXT[c.stages[k]]}`},
-        h('span', {class: 'bar ' + c.stages[k], 'aria-hidden': 'true'})))),
+        h('span', {class: 'bar ' + c.stages[k], 'aria-hidden': 'true'}), h('span', {class: 'stage-name', 'aria-hidden': 'true'}, label)))),
       h('div', {class: 'char-tags', 'aria-label': 'スタイルとタグ'}, styleChip(c.style), (c.tags ?? []).map(t => h('span', {class: 'tag', title: t}, t))),
       h('div', {class: 'char-foot'},
         h('a', {class: 'char-model', href: stageHref('model', c)}, `完成モデル ${c.finished.length}`),
@@ -47,7 +47,7 @@ function waitBand(w) {
 
 // 新しいキャラ: スタイルと作り方を選んでキャラの記録を作り、きゃらくるのアプリを開く。制作はきゃらくるの依頼文から Claude が進める
 // スタイルは必須。選ぶまで「作り始める」を押せない
-// 生き物は 3D の作り方を隠し、きゃらくるを開かずに記録だけ作ってキャラのページへ移る。版は scripts/import-creature.mjs で取り込む
+// 生き物は 3D の作り方を隠し、きゃらくるを開かずに記録だけ作ってキャラのページへ移る。バージョンは scripts/import-creature.mjs で取り込む
 function newCharacter(ov, stageHref) {
   let method = 'tripo';   // 顔の仕上がりは Tripo Studio の方がよかったので、既定にする
   let style = null, setReady = () => {};
@@ -64,11 +64,11 @@ function newCharacter(ov, stageHref) {
     setup: ({setDisabled}) => { setReady = () => setDisabled(!style); setReady(); },
     body: [h('div', {class: 'form-stack'},
       h('fieldset', {class: 'style-field'}, h('legend', {}, 'スタイル'),
-        h('p', {class: 'muted'}, `あとから変えられるが、${RESTYLE_WARNING}。${STYLE_IDS.includes('creature') ? '版を取り込んだあとは、生き物とほかのスタイルのあいだでは変えられない。' : ''}`), choices.box, steps.box),
+        h('p', {class: 'muted'}, `あとから変えられるが、${RESTYLE_WARNING}。${STYLE_IDS.includes('creature') ? 'バージョンを取り込んだあとは、生き物とほかのスタイルのあいだでは変えられない。' : ''}`), choices.box, steps.box),
       methodField,
       h('label', {}, 'キャラ ID（英小文字・数字・ハイフン）', id), h('label', {}, '名前', name))],
     run: async () => {
-      if (!style) throw Error(`スタイル(${STYLE_IDS.map(styleLabel).join('、')}のどれか)を選ぶ`);   // キットには生き物が無い(public/app.mjs が STYLE_IDS から外す)
+      if (!style) throw Error(`スタイル（${STYLE_IDS.map(styleLabel).join('、')}のどれか）を選ぶ`);   // キットには生き物が無い(public/app.mjs が STYLE_IDS から外す)
       if (!id.value.trim() || !name.value.trim()) throw Error('ID と名前を入れる');
       if (style === 'creature') {   // きゃらくるは VRM の作り方なので開かない
         try {

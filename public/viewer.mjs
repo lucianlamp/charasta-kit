@@ -1,5 +1,5 @@
 // きゃらすたのビューア: VRMA の再生、自動まばたき、モーションに合わせた表情（motion.json の expressions）、
-// あいうえお、かなの文を話す、セリフ（line.json）の再生とリップシンク。キャラと版は画面の中で切り替える。
+// あいうえお、かなの文を話す、セリフ（line.json）の再生とリップシンク。キャラとバージョンは画面の中で切り替える。
 // 移植元: charakuru-claude-code-with-kimi の scripts/viewer/viewer.mjs。window.viewer の名前と振る舞いは同じ。
 import * as THREE from 'three';
 import {GLTFLoader} from '/vendor/GLTFLoader.js';
@@ -21,7 +21,7 @@ function note(text, kind = 'info', key = kind) {
 }
 addEventListener('error', e => note('エラー: ' + (e.message || e.error), 'err', 'err'));
 addEventListener('unhandledrejection', e => note('エラー: ' + (e.reason?.message || e.reason), 'err', 'err'));
-canvas.addEventListener('webglcontextlost', () => note('WebGL が止まった（端末のメモリが足りない可能性）。版を軽いものにするか、読み込み直す。', 'err', 'gl'));
+canvas.addEventListener('webglcontextlost', () => note('WebGL が止まった（端末のメモリが足りない可能性）。バージョンを軽いものにするか、読み込み直す。', 'err', 'gl'));
 const renderer = new THREE.WebGLRenderer({canvas, antialias: true});
 renderer.setPixelRatio(Math.min(devicePixelRatio, /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? 1.5 : 2)); renderer.outputColorSpace = THREE.SRGBColorSpace;
 // ?embed=1: きゃらすたの画面(動き、完成モデル)の iframe の中で、キャンバスだけを出す(docs/screens.md)。背景は周りの画面の色に合わせる
@@ -330,7 +330,7 @@ window.viewer.fingerCurl = flex => {
   return () => { for (const {b, q} of bends) b.quaternion.copy(q); };
 };
 // ---- 体型と揺れものの下見(仕上げの「体型と揺れもの」、public/adjust.mjs、docs/adjust.md) ----
-// 書き換える道具(tools/vrm/body_shape.py)の結果に近い見た目を、読み込んだ VRM のまま作る。版のファイルは変えない。
+// 書き換える道具(tools/vrm/body_shape.py)の結果に近い見た目を、読み込んだ VRM のまま作る。バージョンのファイルは変えない。
 //   腕、腰、脚: 骨ごとの逆バインド行列に、骨の軸に垂直な縮めを掛ける(重みで混ざるのは道具と同じ。足首を戻す分と法線は直さない)
 //   頭: 頭の骨の大きさ(中心は頭の骨。道具は首の区間の中ほど)。首: 頭の骨を上へ。肩幅: 上腕の骨を横へ(肩の頂点の帯は直さない)
 //   揺れもの: 揺れ骨の設定(stiffness、dragForce、gravityPower)を節点の番号ごとに入れ替える
@@ -423,7 +423,7 @@ function button(parent, text, onclick, data = {}) {
   const b = document.createElement('button'); b.textContent = text; Object.assign(b.dataset, data); b.onclick = onclick; parent.append(b); return b;
 }
 
-// 版の VRM を読み込む。前のモデルは外して捨て、表情と口のボタンを作り直す
+// バージョンの VRM を読み込む。前のモデルは外して捨て、表情と口のボタンを作り直す
 async function loadModel(url) {
   const gltf = await loader.loadAsync(url, e => {
     const mb = (e.loaded / 1048576).toFixed(1), all = e.total ? ` / ${(e.total / 1048576).toFixed(1)}` : '';
@@ -483,7 +483,7 @@ async function play(name, stale = () => false) {   // name: モーションの I
     clip = createVRMAnimationClip(anim, owner);
   }
   const plan = footBox.checked && !footPlans.has(name) ? await footPlanFor(m, owner, clip) : footPlans.get(name);
-  if (vrm !== owner || stale()) return;   // 待つ間に版が替わった(今の版の再生は openVersion が始める)か、新しい呼び出しに置き換わった
+  if (vrm !== owner || stale()) return;   // 待つ間にバージョンが替わった(今のバージョンの再生は openVersion が始める)か、新しい呼び出しに置き換わった
   clips.set(name, clip);
   if (plan !== undefined) footPlans.set(name, plan);
   window.viewer.hold = false;   // 止めたまま切り替えると、重みが進まず前の姿勢のままになる
@@ -650,7 +650,7 @@ window.viewer.skirtTest = (frames = 300, r0 = 0.08, r1 = 0.052) => {
   return {framesHit, worst, deepest_mm: Math.round(deepest * 1000), total, byAngle};
 };
 
-// ---- キャラと版 ----
+// ---- キャラとバージョン ----
 const charSelect = document.getElementById('charSelect'), verSelect = document.getElementById('verSelect');
 const getJSON = url => fetch(url).then(r => { if (!r.ok) throw Error(`${url}: ${r.status}`); return r.json(); });
 
@@ -666,7 +666,7 @@ function fillLines() {
   }
   if (!lines.length) vbox.innerHTML = '<div class="muted">（このキャラのセリフはまだない）</div>';
 }
-// ?studio=<表情づくり ID>: その表情づくりの試作も版の一覧に出す(ver=proto-<番号>。表情づくりの確かめの撮影が使う)
+// ?studio=<表情づくり ID>: その表情づくりの試作もバージョンの一覧に出す(ver=proto-<番号>。表情づくりの確かめの撮影が使う)
 const STUDIO = new URLSearchParams(location.search).get('studio');
 function setUrl() {
   const q = new URLSearchParams({char: character.id}); if (version) q.set('ver', version.id);
@@ -680,7 +680,7 @@ function setUrl() {
 async function openVersion(verId) {
   version = character.versions.find(v => v.id === verId) || character.versions.find(v => v.id === character.latestVersion)
     || [...character.versions].sort((a, b) => (b.order ?? 0) - (a.order ?? 0))[0];
-  if (!version) throw Error(`キャラ ${character.id} に版がない`);
+  if (!version) throw Error(`キャラ ${character.id} にバージョンがない`);
   verSelect.value = version.id; setUrl();
   document.getElementById('verNote').textContent = version.note || '';
   document.title = `${character.name || character.id} ${version.id} - きゃらすた`;
@@ -697,7 +697,7 @@ async function openCharacter(charId, verId) {
   if (STUDIO) {
     const st = await getJSON(`/api/studio/${encodeURIComponent(charId)}/${encodeURIComponent(STUDIO)}`).catch(() => null);
     for (const p of st?.prototypes ?? []) character.versions.push({id: 'proto-' + p.n, label: `試作 ${p.n}（表情づくり ${STUDIO}）`, order: 100000 + p.n, model: p.url,
-      note: `表情づくり ${STUDIO} の試作 ${p.n}（${p.step === 'video' ? '中割りあり' : '組み立て'}${p.springTune ? '、揺れ骨を整えた' : ''}）。まだ版ではない`});
+      note: `表情づくり ${STUDIO} の試作 ${p.n}（${p.step === 'video' ? '中割りあり' : '組み立て'}${p.springTune ? '、揺れ骨を整えた' : ''}）。まだバージョンではない`});
   }
   charSelect.value = character.id;
   document.getElementById('lineLink').href = '/#model/' + encodeURIComponent(character.id);
@@ -720,7 +720,7 @@ function fillMotions() {
     const b = button(box, m.label ? `${m.label}（${m.name || m.id}）` : (m.name || m.id), () => play(m.id).catch(e => statusEl.textContent = e.message), {name: m.id});
     b.title = m.id;
   }
-  if (!motions.length) box.innerHTML = '<div class="muted">（動きの画面で取り込む）</div>';
+  if (!motions.length) box.innerHTML = '<div class="muted">（モーションの画面で取り込む）</div>';
   const holders = [...new Set(motions.map(m => m.license?.holder).filter(Boolean))];
   document.getElementById('credit').textContent = holders.map(h => /ピクシブ|pixiv/i.test(h)
     ? 'キャラクターアニメーション: ピクシブ株式会社 VRoidプロジェクト' : `モーション: ${h}`).join(' / ');

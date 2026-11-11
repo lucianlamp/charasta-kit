@@ -80,7 +80,7 @@ async function sendFile(req, res, file) {
 // 本文を読む。Content-Length が上限を超えていれば、読み始める前に 413 にする。
 // 長さを偽る送り方や chunked で超えたときも、読むのをやめて 413 にする(接続は閉じる: catch で Connection: close を付ける)
 async function readBody(req, max = MAX_BODY) {
-  const tooLarge = () => new LibraryError('too-large', `本文が大きすぎる(上限 ${max >= 1048576 ? Math.floor(max / 1048576) + ' MiB' : Math.floor(max / 1024) + ' KiB'})`);
+  const tooLarge = () => new LibraryError('too-large', `本文が大きすぎる（上限 ${max >= 1048576 ? Math.floor(max / 1048576) + ' MiB' : Math.floor(max / 1024) + ' KiB'}）`);
   if (Number(req.headers['content-length']) > max) throw tooLarge();
   const chunks = []; let n = 0;
   for await (const c of req) {
@@ -127,7 +127,7 @@ async function postMotion(req, res, lib) {
 async function postVideoMotion(req, res, lib, jobs) {
   const fileName = safeDecode(String(req.headers['x-filename'] ?? '')).replace(/[\\/]/g, '_'), ext = path.extname(fileName).toLowerCase();
   if (!VIDEO_EXT.includes(ext)) return json(res, 400, {error: '動画は ' + VIDEO_EXT.join(' ') + ' のファイル'});
-  if (Number(req.headers['content-length']) > UPLOAD_MAX) { res.setHeader('Connection', 'close'); return json(res, 413, {error: '動画が大きすぎる(上限 2 GiB)'}); }
+  if (Number(req.headers['content-length']) > UPLOAD_MAX) { res.setHeader('Connection', 'close'); return json(res, 413, {error: '動画が大きすぎる（上限 2 GiB）'}); }
   let params;
   try { params = JSON.parse(safeDecode(String(req.headers['x-params'] ?? ''))); } catch { return json(res, 400, {error: 'x-params が JSON ではない'}); }
   if (!params || typeof params !== 'object' || Array.isArray(params)) return json(res, 400, {error: 'x-params は JSON の連想配列'});
@@ -135,7 +135,7 @@ async function postVideoMotion(req, res, lib, jobs) {
   const upload = `v${Date.now().toString(36)}${crypto.randomBytes(2).toString('hex')}${ext}`, dir = path.join(lib.dir, UPLOAD_DIR), file = path.join(dir, upload);
   await fsp.mkdir(dir, {recursive: true});
   let size = 0;
-  const limit = new Transform({transform(c, _, done) { size += c.length; done(size > UPLOAD_MAX ? new LibraryError('too-large', '動画が大きすぎる(上限 2 GiB)') : null, c); }});
+  const limit = new Transform({transform(c, _, done) { size += c.length; done(size > UPLOAD_MAX ? new LibraryError('too-large', '動画が大きすぎる（上限 2 GiB）') : null, c); }});
   try { await pipeline(req, limit, fs.createWriteStream(file, {flags: 'wx'})); }
   catch (e) { await fsp.rm(file, {force: true}); throw e; }
   try { json(res, 201, await jobs.enqueue({...params, type: 'video-motion', url: undefined, upload, fileName})); }
@@ -204,15 +204,15 @@ export function createServer(config) {
         }
         res.writeHead(405, {Allow: 'GET, POST'}); return res.end();
       }
-      const faceRoute = /^\/api\/characters\/([^/]+)\/versions\/([^/]+)\/face$/.exec(url.pathname);   // 版の顔: 方式、Fcl_ のキー、プリセット、確かめの撮影
+      const faceRoute = /^\/api\/characters\/([^/]+)\/versions\/([^/]+)\/face$/.exec(url.pathname);   // バージョンの顔: 方式、Fcl_ のキー、プリセット、確かめの撮影
       if (faceRoute && get) return json(res, 200, await faceInfo(lib, safeDecode(faceRoute[1]), safeDecode(faceRoute[2])));
-      const checkRoute = /^\/api\/characters\/([^/]+)\/versions\/([^/]+)\/check$/.exec(url.pathname);   // 版の検査: スタイルごと(スタンダード=VRoid 形式、チビ=軽い版と三角形など)
+      const checkRoute = /^\/api\/characters\/([^/]+)\/versions\/([^/]+)\/check$/.exec(url.pathname);   // バージョンの検査: スタイルごと(スタンダード=VRoid 形式、チビ=軽い版と三角形など)
       if (checkRoute && get) return json(res, 200, await versionCheck(lib, safeDecode(checkRoute[1]), safeDecode(checkRoute[2]), {edition}));
       const adjustRoute = /^\/api\/characters\/([^/]+)\/versions\/([^/]+)\/adjust$/.exec(url.pathname);   // 体型と揺れものの直し(docs/adjust.md)。直すのはジョブ adjust
       if (adjustRoute && get) return json(res, 200, await adjustInfo(lib, safeDecode(adjustRoute[1]), safeDecode(adjustRoute[2])));
-      const gameRoute = /^\/api\/characters\/([^/]+)\/versions\/([^/]+)\/game-exports$/.exec(url.pathname);   // 版のゲーム用の書き出し(docs/game-export.md)。作るのはジョブ game-export
+      const gameRoute = /^\/api\/characters\/([^/]+)\/versions\/([^/]+)\/game-exports$/.exec(url.pathname);   // バージョンのゲーム用の書き出し(docs/game-export.md)。作るのはジョブ game-export
       if (gameRoute && get) return json(res, 200, await listGameExports(lib, safeDecode(gameRoute[1]), safeDecode(gameRoute[2])));
-      const verRoute = /^\/api\/characters\/([^/]+)\/versions$/.exec(url.pathname);   // きゃらくるのプロジェクトから版を取り込む
+      const verRoute = /^\/api\/characters\/([^/]+)\/versions$/.exec(url.pathname);   // きゃらくるのプロジェクトからバージョンを取り込む
       if (verRoute) {
         if (req.method !== 'POST') { res.writeHead(405, {Allow: 'POST'}); return res.end(); }
         return json(res, 201, await studio.importProjectVersion(safeDecode(verRoute[1]), await readJsonBody(req)));
@@ -544,7 +544,7 @@ async function studioRoute(req, res, parts, studio, jobs) {
 
 // 画面のファイルがまだ無いときも落ちずに 404 を返す。
 async function sendHtml(req, res, file) {
-  try { await fsp.access(file); } catch { return notFound(res, '画面のファイルがまだ無い: ' + path.relative(root, file)); }
+  try { await fsp.access(file); } catch { return notFound(res, '画面のファイルがまだない: ' + path.relative(root, file)); }
   return sendFile(req, res, file);
 }
 

@@ -1,6 +1,6 @@
 # 動画からモーションを作る（vrma-pipeline）
 
-動きの画面の「モーションを足す」の「つくる」の動画の区間（区間が 1 つのとき「動画から作る」）で、動画から VRMA を作る。ジョブは VRMA と、元の動画と並べた比較の動画を作って止まる。人が比較を見て「取り込む」を押すまで、モーションにならない。
+モーションを作る画面（モーションの画面の「新しく作る」）の動画の区間（区間が 1 つのとき「動画から作る」）で、動画から VRMA を作る。ジョブは VRMA と、元の動画と並べた比較の動画を作って止まる。人が確認のモーダル（モーションの画面の「確認待ちの結果を見比べる」）で比較を見て「取り込んで次へ」を押すまで、モーションにならない。
 
 変換は vrma-pipeline の `batch_convert.py`（MediaPipe Pose と Hand Landmarker）。入力の `engine` は `mediapipe` だけ。MediaPipe は Apache-2.0。
 
@@ -19,11 +19,11 @@
 3. 切り出す（ffmpeg。開始と終了の秒、切り抜き、ミラー解除、速さ）。音は捨てる。
 4. `<動画>.license.json` に権利のメモを書き、VRMA を作る。
 
-   `mediapipe`: `batch_convert.py` を動かす（MediaPipe Pose と Hand Landmarker で BVH、Blender で対象の版の `model.vrm` へ移し替えて VRMA、手の検証ループ、測定）。`--anatomy` と検証ループは既定で on で、ジョブは指定しない。ループは VRMA の手を元の動画と比べ、手と顔、両手の関係がずれた区間の手首を腕の IK で動かす（2 回、腕の方向の変化は `--hand-offset-max-deg` 30 度まで、1800 秒で打ち切り）。急な動きが増えた回や腕の方向が 45 度を超えて変わった回は採らない。失敗したときは移し替えた VRMA を残し、`manifest.json` の `outputs.hand_loop` に残す。時間は 1098 コマで約 66 秒、294 コマで約 33 秒増える。ループは CPU で動く。`--anatomy off --hand-loop off` のとき、前の版と一致するのは VRMA と BVH だけで、品質判定は違う。ジョブの画面にはこの 2 つを切る入力がない。
-5. Blender（Cycles、GPU）で VRMA を対象の版に当てて全コマ描き、`side_by_side.ps1` で元の動画と並べる（`compare.mp4`）。描いたコマは残さない。
+   `mediapipe`: `batch_convert.py` を動かす（MediaPipe Pose と Hand Landmarker で BVH、Blender で対象のバージョンの `model.vrm` へ移し替えて VRMA、手の検証ループ、測定）。`--anatomy` と検証ループは既定で on で、ジョブは指定しない。ループは VRMA の手を元の動画と比べ、手と顔、両手の関係がずれた区間の手首を腕の IK で動かす（2 回、腕の方向の変化は `--hand-offset-max-deg` 30 度まで、1800 秒で打ち切り）。急な動きが増えた回や腕の方向が 45 度を超えて変わった回は採らない。失敗したときは移し替えた VRMA を残し、`manifest.json` の `outputs.hand_loop` に残す。時間は 1098 コマで約 66 秒、294 コマで約 33 秒増える。ループは CPU で動く。`--anatomy off --hand-loop off` のとき、前のバージョンと一致するのは VRMA と BVH だけで、品質判定は違う。ジョブの画面にはこの 2 つを切る入力がない。
+5. Blender（Cycles、GPU）で VRMA を対象のバージョンに当てて全コマ描き、`side_by_side.ps1` で元の動画と並べる（`compare.mp4`）。描いたコマは残さない。
 6. `charasta_license.py` が利用条件の記録を作る。
 7. 確認待ちで止まる（`job.result.review` が `waiting`）。
-8. 画面で「取り込む」（`POST /api/video-motions/<ジョブ>/import`、本文 `{label, motionId}`）か「捨てる」（`.../discard`）。捨てると作業フォルダは保管場所の `trash/` へ移る。確認待ちの結果は、取り込む前に「つくる」の区間（確認待ちの結果）にも使える（`docs/motion-compose.md` の「画面からつなぐ」。利用条件はジョブの `license` のまま）。順番待ちか実行中のつなぐジョブが使っている間は捨てられない。
+8. 画面で「取り込んで次へ」（`POST /api/video-motions/<ジョブ>/import`、本文 `{label, motionId}`）か「捨てる」（`.../discard`）。捨てると作業フォルダは保管場所の `trash/` へ移る。確認待ちの結果は、取り込む前に作る画面の区間（確認待ちの結果）にも使える（`docs/motion-compose.md` の「画面からつなぐ」。利用条件はジョブの `license` のまま）。順番待ちか実行中のつなぐジョブが使っている間は捨てられない。
 
 ジョブの順番待ちは 1 件ずつなので、ほかのジョブの Blender や撮影と GPU を取り合わない。時間の上限は、URL の取得が 15 分、切り出しの ffmpeg と ffprobe が各 5 分、それより後はコマ数から決める（`120 秒 + 1 コマ 3 秒`）。上限を超えると、起動した外部コマンドを子のプロセスごと止める（`taskkill /T`、自分が起動した PID だけ）。
 
@@ -34,7 +34,7 @@ Stage A の MediaPipe は CPU で動く（このパッケージは GPU の処理
 | 項目 | 値 | 中身 |
 |---|---|---|
 | `url` か手元のファイル | どちらか 1 つ | `url` は http か https |
-| `charId`、`verId` | 対象のキャラの版 | この `model.vrm` の体に合わせて作る。VRM 1.0 |
+| `charId`、`verId` | 対象のキャラのバージョン | この `model.vrm` の体に合わせて作る。VRM 1.0 |
 | `rights` | 500 文字まで、必須 | 権利のメモ |
 | `unmirror` | true か false | 左右を反転する |
 | `speed` | 0.1〜4、既定 1 | 動画が実際の何倍速か。0.6 倍のスローなら 0.6。全コマ残して fps を変える |

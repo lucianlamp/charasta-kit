@@ -1,10 +1,10 @@
 // きゃらすたの画面の本体: 上部バーと、URL の # から画面を選ぶ部分(docs/screens.md)。
 //   #chars(既定) ライブラリ、#jobs 今の画面のままジョブの引き出しを開く(画面ではない)
-//   #create/<キャラ>[/<版>] つくる、#motions[/<キャラ>[/<版>]] 動き、#expression/<キャラ> 表情(今の表情づくりへ移る)
-//   #studio/<キャラ>/<表情づくり>[/<工程>] 表情、#finish/<キャラ>[/<表情づくり>] 仕上げ、#adjust/<キャラ>[/<版>] 仕上げの中の体型と揺れもの
-//   #face/<キャラ>[/<版>] 表情(シェイプキー方式の版の確認)
-//   #gallery 動画ギャラリー、#mv/<キャラ>[/<版>] ダンス MV のショートを作って #short/<ID> へ移る、#shorts ショートの一覧、#short/<ID> カット表の編集
-//   #trash ごみ箱。#model/<キャラ>[/<版>] 完成モデル。#model/<キャラ>/<版>/export と #char/<キャラ> は完成モデルへ移す(前の URL)
+//   #create/<キャラ>[/<バージョン>] つくる、#motions[/<キャラ>[/<バージョン>]] モーション(末尾に /new でモーションを作る画面)、#expression/<キャラ> 表情(今の表情づくりか表情の確認へ移る。#expression/<キャラ>/new は表情を作り直す始める画面)
+//   #studio/<キャラ>/<表情づくり>[/<工程>] 表情、#finish/<キャラ>[/<表情づくり>] 仕上げ、#adjust/<キャラ>[/<バージョン>] 仕上げの中の体型と揺れもの
+//   #face/<キャラ>[/<バージョン>] 表情(シェイプキー方式のバージョンの確認)
+//   #gallery 動画ギャラリー、#mv/<キャラ>[/<バージョン>] ダンス MV のショートを作って #short/<ID> へ移る、#shorts ショートの一覧、#short/<ID> カット表の編集
+//   #trash ごみ箱。#model/<キャラ>[/<バージョン>] 完成モデル。#model/<キャラ>/<バージョン>/export と #char/<キャラ> は完成モデルへ移す(前の URL)
 //   #stages[/<シーン>] ステージ(stage-studio のシーンの一覧と、選んだシーン。読むだけ)
 //   生き物のキャラ(docs/creature.md)は #model が生き物のページ。VRM の工程の画面(つくる、動き、表情、仕上げ、MV)は短い案内とキャラのページへのリンクだけ
 import {h, getJSON} from './dom.mjs';
@@ -12,6 +12,7 @@ import {AGENT, METHODS, enc, thumb, sortVersions, jobActive, jobRow} from './sha
 import {showLibrary} from './library.mjs';
 import {showCreate} from './create.mjs';
 import {showMotion} from './motion.mjs';
+import {showMotionCreate} from './motion-create.mjs';
 import {showStudio, showStudioStart} from './studio.mjs';
 import {showFaceCheck} from './face-check.mjs';
 import {showFinish} from './finish.mjs';
@@ -29,10 +30,10 @@ import {CAMERA_AXES, CAMERA_COMBOS} from './short-camera.mjs';
 import {can} from './capabilities.mjs';
 
 const main = document.getElementById('main'), bar = document.getElementById('appbar'), phoneNav = document.getElementById('phoneNav');
-const STAGES = [['create', '1', 'つくる'], ['motion', '2', '動き'], ['expression', '3', '表情'], ['finish', '4', '仕上げ']];
+const STAGES = [['create', '1', 'つくる'], ['motion', '2', 'モーション'], ['expression', '3', '表情'], ['finish', '4', '仕上げ']];
 // VRM が前提の画面。生き物のキャラでは開かない
-const VRM_PAGES = {create: 'つくる', motions: '動き', expression: '表情', studio: '表情', face: '表情', finish: '仕上げ', adjust: '体型と揺れもの', mv: 'ダンス MV'};
-const chosenVer = {}, chosenStudio = {};   // キャラごとに、画面を移っても保つ版と表情づくり
+const VRM_PAGES = {create: 'つくる', motions: 'モーション', expression: '表情', studio: '表情', face: '表情', finish: '仕上げ', adjust: '体型と揺れもの', mv: 'ダンス MV'};
+const chosenVer = {}, chosenStudio = {};   // キャラごとに、画面を移っても保つバージョンと表情づくり
 const store = {   // 最後に見たキャラ。残せない環境でも動く
   get() { try { return localStorage.getItem('charasta.char'); } catch { return null; } },
   set(id) { try { localStorage.setItem('charasta.char', id); } catch { /* 残せなくても困らない */ } },
@@ -80,25 +81,26 @@ addEventListener('blur', () => { if (document.activeElement?.tagName === 'IFRAME
 function renderBar(ov, stage, c, verId) {
   const brand = h('a', {class: 'brand', href: '#chars'}, h('img', {src: '/app/icon.svg', alt: '', width: '28', height: '28'}), 'きゃらすた');
   renderPhoneNav(stage, c);
-  const gallery = h('a', {class: 'model-link', href: '#gallery', 'aria-current': /^#(gallery|short)/.test(location.hash) ? 'page' : null}, '動画');
+  const gallery = h('a', {class: 'model-link', href: '#gallery', 'aria-current': /^#gallery/.test(location.hash) ? 'page' : null}, '動画');
+  const shorts = h('a', {class: 'model-link', href: '#shorts', 'aria-current': /^#shorts?(\/|$)/.test(location.hash) ? 'page' : null}, 'ショート');
   const scenes = h('a', {class: 'model-link', href: '#stages', 'aria-current': /^#stages/.test(location.hash) ? 'page' : null}, 'ステージ');
-  if (stage === 'none') { bar.replaceChildren(brand, h('div', {class: 'grow'}), scenes, gallery, jobsButton, drawer); return; }
+  if (stage === 'none') { bar.replaceChildren(brand, h('div', {class: 'grow'}), scenes, shorts, gallery, jobsButton, drawer); return; }
   const close = () => { sw.open = false; };
   const creature = isCreature(c);
-  const pickVersion = v => e => {   // 表情と仕上げの URL は版を持たないので、同じ URL のまま読み直す。表情の確認と体型と揺れものは版の URL へ
+  const pickVersion = v => e => {   // 表情と仕上げの URL はバージョンを持たないので、同じ URL のまま読み直す。表情の確認と体型と揺れものはバージョンの URL へ
     e.preventDefault(); close(); chosenVer[c.id] = v.id;
-    const page = /^#(face|adjust)\//.exec(location.hash)?.[1];
-    const next = page ? `#${page}/${enc(c.id)}/${enc(v.id)}` : stageHref(stage, c);
+    const page = /^#(face|adjust)\//.exec(location.hash)?.[1], creating = /^#motions\/.*\/new$/.test(location.hash);   // モーションを作る画面はそのまま作る画面へ
+    const next = page ? `#${page}/${enc(c.id)}/${enc(v.id)}` : creating ? `#motions/${enc(c.id)}/${enc(v.id)}/new` : stageHref(stage, c);
     if (next === location.hash) route(); else location.hash = next;
   };
   const sw = h('details', {class: 'switch'},
     h('summary', {'aria-label': 'キャラを切り替える'},
       thumb(c?.thumb, '', 'mini'),
-      h('span', {class: 'who'}, h('span', {class: 'who-name'}, c?.name ?? 'キャラなし'), h('span', {class: 'mono who-ver'}, verId ?? '版なし'))),
+      h('span', {class: 'who'}, h('span', {class: 'who-name'}, c?.name ?? 'キャラなし'), h('span', {class: 'mono who-ver'}, verId ?? 'バージョンなし'))),
     h('div', {class: 'menu'},
       h('div', {class: 'menu-head'}, 'キャラ'),
       ov.chars.map(x => h('a', {href: stageHref(stage, x), 'aria-current': x.id === c?.id ? 'true' : null, onclick: close}, thumb(x.thumb, '', 'mini'), x.name)),
-      c?.versions?.length ? h('div', {class: 'menu-head'}, '版') : null,
+      c?.versions?.length ? h('div', {class: 'menu-head'}, 'バージョン') : null,
       sortVersions(c ?? {}).map(v => h('a', {href: '#', 'aria-current': v.id === verId ? 'true' : null, onclick: pickVersion(v)},
         h('span', {class: 'mono'}, v.id), v.id === c.latest?.id ? h('span', {class: 'tag'}, '最新') : null)),
       // スマホには工程のタブが無いので、下のナビに無い 2 つの工程はここから入る(生き物には工程が無い)
@@ -107,24 +109,26 @@ function renderBar(ov, stage, c, verId) {
   const tab = ([id, n, label]) => h('a', {class: 'tab', href: stageHref(id, c), 'aria-current': id === stage ? 'page' : null}, h('span', {class: 'mono n'}, n), h('span', {}, label));
   // 生き物は 4 工程のタブを出さず、キャラのページへのリンクだけ
   bar.replaceChildren(brand, sw, creature ? h('div', {class: 'grow'}) : h('nav', {class: 'tabs', 'aria-label': '工程'}, STAGES.map(tab)),
-    h('a', {class: 'model-link', href: stageHref('model', c), 'aria-current': stage === 'model' ? 'page' : null}, creature ? 'キャラのページ' : '完成モデル'), scenes, gallery, jobsButton, drawer);
+    h('a', {class: 'model-link', href: stageHref('model', c), 'aria-current': stage === 'model' ? 'page' : null}, creature ? 'キャラのページ' : '完成モデル'), scenes, shorts, gallery, jobsButton, drawer);
 }
 
 // スマホの下のナビ。ジョブは上部バーの引き出し、つくると仕上げはキャラの切り替えの欄とライブラリのカードから入る
 // 生き物のキャラでは、動きと表情を出さない(VRM の工程なので)
+// キャラの無い画面のうち、ステージ、ショート、動画はそれぞれのリンクを光らせ、ライブラリは光らせない
 function renderPhoneNav(stage, c) {
   const link = (href, label, on) => h('a', {href, 'aria-current': on ? 'page' : null}, label);
-  const creature = isCreature(c);
-  phoneNav.replaceChildren(link('#chars', 'ライブラリ', stage === 'none'),
-    creature ? null : link(stageHref('motion', c), '動き', stage === 'motion'), creature ? null : link(stageHref('expression', c), '表情', stage === 'expression'),
-    link(stageHref('model', c), creature ? 'キャラ' : '完成モデル', stage === 'model'), link('#stages', 'ステージ', /^#stages/.test(location.hash)), link('#gallery', '動画', /^#(gallery|short)/.test(location.hash)));
+  const creature = isCreature(c), hash = location.hash;
+  const isStages = /^#stages(\/|$)/.test(hash), isShorts = /^#shorts?(\/|$)/.test(hash), isGallery = /^#gallery(\/|$)/.test(hash);
+  phoneNav.replaceChildren(link('#chars', 'ライブラリ', stage === 'none' && !isStages && !isShorts && !isGallery),
+    creature ? null : link(stageHref('motion', c), 'モーション', stage === 'motion'), creature ? null : link(stageHref('expression', c), '表情', stage === 'expression'),
+    link(stageHref('model', c), creature ? 'キャラ' : '完成モデル', stage === 'model'), link('#stages', 'ステージ', isStages), link('#shorts', 'ショート', isShorts), link('#gallery', '動画', isGallery));
 }
 
 // 生き物のキャラで VRM の画面を開いたときの案内
 function creatureNotice(char, page) {
   return h('div', {class: 'page-empty route-notice'},
     h('h1', {}, `${char.name} は${styleLabel('creature')}のキャラ`),
-    h('p', {}, `${VRM_PAGES[page]}の画面は VRM のキャラ(${styleLabel('standard')}と${styleLabel('chibi')})だけで使う。${styleLabel('creature')}は Blender の骨と動きで作り、scripts/import-creature.mjs で取り込む。`),
+    h('p', {}, `${VRM_PAGES[page]}の画面は VRM のキャラ（${styleLabel('standard')}と${styleLabel('chibi')}）だけで使う。${styleLabel('creature')}は Blender の骨と動きで作り、scripts/import-creature.mjs で取り込む。`),
     h('a', {class: 'button primary', href: '#model/' + enc(char.id)}, 'キャラのページへ戻る'));
 }
 
@@ -195,7 +199,7 @@ async function route(e) {
       char.versions = (await getJSON('/api/characters/' + enc(char.id))).versions;
       if (['create', 'motions', 'model', 'face', 'adjust', 'mv'].includes(page) && b) chosenVer[char.id] = b;
       if (['studio', 'finish'].includes(page) && b) chosenStudio[char.id] = b;
-      if (chosenVer[char.id] && !char.versions.some(v => v.id === chosenVer[char.id])) delete chosenVer[char.id];   // 消した版や、無い版の URL は最新の版へ戻す
+      if (chosenVer[char.id] && !char.versions.some(v => v.id === chosenVer[char.id])) delete chosenVer[char.id];   // 消したバージョンや、無いバージョンの URL は最新バージョンへ戻す
       if (!chosenStudio[char.id] && char.studios.length) chosenStudio[char.id] = char.studios.at(-1).id;
     }
     if (char && isCreature(char) && vrmPage) {   // VRM が前提の画面は開かない(サーバーも断る)
@@ -205,18 +209,21 @@ async function route(e) {
       scrollTo(0, 0);
       return;
     }
-    if (page === 'expression' && char?.latest) {   // Fcl_ のキーを持つ版は作り直す工程が無いので、確認の画面へ
+    // #expression/<キャラ>/new は表情を作り直す入口。確認の画面や今の表情づくりへ移さず、始める画面を開く
+    const rebuild = page === 'expression' && b === 'new';
+    if (page === 'expression' && char?.latest && !rebuild) {   // Fcl_ のキーを持つバージョンは作り直す工程が無いので、確認の画面へ。感情の表情 5 つがそろい、進行中の表情づくりが無いキャラも同じ
       const ver = chosenVer[char.id] ?? char.latest.id, face = await getJSON(`/api/characters/${enc(char.id)}/versions/${enc(ver)}/face`).catch(() => null);
-      if (face?.method === 'shapekey') { location.replace(`#face/${enc(char.id)}/${enc(ver)}`); return; }
+      const building = char.studios.some(s => !s.versions.length);
+      if (face?.method === 'shapekey' || (ver === char.latest.id && char.stages.expression === 'done' && !building)) { location.replace(`#face/${enc(char.id)}/${enc(ver)}`); return; }
     }
-    if (page === 'expression' && char && chosenStudio[char.id]) { location.replace(`#studio/${enc(char.id)}/${enc(chosenStudio[char.id])}`); return; }
+    if (page === 'expression' && char && chosenStudio[char.id] && !rebuild) { location.replace(`#studio/${enc(char.id)}/${enc(chosenStudio[char.id])}`); return; }
     const verId = char ? chosenVer[char.id] ?? char.latest?.id ?? null : null;
     renderBar(ov, stage, char, verId);
     refreshJobs();
     // 読み込みの途中で別の画面へ移ったら、古い画面の描画を捨てる
     const ctx = {main: {replaceChildren: (...nodes) => { if (alive()) main.replaceChildren(...nodes); }}, ov, char, verId, alive, jobsChanged: refreshJobs, stageHref, reload: route};
     if (page === 'create') await showCreate(ctx);
-    else if (page === 'motions') await showMotion(ctx);
+    else if (page === 'motions') await (c === 'new' || (b === 'new' && !c) ? showMotionCreate(ctx) : showMotion(ctx));
     else if (page === 'expression') await showStudioStart(ctx);
     else if (page === 'studio') await showStudio(ctx, b, c);
     else if (page === 'face') await showFaceCheck(ctx);

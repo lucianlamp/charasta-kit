@@ -69,7 +69,7 @@ test('値の確かめと、道具の引数、変えたことの文', () => {
   assert.deepEqual(checkBody({}), BODY_NEUTRAL);
   const b = checkBody({head: 0.94, neck: 0.75, shoulder: -1.2, arm: 0.8});
   assert.deepEqual(bodyArgs(b), ['--head', '0.94', '--neck', '0.0075', '--shoulder', '-0.012', '--arm', '0.8']);
-  assert.equal(bodySummary(b), '頭の大きさ 0.94 倍、首の長さ +0.8 cm、肩幅(片側) -1.2 cm、腕の太さ 0.80 倍');
+  assert.equal(bodySummary(b), '頭の大きさ 0.94 倍、首の長さ +0.8 cm、肩幅（片側） -1.2 cm、腕の太さ 0.80 倍');
   for (const bad of [{head: 2}, {neck: '1'}, {legs: 1}, [], {arm: NaN}]) assert.throws(() => checkBody(bad), Error, JSON.stringify(bad));
   for (const bad of [{hairs: {stiffness: 1}}, {hair: {stiff: 1}}, {hair: {dragForce: 2}}, {hair: 1}, []]) assert.throws(() => checkSprings(bad), Error, JSON.stringify(bad));
   const groups = [{key: 'hair', label: '髪', values: {stiffness: 0.8, dragForce: 0.4, gravityPower: 0}}];
@@ -91,7 +91,7 @@ async function withChar(extra, fn) {
 }
 
 for (const edition of [undefined, 'kit']) {
-  test(`ジョブ adjust(${edition ?? 'full'}): 体型と揺れものを変えた新しい版を作り、元の版は変えない`, async () => {
+  test(`ジョブ adjust(${edition ?? 'full'}): 体型と揺れものを変えた新しいバージョンを作り、元のバージョンは変えない`, async () => {
     await withChar(edition ? {edition} : {}, async (s, lib) => {
       const info = (await call(s.base, 'GET', '/api/characters/c1/versions/v1/adjust')).body;
       assert.equal(info.body.available, true);
@@ -107,10 +107,10 @@ for (const edition of [undefined, 'kit']) {
       assert.deepEqual(r.body.input.springs, {hair: {stiffness: 1.4}}, '元と同じ値の組は入れない');
       assert.equal(r.body.input.label, '体型と揺れものを直した');
       assert.match(r.body.input.note, /^v1 から。首の長さ \+1\.0 cm、腕の太さ 0\.90 倍。髪 揺れにくさ 0\.70→1\.40$/);
-      assert.equal((await call(s.base, 'POST', '/api/jobs', {type: 'adjust', charId: 'c1', verId: 'v1', newVerId: 'v2', body: {arm: 0.8}})).status, 409, '同じ新しい版 ID のジョブが待っている');
+      assert.equal((await call(s.base, 'POST', '/api/jobs', {type: 'adjust', charId: 'c1', verId: 'v1', newVerId: 'v2', body: {arm: 0.8}})).status, 409, '同じ新しいバージョン ID のジョブが待っている');
       const job = await waitDone(s.base, r.body.id);
       assert.equal(job.state, 'done', job.error);
-      assert.equal(sha(await fs.readFile(v1)), before, '元の版は変えない');
+      assert.equal(sha(await fs.readFile(v1)), before, '元のバージョンは変えない');
 
       const ch = (await call(s.base, 'GET', '/api/characters/c1')).body;
       assert.equal(ch.latestVersion, 'v2');
@@ -131,12 +131,12 @@ for (const edition of [undefined, 'kit']) {
       const a = parseGlb(await fs.readFile(path.join(lib.dir, 'characters/c1/versions/v2/model.vrm'))), b = parseGlb(await fs.readFile(path.join(lib.dir, 'characters/c1/versions/v3/model.vrm')));
       assert.equal(sha(b.bin), sha(a.bin));
       assert.equal(b.json.extensions.VRMC_springBone.springs[3].joints[0].gravityPower, 0);
-      assert.equal((await call(s.base, 'GET', '/api/characters/c1')).body.latestVersion, 'v2', 'latest を付けなければ最新の版は変えない');
+      assert.equal((await call(s.base, 'GET', '/api/characters/c1')).body.latestVersion, 'v2', 'latest を付けなければ最新バージョンは変えない');
     });
   });
 }
 
-test('体型を直せない版: VRM 0.x は理由を返し、ジョブは断る。揺れものが無ければ組は空', async () => {
+test('体型を直せないバージョン: VRM 0.x は理由を返し、ジョブは断る。揺れものが無ければ組は空', async () => {
   const s = await startServer({env: FAKE_ENV});
   try {
     const lib = new Library(s.libraryDir);
@@ -181,7 +181,7 @@ test('直しの頼みごと: 作る、絵を付ける、一覧、取り下げ(li
 // CLI: 保管場所(CHARASTA_LIBRARY)のファイルを直に読み書きする。サーバーは要らない
 const cli = (dir, ...args) => exec(process.execPath, [path.join(root, 'scripts', 'adjust-requests.mjs'), ...args], {env: {...process.env, CHARASTA_LIBRARY: dir}});
 
-test('CLI: list、show、start、done(新しい版を確かめる)、decline', async () => {
+test('CLI: list、show、start、done(新しいバージョンを確かめる)、decline', async () => {
   const dir = await tempDir(), lib = new Library(dir);
   await lib.createCharacter({id: 'c1', name: 'C1', style: 'standard'});
   await lib.importVersion({charId: 'c1', id: 'v1', data: await humanoid()});
@@ -195,7 +195,7 @@ test('CLI: list、show、start、done(新しい版を確かめる)、decline', a
   assert.match((await cli(dir, 'show', a.id)).stdout, /対応待ち.*c1\/v1.*体型[\s\S]*肩幅を狭く/);
   assert.equal(JSON.parse((await cli(dir, 'start', a.id, '--json')).stdout).state, 'working');
   await assert.rejects(cli(dir, 'done', a.id, '--version', 'v2', '--reply', '狭くした'), e => e.code === 1 && /v2 が無い/.test(e.stderr));
-  await assert.rejects(cli(dir, 'done', a.id, '--version', 'v1', '--reply', '狭くした'), e => e.code === 1 && /頼まれたときの版/.test(e.stderr));
+  await assert.rejects(cli(dir, 'done', a.id, '--version', 'v1', '--reply', '狭くした'), e => e.code === 1 && /依頼されたときのバージョン/.test(e.stderr));
   await assert.rejects(cli(dir, 'done', a.id, '--version', 'v2'), e => e.code === 2);
   await lib.importVersion({charId: 'c1', id: 'v2', data: await fs.readFile(path.join(dir, 'characters/c1/versions/v1/model.vrm'))});
   const done = JSON.parse((await cli(dir, 'done', a.id, '--version', 'v2', '--reply', '肩幅を片側 1.2 cm 狭くした', '--json')).stdout);
@@ -203,7 +203,7 @@ test('CLI: list、show、start、done(新しい版を確かめる)、decline', a
   assert.ok(done.repliedAt);
   await assert.rejects(cli(dir, 'decline', a.id, '--reply', 'x'), e => e.code === 1, '終わったものは動かせない');
   assert.equal(JSON.parse((await cli(dir, 'decline', b.id, '--reply', '指の長さは体型の道具に無い', '--json')).stdout).state, 'declined');
-  assert.match((await cli(dir, 'list')).stdout, /頼みごとは無い/);
+  assert.match((await cli(dir, 'list')).stdout, /依頼はない/);
   assert.equal(JSON.parse((await cli(dir, 'list', '--all', '--char', 'c1', '--json')).stdout).length, 2);
   await assert.rejects(cli(dir, 'nope'), e => e.code === 2);
 });

@@ -3,12 +3,12 @@
 //   DOM は構図の絵(cameraSketch)を呼んだときだけ使う(テストが読み込める)
 
 export const CAMERA_COMBOS = [
-  {id: 'talk_close', who: '決まった人', dist: '寄り', move: '正面', kinds: ['talk']},
-  {id: 'talk_bust', who: '決まった人', dist: '胸から上', move: '正面', kinds: ['talk']},
-  {id: 'talk_wide', who: '決まった人', dist: '全身', move: '正面', kinds: ['talk']},
-  {id: 'orbit', who: '決まった人', dist: '胸から上', move: '回り込む', kinds: ['talk', 'dance']},
-  {id: 'wide_push', who: '決まった人', dist: '全身', move: '寄っていく', kinds: ['talk', 'dance']},
-  {id: 'low_feet', who: '決まった人', dist: '全身', move: '下から', kinds: ['talk', 'dance']},
+  {id: 'talk_close', who: '選んだ人', dist: '寄り', move: '正面', kinds: ['talk']},
+  {id: 'talk_bust', who: '選んだ人', dist: '胸から上', move: '正面', kinds: ['talk']},
+  {id: 'talk_wide', who: '選んだ人', dist: '全身', move: '正面', kinds: ['talk']},
+  {id: 'orbit', who: '選んだ人', dist: '胸から上', move: '回り込む', kinds: ['talk', 'dance']},
+  {id: 'wide_push', who: '選んだ人', dist: '全身', move: '寄っていく', kinds: ['talk', 'dance']},
+  {id: 'low_feet', who: '選んだ人', dist: '全身', move: '下から', kinds: ['talk', 'dance']},
   {id: 'face_who', who: '話す人', dist: '大写し', move: '正面', kinds: ['talk']},
   {id: 'close_who', who: '話す人', dist: '寄り', move: '正面', kinds: ['talk']},
   {id: 'bust_who', who: '話す人', dist: '胸から上', move: '正面', kinds: ['talk']},
@@ -25,14 +25,14 @@ export const CAMERA_COMBOS = [
   {id: 'crow_close', who: '生き物', dist: '寄り', move: '回り込む', kinds: ['creature']},
   {id: 'crow_takeoff', who: '2 人', dist: '引き', move: '見上げる', kinds: ['creature']},
   // ダンス MV のカメラ(stage-studio の lib/shots.py の shot_*)。wide_push、orbit、low_feet は上にある
-  {id: 'close', who: '決まった人', dist: '寄り', move: '正面', kinds: ['dance']},
-  {id: 'crane_up', who: '決まった人', dist: '引き', move: '上がっていく', kinds: ['dance']},
-  {id: 'crane_down', who: '決まった人', dist: '引き', move: '下がっていく', kinds: ['dance']},
-  {id: 'side_track', who: '決まった人', dist: '全身', move: '並走する', kinds: ['dance']},
-  {id: 'high_top', who: '決まった人', dist: '引き', move: '真上から', kinds: ['dance']},
+  {id: 'close', who: '選んだ人', dist: '寄り', move: '正面', kinds: ['dance']},
+  {id: 'crane_up', who: '選んだ人', dist: '引き', move: '上がっていく', kinds: ['dance']},
+  {id: 'crane_down', who: '選んだ人', dist: '引き', move: '下がっていく', kinds: ['dance']},
+  {id: 'side_track', who: '選んだ人', dist: '全身', move: '並走する', kinds: ['dance']},
+  {id: 'high_top', who: '選んだ人', dist: '引き', move: '真上から', kinds: ['dance']},
 ];
 export const CAMERA_AXES = [
-  {key: 'who', label: '誰を撮る', values: ['話す人', '決まった人', '2 人', '生き物', '手紙']},
+  {key: 'who', label: '誰を撮る', values: ['話す人', '選んだ人', '2 人', '生き物', '手紙']},
   {key: 'dist', label: '距離', values: ['大写し', '寄り', '胸から上', '全身', '引き']},
   {key: 'move', label: '角度と動き', values: ['正面', '斜め前', '横', '後ろ', '肩越し', '下から', '見上げる', '寄っていく', '引いていく', '回り込む', '上がっていく', '下がっていく', '並走する', '真上から']},
 ];
@@ -55,20 +55,15 @@ export function chooseCamera(nowId, key, value, kind) {
   return best;
 }
 
-// 画面の軸のボタンの中身。off は押せない値で、why はその理由(押せる値では、そのカメラの条件)
+// 画面の軸のボタンの中身。その種類で 1 つも使えない値は出さない(今のカメラの値が使えないときは hint で知らせる)。why は、そのカメラの条件
 export function cameraAxes(nowId, kind) {
   const now = comboOf(nowId) ?? {};
-  // ダンス MV だけの値(上がっていく、など)は、ほかの動画の種類のボタンには出さない
-  const shown = (a, v) => kind === 'dance' || CAMERA_COMBOS.some(x => x[a.key] === v && x.kinds.some(k => k !== 'dance'));
-  const axes = CAMERA_AXES.map(a => ({key: a.key, label: a.label, items: a.values.filter(v => shown(a, v)).map(value => {
-    const pick = chooseCamera(nowId, a.key, value, kind), off = !pick;
-    const why = off ? (CAMERA_COMBOS.some(x => x[a.key] === value) ? `${KIND_NAME[kind]}では使えない` : 'このカメラは無い') : pick.need ?? '';
-    return {value, on: now[a.key] === value, off, why, camera: pick?.id ?? null};
+  const axes = CAMERA_AXES.map(a => ({key: a.key, label: a.label, items: a.values.filter(v => CAMERA_COMBOS.some(x => x[a.key] === v && x.kinds.includes(kind))).map(value => {
+    const pick = chooseCamera(nowId, a.key, value, kind);
+    return {value, on: now[a.key] === value, why: pick.need ?? '', camera: pick.id};
   })}));
-  const off = CAMERA_AXES.flatMap(a => a.values.filter(v => shown(a, v) && !CAMERA_COMBOS.some(x => x[a.key] === v && x.kinds.includes(kind))));
   const usable = now.kinds?.includes(kind);
-  return {axes, offNote: off.length ? `薄い選択肢(${off.join('、')})は${KIND_NAME[kind]}では使えない` : '',
-    hint: usable ? now.need ?? '' : `${KIND_NAME[kind]}では使えないカメラ。軸から選び直す`};
+  return {axes, hint: usable ? now.need ?? '' : `${KIND_NAME[kind]}では使えないカメラ。軸から選び直す`};
 }
 
 // 構図の絵(120x160)。人の形と、距離の枠

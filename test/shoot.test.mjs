@@ -7,7 +7,7 @@ import http from 'node:http';
 import {execFileSync, spawnSync} from 'node:child_process';
 import {Library} from '../lib/library.mjs';
 import {JobQueue} from '../lib/jobs.mjs';
-import {limitOf, videoTerms} from '../lib/terms.mjs';
+import {currentTerms, limitOf, videoTerms} from '../lib/terms.mjs';
 import {encodeArgs, shootSize, shootTimeoutMs} from '../lib/shoot.mjs';
 import {fitFull, frameHead, distanceFor, shootSeconds, smoothTrack, trackAt, zoomTrack, MAX_SECONDS} from '../public/shoot-plan.mjs';
 import {tempDir, fakeGlb, FAKE_ENV, SAMPLE_VRMA, startServer} from './helpers.mjs';
@@ -32,6 +32,22 @@ const songFrom = async (lib, seconds, name = 'song.wav') => {
   const f = path.join(await tempDir(), name); tone(f, seconds);
   return lib.importAudio({name, data: await fs.readFile(f)});
 };
+
+test('保存された札の文: level があれば今の文を出し、level の無い古い記録だけ保存された文のまま。保管場所のファイルは変えない', async () => {
+  const {lib} = await setup();
+  const rec = (id, terms, createdAt) => ({id, charId: 'c1', verId: 'v1', createdAt, terms});
+  for (const [id, terms, at] of [['old-check', {level: 'check', tag: '公開前に確かめる', notes: []}, '2026-01-03'], ['old-no', {level: 'no', tag: '昔の文', notes: []}, '2026-01-02'], ['legacy', {tag: '公開前に確かめる'}, '2026-01-01']]) {
+    const dir = lib.shootDir('c1', id); await fs.mkdir(dir, {recursive: true});
+    await fs.writeFile(path.join(dir, 'shoot.json'), JSON.stringify(rec(id, terms, at)));
+  }
+  const of = (list, id) => list.find(s => s.id === id).terms;
+  for (const list of [(await lib.getCharacter('c1')).shoots, await lib.allShoots()]) {
+    assert.equal(of(list, 'old-check').tag, '公開前に確認する'); assert.equal(of(list, 'old-no').tag, '公開できない');
+    assert.equal(of(list, 'legacy').tag, '公開前に確かめる', 'level が無い古い記録は保存された文');
+  }
+  assert.equal(JSON.parse(await fs.readFile(path.join(lib.shootDir('c1', 'old-check'), 'shoot.json'), 'utf8')).terms.tag, '公開前に確かめる');
+  assert.equal(currentTerms({level: 'ok', tag: '古い'}).tag, null); assert.equal(currentTerms(undefined), undefined);
+});
 
 test('利用条件: 評価用と個人利用は公開できない、記録が無いものは確かめる、音声は書いた条件で判定する', () => {
   const name = (license, id = 'm') => ({id, label: 'モ', license});

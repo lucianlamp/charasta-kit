@@ -44,13 +44,13 @@ test('最初のタブ: 覚えたタブを使う。無い・壊れているとき
 });
 
 test('タブの下の 1 行: スタイルのタブは決まること、生き物は動きの名前を重ねずに足す、「すべて」は出さない', () => {
-  assert.equal(bandText('standard'), '表情: シェイプキー(Fcl の 57 キー) / 形式: VRoid 形式の検査');
-  assert.equal(bandText('chibi'), '表情: 画像(顔テクスチャのコマ) / 形式: 軽い版と三角形の数');
-  assert.equal(bandText('creature'), '形式: Blender(骨と動き)');
-  assert.equal(bandText('creature', chars), '形式: Blender(骨と動き) / 動き: 止まる、羽ばたく、down、tilt、stare、caw');
+  assert.equal(bandText('standard'), '表情はシェイプキーで動かす。VRoid と同じ作りかを確認する');
+  assert.equal(bandText('chibi'), '表情は顔の画像を切り替えて動かす。軽量版があるか、三角形が多すぎないかを確認する');
+  assert.equal(bandText('creature'), 'Blender で作った骨と動きで動かす。表情は無い');
+  assert.equal(bandText('creature', chars), 'Blender で作った骨と動きで動かす。表情は無い / 動き: 止まる、羽ばたく、down、tilt、stare、caw');
   const owl = {id: 'owl', kind: 'creature', creature: {rest: ['idle', 1, 1], clipNames: ['down', 'hoot']}};
-  assert.equal(bandText('creature', [...chars, owl]), '形式: Blender(骨と動き) / 動き: 止まる、羽ばたく、down、tilt、stare、caw など');
-  assert.equal(bandText('standard', chars), '表情: シェイプキー(Fcl の 57 キー) / 形式: VRoid 形式の検査');
+  assert.equal(bandText('creature', [...chars, owl]), 'Blender で作った骨と動きで動かす。表情は無い / 動き: 止まる、羽ばたく、down、tilt、stare、caw など');
+  assert.equal(bandText('standard', chars), '表情はシェイプキーで動かす。VRoid と同じ作りかを確認する');
   assert.equal(bandText('all', chars), null);
 });
 
@@ -77,7 +77,7 @@ test('ショートで使う書き方の見本: charId、perch、path([x, y, z] �
   assert.deepEqual(Object.keys(ref), ['charId', 'perch', 'path']);
 });
 
-test('スタイルを変えるときの候補: 版があると生き物とそれ以外のあいだは移れない', () => {
+test('スタイルを変えるときの候補: バージョンがあると生き物とそれ以外のあいだは移れない', () => {
   assert.deepEqual(restyleChoices('standard', false), ['standard', 'chibi', 'creature']);
   assert.deepEqual(restyleChoices('creature', false), ['standard', 'chibi', 'creature']);
   assert.deepEqual(restyleChoices('standard', true), ['standard', 'chibi']);
@@ -93,7 +93,8 @@ test('名前: タブの順と札。用途の言葉と、人型、デフォルメ
   assert.equal(styleLabel(null), 'スタイル未設定');
   assert.equal(styleOf({style: 'weird'}), null);
   assert.equal(styleOf(undefined), null);
-  assert.deepEqual(CHAR_STYLES.creature.steps, [['作り方', 'Blender で骨と動きを作り、scripts/import-creature.mjs で取り込む'], ['表情', 'なし(動きの Action を使う)']]);
+  assert.deepEqual(CHAR_STYLES.creature.steps, [['作り方', 'Blender で骨と動きを作り、取り込む'], ['表情', 'なし（Blender で作った動きを使う）']]);
   const text = JSON.stringify([CHAR_STYLES, STYLE_TABS]);
+  for (const w of ['Fcl', 'kit_fcl', 'review.vrm', 'image_gen', 'scripts/', '.mjs', 'Action', 'rig ', 'テクスチャ']) assert.ok(!text.includes(w), `内部の名前を出さない ${w}`);
   for (const w of ['VTuber', '動画', 'ゲーム', '人型', 'デフォルメ']) assert.ok(!text.includes(w), w);
 });

@@ -112,7 +112,7 @@ test('カメラ: ダンス MV の種類は FLOW の 8 つ。ほかの種類の�
   assert.deepEqual(camerasFor('dance'), DANCE_CAMERAS);
   const moves = kind => cameraAxes('wide_push', kind).axes.find(a => a.key === 'move').items.map(i => i.value);
   assert.ok(moves('dance').includes('上がっていく')); assert.ok(!moves('talk').includes('上がっていく'));
-  assert.equal(moves('talk').length, 10);
+  assert.deepEqual(moves('talk'), ['正面', '肩越し', '下から', '寄っていく', '引いていく', '回り込む']);   // 立って話す動画で 1 つも使えない動き（横、後ろなど）は出さない
 });
 
 test('コマの数: 偶数丸め、拍の境で shots.json と同じ規則で数える', () => {
@@ -144,7 +144,7 @@ test('照合: 時刻、シーン、カメラ、角度、カットの数がずれ
   checkShots(cuts, good.map(s => ({...s, start: s.start + 0.005, end: s.end - 0.005})));   // 許容の中
   assert.throws(() => checkShots(cuts, good.slice(0, 1)), /1 カット/);
   assert.throws(() => checkShots(cuts, [good[0], {...good[1], start: 2.5}]), /カット 2 の時刻/);
-  assert.throws(() => checkShots(cuts, [good[0], {...good[1], stage: 'a'}]), /カット 2 のシーン/);
+  assert.throws(() => checkShots(cuts, [good[0], {...good[1], stage: 'a'}]), /カット 2 のステージ/);
   assert.throws(() => checkShots(cuts, [good[0], {...good[1], kind: 'orbit'}]), /カット 2 のカメラ/);
   assert.throws(() => checkShots(cuts, [{...good[0], a: -12}, good[1]]), /カット 1 の角度/);
 });
@@ -204,7 +204,7 @@ test('API: ダンス MV の music とカットを確かめる。ほかの型は 
     await bad({music: {motionId: 'dance', shotsPerScene: 3}}, /shotsPerScene/);
     await bad({music: {motionId: 'dance', seed: 10000}}, /seed/);
     await bad({music: {motionId: 'dance', audioStart: -1}}, /audioStart/);
-    await bad({music: {motionId: 'dance', stages: ['nowhere']}}, /シーン/);
+    await bad({music: {motionId: 'dance', stages: ['nowhere']}}, /ステージ/);
     await bad({music: {motionId: 'dance', stages: ['concert', 'concert']}}, /2 回/);
     await bad({cuts: [{...cut, camera: 'talk_bust'}]}, /カメラ/);
     await bad({cuts: [{...cut, seconds: 0}]}, /秒/);

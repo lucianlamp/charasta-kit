@@ -1,8 +1,9 @@
 // 表情(docs/expression-studio.md、docs/screens.md): 左に工程、真ん中に選んだ工程の中身、右にできている表情と新しい依頼。
-// 確かめと版にするは仕上げの画面(public/finish.mjs)にある。#studio/<キャラ>/<ID>/<工程> で工程を直接開ける。
+// 確かめとバージョンにするは仕上げの画面(public/finish.mjs)にある。#studio/<キャラ>/<ID>/<工程> で工程を直接開ける。
 import {h, getJSON, send, elapsedText} from './dom.mjs';
 import {AGENT, enc, mb, when} from './shared.mjs';
 import {missingNote} from './capabilities.mjs';
+import {confirmDialog} from './confirm.mjs';
 
 const STATE = {none: '未実行', queued: '待ち', running: '実行中', done: '完了', failed: '失敗'};
 const REQ_STEP = {face: '3 顔の絵', expr: '6 表情の絵'};
@@ -27,14 +28,14 @@ function startForm(charId, stageHref) {
     try { const w = await send('POST', `/api/studio/${enc(charId)}`, {id: id.value.trim() || undefined, note: note.value.trim()}); location.hash = `#studio/${enc(charId)}/${enc(w.id)}`; }
     catch (e) { msg.className = 'err'; msg.textContent = '作れない: ' + e.message; go.disabled = false; }
   };
-  return h('div', {class: 'form-stack'}, h('label', {}, 'ID', id), h('label', {}, 'メモ', note), go, msg);
+  return h('div', {class: 'form-stack'}, h('label', {}, 'メモ', note), go, msg, h('details', {}, h('summary', {}, '詳しい設定'), h('label', {}, 'ID', id)));
 }
 
 // このキャラに表情づくりが無いとき
 export async function showStudioStart({main, ov, char}) {
   if (!char) { main.replaceChildren(h('div', {class: 'empty page-empty'}, 'キャラがまだない。')); return; }
   main.replaceChildren(h('div', {class: 'narrow'}, h('h1', {}, '表情づくり'),
-    h('p', {class: 'lead'}, `${char.name} の表情づくりはまだない。`), missingNote(ov, ['expressionStudio'], '表情づくりに要る道具が未設定'), h('section', {class: 'card-box'}, startForm(char.id)), h('p', {}, h('a', {href: `#face/${enc(char.id)}`}, '版の顔を確かめる'))));
+    h('p', {class: 'lead'}, char.studios.length ? '新しい表情づくりを始める。' : `${char.name} の表情づくりはまだない。`), missingNote(ov, ['expressionStudio'], '表情づくりに要る道具が未設定'), h('section', {class: 'card-box'}, startForm(char.id)), h('p', {}, h('a', {href: `#face/${enc(char.id)}`}, 'バージョンの顔を確認する'))));
 }
 
 export async function showStudio({main, char, alive, jobsChanged}, id, stepArg) {
@@ -66,7 +67,7 @@ export async function showStudio({main, char, alive, jobsChanged}, id, stepArg) 
   const draft = (key, el) => { if (drafts[key] != null) el.value = drafts[key]; el.addEventListener('input', () => { drafts[key] = el.value; }); return el; };
   const startJob = async (step, extra = {}, msg) => {
     try { await send('POST', '/api/jobs', {type: JOB[step], charId, studioId: id, ...extra}); jobsChanged(); await reload(); }
-    catch (e) { msg.className = 'err'; msg.textContent = '積めない: ' + e.message; }
+    catch (e) { msg.className = 'err'; msg.textContent = '始められない: ' + e.message; }
   };
 
   // ---- 左: 工程の一覧 ----
@@ -91,8 +92,8 @@ export async function showStudio({main, char, alive, jobsChanged}, id, stepArg) 
   function stepPanel(step) {
     const s = st.steps[step], msg = h('span', {class: 'muted'});
     const tags = [];
-    if (s.stale) tags.push(h('span', {class: 'tag no'}, '古い（入力が変わった）'));
-    if (s.upstreamStale) tags.push(h('span', {class: 'tag no'}, '前の工程が古い'));
+    if (s.stale) tags.push(h('span', {class: 'tag no'}, '入力が変わった。もう一度動かす'));
+    if (s.upstreamStale) tags.push(h('span', {class: 'tag no'}, '前の工程が変わった。もう一度動かす'));
     if (s.sourceChanged) tags.push(h('span', {class: 'tag no'}, 'きゃらくる側が変わった'));
     const busy = s.state === 'queued' || s.state === 'running';
     let action = null;
@@ -133,7 +134,7 @@ export async function showStudio({main, char, alive, jobsChanged}, id, stepArg) 
       const pending = r.state === '候補あり' && c.state === '候補';
       const reason = pending ? draft(`${r.id}:${c.n}`, h('input', {'aria-label': `候補 ${c.n} の却下の理由`})) : null;
       const adopt = pending ? h('button', {class: 'primary'}, '採用') : null, reject = pending ? h('button', {}, '却下') : null;
-      if (adopt) adopt.onclick = () => { if (confirm(`候補 ${c.n} を採用して ${r.target} を替える？（前の絵は trash/ へ。使う工程は「古い」になる）`))
+      if (adopt) adopt.onclick = async () => { if (await confirmDialog({title: `候補 ${c.n} を採用`, body: [h('p', {}, `${r.target} を替える。前の絵はごみ箱へ移す。使う工程は「古い」になる。`)], confirm: '採用する'}))
         act(() => send('POST', api(charId, id, `/requests/${enc(r.id)}/candidates/${c.n}/adopt`)), '採用している…'); };
       if (reject) reject.onclick = () => act(() => { delete drafts[`${r.id}:${c.n}`]; return send('POST', api(charId, id, `/requests/${enc(r.id)}/candidates/${c.n}/reject`), {reason: reason.value.trim()}); }, '却下している…');
       return h('figure', {class: 'candidate' + (pending ? ' pending' : ''), 'data-state': c.state},
@@ -145,7 +146,7 @@ export async function showStudio({main, char, alive, jobsChanged}, id, stepArg) 
         pending ? h('label', {class: 'small-label'}, '却下の理由（次の候補で読む）', reason) : null);
     });
     const withdraw = REQ_OPEN(r) ? h('button', {class: 'danger'}, '取り下げる') : null;
-    if (withdraw) withdraw.onclick = () => { if (confirm(`依頼 ${r.id} を取り下げる？`)) act(() => send('POST', api(charId, id, `/requests/${enc(r.id)}/withdraw`)), '取り下げている…'); };
+    if (withdraw) withdraw.onclick = async () => { if (await confirmDialog({title: `依頼 ${r.id} を取り下げる`, confirm: '取り下げる'})) act(() => send('POST', api(charId, id, `/requests/${enc(r.id)}/withdraw`)), '取り下げている…'); };
     const wait = r.state !== '未着手' ? '' : r.candidates.length ? `（全部却下した。${AGENT.ga}次の候補を作る）` : `（${AGENT.wo}待っている。${AGENT.ni}「きゃらすたの依頼を進めて」と言う）`;
     return h('section', {class: 'request', 'data-request': r.id, 'data-state': r.state},
       h('div', {class: 'page-head'}, h('h2', {}, `依頼 ${r.id}`), h('code', {}, r.target),
@@ -166,7 +167,7 @@ export async function showStudio({main, char, alive, jobsChanged}, id, stepArg) 
       catch (e) { msg.className = 'err'; msg.textContent = 'コピーできない: ' + e.message; go.disabled = false; }
     };
     return h('section', {class: 'card-box', id: 'inputsBox'}, h('h2', {}, '材料（きゃらくるは読むだけ）'),
-      st.source ? h('div', {class: 'muted'}, '出どころ: ' + (st.source.type === 'charakuru' ? `きゃらくる ${st.source.project}` : `表情づくり ${st.source.studio}`)) : null,
+      st.source ? h('div', {class: 'muted'}, '取り込み元: ' + (st.source.type === 'charakuru' ? `きゃらくる ${st.source.project}` : `表情づくり ${st.source.studio}`)) : null,
       st.inputs.length ? h('div', {class: 'files'}, st.inputs.map(f => h('div', {}, h('code', {}, 'inputs/' + f.name), ` ${mb(f.size)}・sha256 ${short(f.sha256)}`))) : null,
       h('div', {class: 'actions'}, sel, go, msg));
   }
@@ -178,7 +179,7 @@ export async function showStudio({main, char, alive, jobsChanged}, id, stepArg) 
       h('div', {class: 'muted'}, '依頼の候補を採用すると替わる。今ある絵のフォルダは CLI（node scripts/studio.mjs adopt）でも取り込める。'),
       ...Object.entries(groups).map(([dir, list]) => h('details', {open: list.length <= 12},
         h('summary', {}, `${dir}/（${list.length}）`),
-        h('div', {class: 'thumbs'}, list.map(a => h('a', {href: a.url, target: '_blank', title: `${a.path}\n出どころ: ${a.from}\nsha256 ${a.sha256}`},
+        h('div', {class: 'thumbs'}, list.map(a => h('a', {href: a.url, target: '_blank', title: `${a.path}\n取り込み元: ${a.from}\nsha256 ${a.sha256}`},
           h('img', {src: a.url + '?v=' + a.sha256.slice(0, 8), loading: 'lazy', alt: a.path}), h('span', {}, a.path.split('/').pop() + (a.request ? `（${a.request} 候補 ${a.candidate}）` : ''))))))));
   }
 
@@ -220,7 +221,7 @@ export async function showStudio({main, char, alive, jobsChanged}, id, stepArg) 
     if (selected === 'front') return [stepPanel('front'), frontBlock()];
     if (selected === 'rects') return [stepPanel('rects'), h('section', {class: 'card-box', id: 'rectsBox'}, h('h2', {}, '区画の範囲（目・眉と口）'), rects.el())];
     if (selected === 'build') return [stepPanel('build'), protoBlock(),
-      h('details', {class: 'card-box'}, h('summary', {}, '設定（スクリプトの引数。node scripts/studio.mjs options で変える）'), h('pre', {class: 'json'}, JSON.stringify(st.options, null, 1)))];
+      h('details', {class: 'card-box'}, h('summary', {}, '詳しい設定（開発用）'), h('p', {class: 'muted'}, 'スクリプトの引数。node scripts/studio.mjs options で変える。'), h('pre', {class: 'json'}, JSON.stringify(st.options, null, 1)))];
     return [stepPanel('video'), videoBlock(), protoBlock()];
   }
 
@@ -229,8 +230,8 @@ export async function showStudio({main, char, alive, jobsChanged}, id, stepArg) 
     const last = st.checks.at(-1), faces = (last?.images ?? []).filter(i => i.kind === 'expr' && i.yaw === 0 && FACE_LABEL[i.expr]);
     return h('section', {class: 'stack'}, h('h2', {}, 'できている表情'),
       faces.length ? [h('div', {class: 'faces'}, faces.map(i => h('figure', {}, h('img', {src: i.url, alt: FACE_LABEL[i.expr], loading: 'lazy'}), h('figcaption', {}, FACE_LABEL[i.expr])))),
-        h('div', {class: 'muted'}, `試作 ${last.proto} の確かめの撮影`)]
-        : h('div', {class: 'muted'}, '確かめの撮影がまだない（仕上げで撮る）。'));
+        h('div', {class: 'muted'}, `試作 ${last.proto} の確認用の撮影`)]
+        : h('div', {class: 'muted'}, '確認用の撮影がまだない（仕上げで撮る）。'));
   }
 
   // 依頼は開いている工程(3 か 6)に出す
@@ -253,19 +254,19 @@ export async function showStudio({main, char, alive, jobsChanged}, id, stepArg) 
   }
 
   function render() {
-    left.replaceChildren(...ROWS.map(stepButton), h('a', {class: 'step-btn', href: `#finish/${enc(charId)}/${enc(id)}`}, h('span', {class: 'mono n'}, '8'), h('span', {class: 'grow'}, '確かめと版にする（仕上げ）')));
+    left.replaceChildren(...ROWS.map(stepButton), h('a', {class: 'step-btn', href: `#finish/${enc(charId)}/${enc(id)}`}, h('span', {class: 'mono n'}, '8'), h('span', {class: 'grow'}, '確認とバージョンとして保存（仕上げ）')));
     center.replaceChildren(...centerBlocks().flat().filter(Boolean));
     right.replaceChildren(...[facesBlock(), selected.startsWith('req:') ? newRequest(selected.slice(4)) : null].filter(Boolean));
     poll();
   }
 
   const switcher = h('select', {'aria-label': '表情づくり', onchange: e => { location.hash = `#studio/${enc(charId)}/${enc(e.target.value)}`; }},
-    list.map(s => h('option', {value: s.id}, [s.id, when(s.createdAt), s.prototypes ? `試作 ${s.prototypes}` : null, ...s.versions.map(v => '版 ' + v)].filter(Boolean).join('・'))));
+    list.map(s => h('option', {value: s.id}, [s.id, when(s.createdAt), s.prototypes ? `試作 ${s.prototypes}` : null, ...s.versions.map(v => 'バージョン ' + v)].filter(Boolean).join('・'))));
   switcher.value = id;
   main.replaceChildren(h('div', {class: 'work'},
     h('aside', {class: 'pane pane-left pane-steps', 'aria-label': '工程'},
       h('h1', {}, '表情づくり'), list.length > 1 ? switcher : null, st.note ? h('div', {class: 'muted'}, st.note) : null, left,
-      h('details', {}, h('summary', {}, '新しい表情づくり'), startForm(charId)), h('a', {class: 'step-btn', href: `#face/${enc(charId)}`}, h('span', {class: 'grow'}, '版の顔を確かめる'))),
+      h('details', {}, h('summary', {}, '新しい表情づくり'), startForm(charId)), h('a', {class: 'step-btn', href: `#face/${enc(charId)}`}, h('span', {class: 'grow'}, 'バージョンの顔を確認する'))),
     h('section', {class: 'center page-body'}, center),
     h('aside', {class: 'pane pane-right', 'aria-label': '表情の一覧と依頼'}, right)));
   render();
@@ -324,7 +325,7 @@ function rectEditor(getSt, save) {
       ...r.map((v, j) => { const inp = h('input', {type: 'number', value: v, min: 0, max: size, step: 1, 'aria-label': `${k} ${i + 1} ${['x0', 'y0', 'x1', 'y1'][j]}`});
         inp.onchange = () => { r[j] = Math.round(Number(inp.value)); draw(); }; return inp; }),
       k === 'mouth' ? h('button', {class: 'danger', onclick: () => { list.splice(i, 1); draw(); }}, '消す') : null))));
-    const add = h('button', {}, '口の四角を足す');
+    const add = h('button', {}, '口の四角を追加');
     add.onclick = () => { const last = regions.mouth.at(-1) ?? [Math.round(size * 0.42), Math.round(size * 0.63), Math.round(size * 0.58), Math.round(size * 0.77)]; regions.mouth.push(last.map((v, j) => v + (j % 2 ? 20 : 0))); draw(); };
     const reset = h('button', {}, '保存した形に戻す'); reset.onclick = () => { fromSt(); const old = root; shown = null; root = null; old.replaceWith(el()); };
     const go = h('button', {class: 'primary'}, '保存');

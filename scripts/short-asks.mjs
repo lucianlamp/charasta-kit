@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// ショートの頼みごと(編集画面の「Claude に頼む」)の CLI。動いているサーバーの API を通して読み書きする(画面の保存と同じ道を通るため)
-//   node scripts/short-asks.mjs list [--short ID] [--port 8870]          対応待ちの頼みごと。カットの今のセリフ、テロップ、カメラも出す
+// ショートの依頼(編集画面の「Claude に依頼する」)の CLI。動いているサーバーの API を通して読み書きする(画面の保存と同じ道を通るため)
+//   node scripts/short-asks.mjs list [--short ID] [--port 8870]          対応待ちの依頼。カットの今のセリフ、テロップ、カメラも出す
 //   node scripts/short-asks.mjs done --short ID (--cut N | --whole) --reply "何をしたか" [--port 8870]
-//                                                                       直したあとに呼ぶ。返事を残して頼みごとを外し、カットの「確認した」も外す
+//                                                                       直したあとに呼ぶ。返事を残して依頼を外し、カットの「確認した」も外す
 import {cliArgs, need, fail, run} from '../lib/cli.mjs';
 import {loadConfig} from '../lib/config.mjs';
 import {pendingAsks, resolveAsk} from '../lib/short-asks.mjs';

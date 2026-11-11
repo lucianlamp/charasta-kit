@@ -243,7 +243,13 @@ test('API: カット表を作って読み、直して、ごみ箱へ移す。入
     assert.equal(made.status, 201); assert.equal(made.json.verId, 'v1');
     const id = made.json.id;
     assert.equal((await s.api('PUT', '/api/shorts/' + id, short({title: '直した'}))).json.title, '直した');
-    assert.equal((await s.api('GET', '/api/shorts')).json.length, 1);
+    const listed = (await s.api('GET', '/api/shorts')).json;
+    assert.equal(listed.length, 1); assert.equal(listed[0].thumb, null);   // 書き出していなければ絵は無い
+    for (const [sid, createdAt] of [['old', '2026-01-01T00:00:00Z'], ['new', '2026-02-01T00:00:00Z']]) {   // 書き出した動画のポスターのうち一番新しいものが thumb になる
+      const dir = path.join(s.libraryDir, 'characters', 'c1', 'shoots', sid);
+      await fs.mkdir(dir, {recursive: true}); await fs.writeFile(path.join(dir, 'shoot.json'), JSON.stringify({id: sid, charId: 'c1', createdAt, short: {id}}));
+    }
+    assert.equal((await s.api('GET', '/api/shorts')).json[0].thumb, '/lib/characters/c1/shoots/new/poster.jpg');
     assert.equal((await s.api('GET', '/api/short-options')).json.speakers.length, 1);
     assert.equal((await s.api('GET', `/api/shorts/${id}/impact`)).json.refusal, null);
     const gone = await s.api('DELETE', '/api/shorts/' + id);

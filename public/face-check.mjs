@@ -1,9 +1,9 @@
-// 表情の確認(docs/expression-studio.md の「シェイプキー方式の版の確認」): 版の顔の方式、プリセット 14 個、Fcl_ のキーのスライダー、視線、版どうしの比較、
-// 確かめの撮影。作るのは with-kimi スキルで、この画面は見るだけ(版の VRM を変えない)。
+// 表情の確認(docs/expression-studio.md の「シェイプキー方式のバージョンの確認」): バージョンの顔の方式、プリセット 14 個、Fcl_ のキーのスライダー、視線、ほかのバージョンとの比較、
+// 確かめの撮影。作るのは with-kimi スキルで、この画面は見るだけ(バージョンの VRM を変えない)。
 import {h, getJSON, send} from './dom.mjs';
 import {enc, when, sortVersions, viewerFrame, viewerReady} from './shared.mjs';
 
-const METHOD = {shapekey: 'シェイプキー方式(Fcl_ のキー)', atlas: '顔画像の方式', other: 'そのほかの顔'};
+const METHOD = {shapekey: 'シェイプキー方式（Fcl_ のキー）', atlas: '顔画像の方式', other: 'そのほかの顔'};
 const PRESET_LABEL = {neutral: 'ふだん', blink: 'まばたき', blinkLeft: '左まばたき', blinkRight: '右まばたき', happy: '笑顔', angry: '怒り', sad: '悲しみ', relaxed: '安らぎ', surprised: '驚き', aa: 'あ', ih: 'い', ou: 'う', ee: 'え', oh: 'お'};
 const GROUPS = [['ALL', '全部'], ['BRW', '眉'], ['EYE', '目'], ['MTH', '口'], ['HA', '歯']];
 const SETS = [['grid', '格子と表情'], ['keys', 'キー別'], ['motion', 'モーション']];
@@ -22,7 +22,7 @@ async function prepare(v, doc) {
   v.vrm.scene.traverse(o => { if (o.isMesh && o.morphTargetDictionary) ms.push(o); });
   const state = {preset: null, keys: {}};
   em.update = () => {
-    // 視線が表情で動く版(lookAt.type: expression)は look の 4 つを lookAt が置くので、消さない
+    // 視線が表情で動くバージョン(lookAt.type: expression)は look の 4 つを lookAt が置くので、消さない
     for (const e of em.expressions) if (e.expressionName !== state.preset && !LOOK.test(e.expressionName)) em.setValue(e.expressionName, 0);
     if (state.preset && em.getExpression(state.preset)) em.setValue(state.preset, 1);
     for (const m of ms) m.morphTargetInfluences.fill(0);   // 割り当ての無いキーは update が戻さない
@@ -34,7 +34,7 @@ async function prepare(v, doc) {
 
 export async function showFaceCheck({main, char, verId, alive, jobsChanged}) {
   clearTimeout(timer);
-  if (!char || !verId) { main.replaceChildren(h('div', {class: 'empty page-empty'}, '版がまだない。')); return; }
+  if (!char || !verId) { main.replaceChildren(h('div', {class: 'empty page-empty'}, 'バージョンがまだない。')); return; }
   const charId = char.id;
   let info = await getJSON(faceUrl(charId, verId)), other = null, set = 'grid', kind = 'expr';
   const motions = await getJSON('/api/motions').catch(() => []);
@@ -67,7 +67,7 @@ export async function showFaceCheck({main, char, verId, alive, jobsChanged}) {
     r.oninput = () => { look[key] = Number(r.value); out.textContent = r.value + '°'; push(); };
     return h('label', {class: 'face-slider'}, h('span', {}, label), r, out);
   };
-  const cmp = h('select', {'aria-label': '比べる版'}, h('option', {value: ''}, 'なし'), sortVersions(char).filter(v => v.id !== verId).map(v => h('option', {value: v.id}, v.id)));
+  const cmp = h('select', {'aria-label': '比べるバージョン'}, h('option', {value: ''}, 'なし'), sortVersions(char).filter(v => v.id !== verId).map(v => h('option', {value: v.id}, v.id)));
   cmp.onchange = () => { if (frames[1]) { frames.pop(); stage.lastChild.remove(); } other = cmp.value || null; if (other) addFrame(other); };
   const resetBtn = h('button', {type: 'button'}, 'キーを戻す');
   resetBtn.onclick = () => { state.keys = {}; for (const s of sliders) { s.r.value = 0; s.out.textContent = '0'; } push(); };
@@ -83,7 +83,7 @@ export async function showFaceCheck({main, char, verId, alive, jobsChanged}) {
   const keysBox = info.keys.length ? GROUPS.map(([g, label], i) => {
     const mine = info.keys.filter(k => k.includes(`Fcl_${g}_`));
     return mine.length ? h('details', {open: i < 3}, h('summary', {}, `${label}(${mine.length})`), mine.map(keyRow)) : null;
-  }) : h('div', {class: 'muted'}, 'この版に Fcl_ のキーは無い。プリセットと視線だけ確かめられる。');
+  }) : h('div', {class: 'muted'}, 'このバージョンに Fcl_ のキーは無い。プリセットと視線だけ確認できる。');
 
   // ---- 確かめの撮影 ----
   const motionSel = h('select', {'aria-label': 'モーション'}, motions.map(m => h('option', {value: m.id}, m.label ?? m.name ?? m.id)));
@@ -112,13 +112,13 @@ export async function showFaceCheck({main, char, verId, alive, jobsChanged}) {
     run.onclick = async () => {
       run.disabled = true; msg.className = 'muted'; msg.textContent = '';
       try { await send('POST', '/api/jobs', {type: 'face-check', charId, verId, set, ...(set === 'motion' ? {motionId: motionSel.value} : {})}); jobsChanged(); await renderChecks(); }
-      catch (e) { msg.className = 'err'; msg.textContent = '積めない: ' + e.message; run.disabled = false; }
+      catch (e) { msg.className = 'err'; msg.textContent = '始められない: ' + e.message; run.disabled = false; }
     };
     checksBox.replaceChildren(...[
-      h('div', {class: 'page-head'}, h('h2', {}, `確かめの撮影(${verId})`)),
+      h('div', {class: 'page-head'}, h('h2', {}, `確認用の撮影（${verId}）`)),
       h('div', {class: 'chips', role: 'group', 'aria-label': '撮影の種類'}, SETS.map(([k, label]) => h('button', {type: 'button', class: 'chip-btn', 'data-set': k, 'aria-pressed': String(k === set), onclick: () => { set = k; drawChecks(); }}, info.checks[k] ? `${label} ${info.checks[k].count}` : label))),
       h('div', {class: 'actions'}, set === 'motion' ? motionSel : null, run, msg),
-      set === 'motion' && info.vrm === 0 ? h('div', {class: 'muted'}, 'VRM 0 の版はモーションで撮れない(前後が逆になる)。VRM 1 へ変換して版にしてから撮る。') : null,
+      set === 'motion' && info.vrm === 0 ? h('div', {class: 'muted'}, 'VRM 0 のバージョンはモーションで撮れない（前後が逆になる）。VRM 1 へ変換してバージョンにしてから撮る。') : null,
       cur ? h('div', {class: 'muted'}, [when(cur.at), cur.motionId ? `モーション ${cur.motionId}` : null, set !== 'motion' ? null : cur.hair ? `髪が顔の内側へ入る頂点 最大 ${cur.hair.worstVerts}、深さ ${cur.hair.maxDepthMm} mm` : '髪は測れなかった'].filter(Boolean).join('・')) : null,
       failed ? h('div', {class: 'err'}, failed.error) : null,
       kinds.length > 1 ? h('div', {class: 'chips', role: 'group', 'aria-label': '撮影の中の分類'}, kinds.map(([k, label]) => { const n = (cur?.images ?? []).filter(i => i.kind === k).length;
@@ -130,12 +130,12 @@ export async function showFaceCheck({main, char, verId, alive, jobsChanged}) {
   main.replaceChildren(h('div', {class: 'work'},
     h('aside', {class: 'pane pane-left pane-steps', 'aria-label': '顔の情報と操作'},
       h('h1', {}, '表情の確認'),
+      info.method !== 'shapekey' ? h('a', {class: 'button primary', href: `#expression/${enc(charId)}/new`}, '表情を作り直す') : null,
       h('div', {class: 'stack-small'}, h('div', {}, h('span', {class: 'tag ' + (info.method === 'shapekey' ? 'yes' : ''), 'data-method': info.method}, METHOD[info.method])),
         h('div', {class: 'muted'}, [info.vrm === 0 ? 'VRM 0.x' : null, `キー ${info.keys.length} 個`, info.lookAt ? `視線 ${info.lookAt === 'bone' ? '目の骨' : '表情'}` : null].filter(Boolean).join('・'))),
       h('h2', {}, 'プリセット'), h('div', {class: 'chips face-presets'}, presetBtns),
       h('h2', {}, '視線'), gazeSlider('左右', 'yaw', 30), gazeSlider('上下', 'pitch', 20),
-      h('h2', {}, '比べる'), h('label', {}, '比べる版', cmp),
-      info.method !== 'shapekey' ? h('a', {href: `#expression/${enc(charId)}`}, '表情づくりへ') : null),
+      h('h2', {}, '比べる'), h('label', {}, '比べるバージョン', cmp)),
     h('section', {class: 'center page-body'}, stage, checksBox),
     h('aside', {class: 'pane pane-right', 'aria-label': 'シェイプキー'}, h('div', {class: 'page-head'}, h('h2', {}, 'シェイプキー'), resetBtn), keysBox)));
   addFrame(verId);   // viewerReady は画面に載った iframe を待つので、載せてから足す

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // VRoid 形式の検査(docs/vroid-format.md)。読むだけで、保管場所にもファイルにも書かない(reference だけは studio/vroid/reference.json を書く)
-//   node scripts/vroid-check.mjs check (--char ID [--ver ID] | --file <vrm>) [--json]   版か VRM ファイルを手本と比べる
+//   node scripts/vroid-check.mjs check (--char ID [--ver ID] | --file <vrm>) [--json]   バージョンか VRM ファイルを手本と比べる
 //   node scripts/vroid-check.mjs reference --file <vrm> --file <vrm> ... [--layout <vrm>]   手本を作り直す(VRoid 公式サンプルの VRM 1.0)。コライダーの置き方は --layout の VRM(無ければ最初の --file)から取る
 import path from 'node:path';
 import fs from 'node:fs/promises';

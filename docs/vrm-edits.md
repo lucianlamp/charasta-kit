@@ -1,14 +1,14 @@
 # VRM の体を直す
 
-キャラの体の比率は、VRM の glTF を直接書き換えて直す。Blender で読み込んで書き出すと、揺れ骨とコライダーの設定が崩れることがあるため（コライダーの警告が出る）。直した VRM は新しい版として取り込む。版は上書きしない。
+キャラの体の比率は、VRM の glTF を直接書き換えて直す。Blender で読み込んで書き出すと、揺れ骨とコライダーの設定が崩れることがあるため（コライダーの警告が出る）。直した VRM は新しいバージョンとして取り込む。バージョンは上書きしない。
 
 ```bash
-node scripts/import-version.mjs --char <キャラ> --id <新しい版> --label "<何を直したか>" --src out.vrm --latest
-python tools/make_lite.py <版>/model.vrm <版>/model-lite.vrm
-node tools/thumb.mjs --char <キャラ> --ver <新しい版>
+node scripts/import-version.mjs --char <キャラ> --id <新しいバージョン> --label "<何を直したか>" --src out.vrm --latest
+python tools/make_lite.py <バージョン>/model.vrm <バージョン>/model-lite.vrm
+node tools/thumb.mjs --char <キャラ> --ver <新しいバージョン>
 ```
 
-体を変えた版では、版に合わせて焼いたモーション（手のめり込みの直し、足を床に付ける焼き込み）を測り直す。
+体を変えたバージョンでは、バージョンに合わせて焼いたモーション（手のめり込みの直し、足を床に付ける焼き込み）を測り直す。
 
 ## 体型（`tools/vrm/body_shape.py`）
 

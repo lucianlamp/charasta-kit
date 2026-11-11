@@ -52,7 +52,7 @@ test('キット: overview は版の種類と名前を返し、Kimi は出さな�
   assert.equal(ov.labels.methods[0][1], 'きゃらくる（Tripo Studio）');
   assert.doesNotMatch(JSON.stringify(ov.labels), /Kimi|本家|顔の出来/);
   assert.deepEqual(ov.labels.styles, {standard: 'スタンダード体型', chibi: 'チビ体型'}, '生き物のスタイルはキットに無い');
-  assert.deepEqual(ov.labels.shortStyles, {drama: '対話型', dance: 'ダンス MV'});
+  assert.deepEqual(ov.labels.shortStyles, {trivia: '雑学', drama: '対話型', pop: '派手', news: 'ニュース', dance: 'ダンス MV'}, '型の名前は対話型とダンス MV を差し替え、保管場所に残るフル版の型は元の名前のまま');
   assert.equal(ov.labels.newShortStyle, 'drama');
   assert.equal(ov.labels.agent.ni, 'エージェントに', 'キットは Codex でも使うので「Claude」と書かない');
   assert.doesNotMatch(JSON.stringify(ov.labels.agent), /Claude/);
@@ -209,7 +209,7 @@ test('作者の版: overview は full と今までの名前、外す機能もサ
   assert.equal(trivia.json.style, 'trivia');
 });
 
-test('版の検査の文: スタイル未設定の理由はキットでスタンダード体型・チビ体型、作者の版はスタンダード・チビ', async t => {
+test('バージョンの検査の文: スタイル未設定の理由はキットでスタンダード体型・チビ体型、作者の版はスタンダード・チビ', async t => {
   for (const [edition, want, not] of [['kit', /スタンダード体型かチビ体型/, null], [undefined, /スタンダードかチビを/, /体型/]]) {
     const s = await server(edition);
     t.after(() => s.close());

@@ -27,7 +27,7 @@
 ## 検査
 
 ```bash
-node scripts/vroid-check.mjs check --char <キャラ> [--ver <版>]   # 保管場所の版
+node scripts/vroid-check.mjs check --char <キャラ> [--ver <バージョン>]   # 保管場所のバージョン
 node scripts/vroid-check.mjs check --file <model.vrm> [--json]
 node scripts/vroid-check.mjs reference --file <A> --file <B> --file <C>   # 手本を作り直す
 ```
@@ -47,7 +47,7 @@ node scripts/vroid-check.mjs reference --file <A> --file <B> --file <C>   # 手�
    - 材質の名前を VRoid の形へ(既定の対応は `lib/vroid-conform.mjs`、決まらない材質があれば止まる)。MToon の影の値を部品ごとに手本へ。輪郭線は元のまま残す。VRoid の線(1.2 mm、世界座標)は場所ごとの太さのテクスチャで細くしたり消したりしているので、太さの値だけ写すと Tripo の細い房の 1 本ずつに太い黒い線が付いた(そのため付けない)。
    - メッシュを Face・Body・Hair にまとめる(同じスキンと変換のノードだけ。モーフの有無が混ざるときは分ける)。BIN は変えない。
    - 輪郭線を付けるときは `--outline <mm>`(標準は 0.8)。髪だけは 0.4 mm(`--hair-outline <mm>` で変えられる)。目、口、眉の部品は線なし、顔の肌とそのほかはその太さで、色は VRoid の暗い赤茶。きゃらくるの頭は顔が 1 つの材質なので、このままだと目と鼻にも線が出る。続けて `python studio/vroid/outline_mask.py <変換後> <出力> --eyes <左の虹彩 x>,<右の虹彩 x>,<高さ>`(m)で、目、鼻、口のまわりの線を消し、あごと頬の輪郭だけに残す(VRoid と同じく太さのテクスチャを使う)。きゃらくるの目の骨は回転の中心で虹彩より内側にあるので、虹彩の位置は正面の撮影で測って渡す。
-4. `node scripts/vroid-check.mjs check --file <出力>` で × が 0 か確かめ、版として取り込む。
+4. `node scripts/vroid-check.mjs check --file <出力>` で × が 0 か確かめ、バージョンとして取り込む。
 
 ## きゃらくるの表情をそのまま使うとき(顔を作り直さない。通常の頭身の標準)
 

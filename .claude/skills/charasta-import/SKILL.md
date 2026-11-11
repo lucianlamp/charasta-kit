@@ -1,18 +1,18 @@
 ---
 name: charasta-import
-description: きゃらすたの保管場所へ、キャラ、版（VRM）、モーション（VRMA）、セリフの音声を CLI で取り込み、版のサムネイルを撮る。利用者が「このキャラをきゃらすたに入れて」「新しい版として取り込んで」「この VRMA を入れて」と言ったときと、頼みごとの作業で作った VRM を新しい版にするときに使う。
+description: きゃらすたの保管場所へ、キャラ、バージョン（VRM）、モーション（VRMA）、セリフの音声を CLI で取り込み、バージョンのサムネイルを撮る。利用者が「このキャラをきゃらすたに入れて」「新しいバージョンとして取り込んで」「この VRMA を入れて」と言ったときと、依頼の作業で作った VRM を新しいバージョンにするときに使う。
 ---
 
 # きゃらすたへ取り込む
 
-キットの root で動かします。共通の決まりは `AGENTS.md` のとおりです。仕様は `docs/characters.md`（キャラと版、保管場所）、`docs/motions.md`（モーション）、`docs/voice-and-lines.md`（セリフ）です。画面からも同じことができます（ライブラリの新しいキャラ、動きの画面の「モーションを足す」の「ファイル」）。
+キットの root で動かします。共通の決まりは `AGENTS.md` のとおりです。仕様は `docs/characters.md`（キャラとバージョン、保管場所）、`docs/motions.md`（モーション）、`docs/voice-and-lines.md`（セリフ）です。画面からも同じことができます（ライブラリの新しいキャラ、動きの画面の「モーションを足す」の「ファイル」）。
 
 ## 決まり
 
 - ID は英小文字、数字、ハイフンです。同じ ID が既にあれば取り込みは止まり、上書きしません。別の ID にします。
 - 元のファイルは読むだけです。保管場所へコピーして sha256 を記録します。取り込んだあとに元のファイルを消したり動かしたりしません。
-- 試作は全部は取り込みません。比べる価値のある節目の版だけを取り込みます。どれを取り込むか迷ったら利用者に聞きます。
-- 取り込む前に、今あるキャラと版を確かめます: `GET http://127.0.0.1:<ポート>/api/characters`（サーバーが動いているとき）か、保管場所の `characters/<キャラ>/character.json` と `versions/` を読みます。
+- 試作は全部は取り込みません。比べる価値のある節目のバージョンだけを取り込みます。どれを取り込むか迷ったら利用者に聞きます。
+- 取り込む前に、今あるキャラとバージョンを確かめます: `GET http://127.0.0.1:<ポート>/api/characters`（サーバーが動いているとき）か、保管場所の `characters/<キャラ>/character.json` と `versions/` を読みます。
 
 ## キャラ
 
@@ -23,25 +23,25 @@ node scripts/new-character.mjs --id <キャラ> --name <表示名> --style stand
 - `--style` はキットでは `standard`（スタンダード体型）か `chibi`（チビ体型）です。
 - 一人の人物は 1 つのキャラにします。きゃらくるのプロジェクトがいくつあっても、人物が同じなら新しいキャラは作りません。
 
-## 版（VRM）
+## バージョン（VRM）
 
 ```bash
-node scripts/import-version.mjs --char <キャラ> --id <版> --label "..." --note "前の版からの変更" --src <path.vrm> [--charakuru-project <id>] [--latest]
-node scripts/import-version.mjs --char <キャラ> --id <版> --label "..." --note "..." --src-charakit <project.charakit> --member documents/vrm/<sha>.vrm
+node scripts/import-version.mjs --char <キャラ> --id <バージョン> --label "..." --note "前のバージョンからの変更" --src <path.vrm> [--charakuru-project <id>] [--latest]
+node scripts/import-version.mjs --char <キャラ> --id <バージョン> --label "..." --note "..." --src-charakit <project.charakit> --member documents/vrm/<sha>.vrm
 ```
 
-- `--note` には、前の版から何を変えたかを書きます。頼みごとから作った版なら、頼みごとの ID と変えた値も書きます。
-- `--latest` は、利用者が最新の版にすると決めたときだけ付けます。頼みごとの作業で作った版には付けません。
+- `--note` には、前のバージョンから何を変えたかを書きます。依頼から作ったバージョンなら、依頼の ID と変えた値も書きます。
+- `--latest` は、利用者が最新バージョンにすると決めたときだけ付けます。依頼の作業で作ったバージョンには付けません。
 - VRM の作者と利用条件（`character.json` の `vrmMeta`）は利用者に聞いて書きます。推測しません。
-- VRoid と同じ中身の作りかを見るときは `node scripts/vroid-check.mjs check --char <キャラ> --ver <版>`（読むだけ。`docs/vroid-format.md`）。
+- VRoid と同じ中身の作りかを見るときは `node scripts/vroid-check.mjs check --char <キャラ> --ver <バージョン>`（読むだけ。`docs/vroid-format.md`）。
 
 ## サムネイル
 
 ```bash
-node tools/thumb.mjs --char <キャラ> --ver <版> [--port <ポート>]
+node tools/thumb.mjs --char <キャラ> --ver <バージョン> [--port <ポート>]
 ```
 
-サーバーが要ります。版の正面の全身を 512x512 で撮り、`versions/<版>/thumb.png` に書きます。撮った絵を開いて、キャラが写っているかを見ます。
+サーバーが要ります。バージョンの正面の全身を 512x512 で撮り、`versions/<バージョン>/thumb.png` に書きます。撮った絵を開いて、キャラが写っているかを見ます。
 
 ## モーション（VRMA）
 

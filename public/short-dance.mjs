@@ -1,7 +1,7 @@
-// ダンス MV(ショートの型 dance)の画面: 編集画面の「曲とシーン」の欄と、#mv/<キャラ>[/<版>] からショートを作る入口。docs/shorts-dance-mv.md、docs/shorts-dance-mv.md の「ショート」。
+// ダンス MV(ショートの型 dance)の画面: 編集画面の「曲とシーン」の欄と、#mv/<キャラ>[/<バージョン>] からショートを作る入口。docs/shorts-dance-mv.md、docs/shorts-dance-mv.md の「ショート」。
 //   シーンを選ぶボタンとカット割りの帯は、前の MV を撮る画面(public/mv.mjs、消した)のものを移した
 import {getJSON, h, send} from './dom.mjs';
-import {enc} from './shared.mjs';
+import {enc, optionName} from './shared.mjs';
 import {missingNote} from './capabilities.mjs';
 import {MAX_SECONDS} from './shoot-plan.mjs';
 import {BEATS_PER_SHOT, DANCE_MUSIC_DEFAULTS, DANCE_SECONDS, GRAPHIC_PALETTES, GRAPHIC_QUALITIES, MV_QUALITIES, beatCutsBody, danceCutBounds, danceEdits, danceFieldsFor, danceShortBody, danceSplitOf, danceTotal, graphicCutsBody, graphicEstimateSec, graphicShares, graphicWords, looksSplitApart, mvCuts, mvEstimateSec, splitConditions, toggleStage} from './mv-plan.mjs';
@@ -20,7 +20,7 @@ export function dancePanel({s, id, options, motions, audio, save, touch, onSplit
   s.music ??= {...DANCE_MUSIC_DEFAULTS};
   const music = () => s.music, label = st => options.stages.find(x => x.id === st)?.label ?? st;
   let seconds = danceTotal(s.cuts) || DANCE_SECONDS.initial, last = null, picked = 0;
-  const base = new WeakMap();   // カット → 拍から割ったときのシーン、カメラ、角度
+  const base = new WeakMap();   // カット → 拍から割ったときのステージ、カメラ、角度
   // 今のカットを「割ったときの値」として覚える。開いたときと、割ったあと
   function markSplit() {
     for (const c of s.cuts) base.set(c, danceSplitOf(c));
@@ -99,8 +99,8 @@ export function dancePanel({s, id, options, motions, audio, save, touch, onSplit
         colorInput('差し色', () => g.palette.accent, (gg, v) => { gg.palette.accent = v; }),
         colorInput('文字', () => g.palette.ink, (gg, v) => { gg.palette.ink = v; }),
         colorInput('明るい地', () => g.palette.light, (gg, v) => { gg.palette.light = v; })),
-      h('details', {}, h('summary', {}, '表情とスカート'), h('div', {class: 'form-stack'},
-        h('p', {class: 'muted'}, '表情は [{from, to, expr: {名前: 0〜1}, ease}]（秒）。名前はこの版の VRM にあるものだけ。直すと踊る人を描き直す。'),
+      h('details', {}, h('summary', {}, '詳しい設定（開発用）'), h('div', {class: 'form-stack'},
+        h('p', {class: 'muted'}, '表情は [{from, to, expr: {名前: 0〜1}, ease}]（秒）。名前はこのバージョンの VRM にあるものだけ。直すと踊る人を描き直す。'),
         cues, cueMsg,
         h('div', {class: 'cut-grid'},
           num('スカートの硬さ', g.skirt[0], {min: '0', max: '10', step: '0.1'}, (gg, v) => { gg.skirt[0] = v; }),
@@ -115,7 +115,7 @@ export function dancePanel({s, id, options, motions, audio, save, touch, onSplit
     const now = music().stages ?? [];
     sceneBox.replaceChildren(...options.stages.map(st => {
       const i = now.indexOf(st.id);
-      return h('button', {type: 'button', class: 'mv-scene', 'aria-pressed': String(i >= 0), 'aria-label': `シーン ${st.label}${i >= 0 ? `（${i + 1} 番目）` : ''}`, onclick: () => {
+      return h('button', {type: 'button', class: 'mv-scene', 'aria-pressed': String(i >= 0), 'aria-label': `ステージ ${st.label}${i >= 0 ? `（${i + 1} 番目）` : ''}`, onclick: () => {
         const next = toggleStage(music().stages, st.id);
         if (next) music().stages = next; else delete music().stages;
         touch(); renderScenes(); render();
@@ -123,7 +123,7 @@ export function dancePanel({s, id, options, motions, audio, save, touch, onSplit
     }));
   }
 
-  const motionSel = h('select', {'aria-label': '踊る動き'}, music().motionId ? null : h('option', {value: ''}, '選ぶ'), motions.map(m => h('option', {value: m.id}, `${motionName(m)}（${m.limit?.text ?? ''}）`)));
+  const motionSel = h('select', {'aria-label': '踊るモーション'}, music().motionId ? null : h('option', {value: ''}, '選ぶ'), motions.map(m => h('option', {value: m.id}, optionName(m, motionName(m)))));
   motionSel.value = music().motionId ?? '';
   motionSel.onchange = () => {
     if (!motionSel.value) return;
@@ -140,7 +140,7 @@ export function dancePanel({s, id, options, motions, audio, save, touch, onSplit
       music()[key] = key === 'look' ? sel.value : Number(sel.value);
       if (key === 'look') {
         if (looksSplitApart(before ?? 'plain', sel.value) && s.cuts.length) {
-          onSplit({...s, music: music(), cuts: []});   // カットの形が変わる(シーンとカメラ / 場面)ので空にして割り直す
+          onSplit({...s, music: music(), cuts: []});   // カットの形が変わる(ステージとカメラ / 場面)ので空にして割り直す
           msg.className = 'muted'; msg.textContent = '演出を変えたので、カットを空にした。「拍から割る」を押す。';
         }
         showLook();
@@ -154,9 +154,9 @@ export function dancePanel({s, id, options, motions, audio, save, touch, onSplit
   // 拍から割る: 先に保存し(サーバーは保存したショートを割る)、答えのショートで画面を置き換える
   const msg = h('span', {class: 'muted', role: 'status'});
   const splitBtn = h('button', {type: 'button', class: 'primary', onclick: async () => {
-    if (!music().motionId) { msg.className = 'err'; msg.textContent = '踊る動きを選ぶ'; return; }
+    if (!music().motionId) { msg.className = 'err'; msg.textContent = '踊るモーションを選ぶ'; return; }
     const isGraphic = music().look === 'graphic';
-    if (!isGraphic && !music().stages?.length) { msg.className = 'err'; msg.textContent = 'シーンを 1 つ以上選ぶ'; return; }
+    if (!isGraphic && !music().stages?.length) { msg.className = 'err'; msg.textContent = 'ステージを 1 つ以上選ぶ'; return; }
     splitBtn.disabled = true; msg.className = 'muted'; msg.textContent = s.audioId ? '曲の拍を求めて割っている…（1 分ほどかかることがある）' : '拍から割っている…';
     try {
       await save();
@@ -178,7 +178,7 @@ export function dancePanel({s, id, options, motions, audio, save, touch, onSplit
     const m = music(), cuts = s.cuts, used = new Set(cuts.map(c => c.stage)), isGraphic = m.look === 'graphic';
     const bands = cuts.length ? danceCutBounds(cuts).map((b, i) => ({...b, stage: cuts[i].stage, scene: cuts[i].scene, i})) : isGraphic ? [] : mvCuts({seconds, bpm: m.bpm, stages: m.stages ?? [], beatsPerShot: m.beatsPerShot, shotsPerScene: m.shotsPerScene});
     strip.replaceChildren(...bands.map(c => {
-      const inner = [h('span', {}, isGraphic ? sceneLabel(c.scene) : c.stage ? label(c.stage) : 'シーン未定'), h('span', {class: 'mono muted'}, `${(c.end - c.start).toFixed(1)}s`)];
+      const inner = [h('span', {}, isGraphic ? sceneLabel(c.scene) : c.stage ? label(c.stage) : 'ステージ未定'), h('span', {class: 'mono muted'}, `${(c.end - c.start).toFixed(1)}s`)];
       const style = `flex:${(c.end - c.start).toFixed(3)} 1 0`, title = `${c.start.toFixed(2)} から ${c.end.toFixed(2)} 秒`;
       return c.i == null ? h('div', {class: 'mv-cut todo', style, title}, ...inner)
         : h('button', {type: 'button', class: 'mv-cut', style, title, 'aria-label': `カット ${c.i + 1}（${title}）を選ぶ`, 'aria-pressed': String(c.i === picked), onclick: () => onPick(c.i)}, ...inner);
@@ -188,19 +188,19 @@ export function dancePanel({s, id, options, motions, audio, save, touch, onSplit
     const shares = isGraphic ? graphicShares(cuts, graphicCat ?? []) : null, est = isGraphic ? qq => graphicEstimateSec(qq, total, shares) : qq => mvEstimateSec(qq, total, used.size || 1);
     note.textContent = [cuts.length ? `${cuts.length} カット、${total.toFixed(1)} 秒。試し ${minutes(est('preview'))}、本番 ${minutes(est('final'))}。` : isGraphic ? 'まだ割っていない。「拍から割る」で場面の並びを作る。' : 'まだ割っていない。帯はテンポからの目安。',
       !isGraphic && cuts.length && unused.length ? `短くて ${unused.join('、')} まで回らない。長くするか、カットを短くする。` : '',
-      mo && total > mo.durationSec ? `動きは ${mo.durationSec.toFixed(1)} 秒なので繰り返す。` : '',
+      mo && total > mo.durationSec ? `モーションは ${mo.durationSec.toFixed(1)} 秒なので繰り返す。` : '',
       cuts.length && changed ? '条件を変えた。「拍から割る」を押すとカットに入る。' : ''].filter(Boolean).join('');
     const edited = cuts.flatMap((c, i) => (edits(c).length ? [i + 1] : []));
     warn.hidden = !edited.length;
-    warn.textContent = edited.length ? `カット ${edited.join('、')} のシーン、カメラ、角度を手で直した。書き出しで止まることがある（stage-studio が手で直したカット表を受けないうちは）。戻すときは「拍から割る」を押す。` : '';
+    warn.textContent = edited.length ? `カット ${edited.join('、')} のステージ、カメラ、角度を手で直した。書き出しで止まることがある（stage-studio が手で直したカット表を受けないうちは）。戻すときは「拍から割る」を押す。` : '';
   }
 
-  const cutLenSel = select('カットの長さ', BEATS_PER_SHOT.map(n => [n, `${n} 拍`]), 'beatsPerShot'), sceneEveSel = select('シーンの切り替え', [[1, 'カットごと'], [2, '2 カットごと']], 'shotsPerScene');   // グラフィックでは場面の並びが決めるので隠す
-  const box = h('section', {class: 'se-sec', 'aria-label': '曲とシーン'}, h('h2', {}, '曲とシーン'),
+  const cutLenSel = select('カットの長さ', BEATS_PER_SHOT.map(n => [n, `${n} 拍`]), 'beatsPerShot'), sceneEveSel = select('ステージの切り替え', [[1, 'カットごと'], [2, '2 カットごと']], 'shotsPerScene');   // グラフィックでは場面の並びが決めるので隠す
+  const box = h('section', {class: 'se-sec', 'aria-label': '曲とステージ'}, h('h2', {}, '曲とステージ'),
     h('p', {class: 'muted'}, 'この型は声が無いので、送った曲が主な音になる。曲が無ければ、テンポから割った無音の動画になる。'),
     h('div', {class: 'form-stack'},
-      h('label', {}, '踊る動き', motionSel),
-      h('fieldset', {}, h('legend', {}, 'シーン（押した順に切り替わる）'), sceneBox),
+      h('label', {}, '踊るモーション', motionSel),
+      h('fieldset', {}, h('legend', {}, 'ステージ（押した順に切り替わる）'), sceneBox),
       ...audio,
       number('長さ（秒）', seconds, {min: String(DANCE_SECONDS.min), max: String(MAX_SECONDS), step: '1'}, v => { if (v >= DANCE_SECONDS.min && v <= MAX_SECONDS) { seconds = v; render(); } }),
       number('曲の開始位置（秒）', music().audioStart ?? 0, {min: '0', max: '3600', step: '0.1'}, clamp('audioStart', 0, 3600)),
@@ -217,13 +217,13 @@ export function dancePanel({s, id, options, motions, audio, save, touch, onSplit
   return {box, render, edits, markSplit, sceneLabel, renderGraphic};
 }
 
-// #mv/<キャラ>[/<版>]: そのキャラを出演者にしたダンス MV のショートを作り、#short/<ID> へ移る。
+// #mv/<キャラ>[/<バージョン>]: そのキャラを出演者にしたダンス MV のショートを作り、#short/<ID> へ移る。
 //   送る前に URL を #shorts に置き換えるので、読み直しても 2 本目はできない。送っている間にもう一度呼ばれても送らない
-const creating = new Map();   // キャラ/版ごと。別のキャラの #mv が、送信中の別のキャラのショートに着地しないように
+const creating = new Map();   // キャラ/バージョンごと。別のキャラの #mv が、送信中の別のキャラのショートに着地しないように
 export async function startDanceShort({main, ov, char, verId, alive}) {
   history.replaceState(null, '', '#shorts');
   const wait = h('div', {class: 'empty page-empty', role: 'status'}, 'ダンス MV のショートを作っている…');
-  if (!char || !verId) { main.replaceChildren(h('div', {class: 'empty page-empty'}, 'ダンス MV を作るには、版のあるキャラが要る。')); return; }
+  if (!char || !verId) { main.replaceChildren(h('div', {class: 'empty page-empty'}, 'ダンス MV を作るには、バージョンのあるキャラが要る。')); return; }
   const note = missingNote(ov, ['stageStudio', 'blender'], 'ダンス MV を作るのに要る道具が未設定');
   if (note) { main.replaceChildren(h('div', {class: 'empty page-empty'}, note, h('a', {class: 'link', href: `#model/${enc(char.id)}/${enc(verId)}`}, '完成モデルへ戻る'))); return; }
   main.replaceChildren(wait);

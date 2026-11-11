@@ -25,8 +25,8 @@ export function videoCard(s, {reload, queued, finals = new Set()}) {
   const msg = h('span', {class: 'muted'}), final = h('button', {type: 'button', class: 'primary'}, '本番で書き出す');
   final.onclick = async () => {
     final.disabled = true; msg.className = 'muted'; msg.textContent = '送っている…';
-    try { queued(await send('POST', '/api/jobs', s.kind === 'short' ? {type: 'short', shortId: s.short.id, quality: 'final', previewOf: s.id} : {type: 'mv', charId: s.charId, previewOf: s.id})); msg.textContent = '積んだ'; final.remove(); }
-    catch (e) { msg.className = 'err'; msg.textContent = '積めない: ' + e.message; final.disabled = false; }
+    try { queued(await send('POST', '/api/jobs', s.kind === 'short' ? {type: 'short', shortId: s.short.id, quality: 'final', previewOf: s.id} : {type: 'mv', charId: s.charId, previewOf: s.id})); msg.textContent = '受け付けた'; final.remove(); }
+    catch (e) { msg.className = 'err'; msg.textContent = '始められない: ' + e.message; final.disabled = false; }
   };
   const name = [s.motionLabel ?? 'モーションなし', s.lineText].filter(Boolean).join('・');
   const scenes = (s.mv ?? s.short)?.stageLabels.join('、'), sceneCount = (s.mv ?? s.short)?.stages.length;
@@ -62,7 +62,7 @@ export async function showGallery({main, ov, alive, jobsChanged, stageHref}) {
   function render() {
     const finals = finalsOf(all), list = all.filter(s => (kind === 'all' || kindOf(s) === kind) && (!char || s.charId === char));
     dropVideos(grid);
-    grid.replaceChildren(...(list.length ? list.map(s => videoCard(s, {reload, queued, finals})) : [h('p', {class: 'muted'}, all.length ? 'この条件の動画は無い。' : '撮った動画がここに並ぶ。まだ無い。')]));
+    grid.replaceChildren(...(list.length ? list.map(s => videoCard(s, {reload, queued, finals})) : [h('p', {class: 'muted'}, all.length ? 'この条件の動画は無い。' : '撮った動画がここに並ぶ。まだない。')]));
   }
   const btns = KINDS.map(([k, label]) => h('button', {type: 'button', class: 'seg-btn', 'aria-pressed': String(k === kind), onclick: e => {
     kind = k; btns.forEach(b => b.setAttribute('aria-pressed', String(b === e.currentTarget))); render(); }}, label));
@@ -70,7 +70,7 @@ export async function showGallery({main, ov, alive, jobsChanged, stageHref}) {
   pick.onchange = () => { char = pick.value; render(); };
   const first = ov.chars.find(c => c.latest && !isCreature(c));   // ダンス MV は VRM のキャラだけ
   main.replaceChildren(h('div', {class: 'library'},
-    h('div', {class: 'lib-head'}, h('h1', {}, '動画'), h('a', {class: 'button primary', href: '#shorts'}, 'ショートを作る'), first ? h('a', {class: 'button outline', href: stageHref('mv', first)}, 'ダンス MV を作る') : null),
+    h('div', {class: 'lib-head'}, h('h1', {}, '動画'), h('a', {class: 'button primary', href: '#shorts'}, 'ショートの一覧'), first ? h('a', {class: 'button outline', href: stageHref('mv', first)}, 'ダンス MV を作る') : null),
     h('div', {class: 'vid-filter'}, h('div', {class: 'seg five'}, btns), pick),
     pending, grid));
   render();

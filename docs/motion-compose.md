@@ -1,6 +1,6 @@
 # モーションをつなぐ（tools/compose）
 
-動画（vrma-pipeline）、FBX のアセット、VRMA、MotionBricks の条件を、同じ形（中間形式）にそろえて、区間の間を MotionBricks で生成し、1 本の VRMA にする。保管場所のモーション、MotionBricks の条件、動画（`video-motion`）や MotionBricks（`motion-gen`）のジョブの取り込む前の結果をつなぐときは、きゃらすたの動きの画面の「つくる」から動かせる（下の「画面からつなぐ」）。計画の `video`、FBX の区間は CLI だけ。用語は `CONTEXT.md`、移し替えは `docs/adr/0003-motionbricks-retarget.md`、足は `docs/foot-ik.md`。
+動画（vrma-pipeline）、FBX のアセット、VRMA、MotionBricks の条件を、同じ形（中間形式）にそろえて、区間の間を MotionBricks で生成し、1 本の VRMA にする。保管場所のモーション、MotionBricks の条件、動画（`video-motion`）や MotionBricks（`motion-gen`）のジョブの取り込む前の結果をつなぐときは、きゃらすたのモーションを作る画面（モーションの画面の「新しく作る」）から動かせる（下の「画面からつなぐ」）。計画の `video`、FBX の区間は CLI だけ。用語は `CONTEXT.md`、移し替えは `docs/adr/0003-motionbricks-retarget.md`、足は `docs/foot-ik.md`。
 
 ## 流れ
 
@@ -8,7 +8,7 @@
 2. 素材を中間形式にする。結果は `WORK/cache` に残す。
    - `asset`: `fbx_dump.py` を Blender で動かし、`fbx_clip.py` が移し替える。
    - `video`: vrma-pipeline の `batch_convert.py` で VRMA を作り、`vrma_read.py` で読む。
-   - `motionbricks`: 条件（`kind`、`speed`、`direction`、`turn`、`seconds`、`action`、`ending`、`root`）を `lib/motion-gen-options.json` で確かめ（きゃらすたの `motion-gen` と同じ規則と既定）、`tools/motionbricks_gen.py` を MotionBricks の uv の環境で動かして VRMA と接地を作る（`--fake` ではふだんの python の作りものの動き）。`speed` は動きの速さ（m/s）なので、再生の速さには使わない。`root` は compose の区間の `root` として扱い、`motionbricks_gen.py` はいつも進む動きを作る。結果は `WORK/cache/mb-<条件の値>` に残す。許諾は `motion-gen` の取り込みと同じ記録（`lib/model-licenses.json` の `motionbricksGen`。評価用のみ）に使った見本の動きの BVH を入れたもの。`generated.segments[]` に条件、`motionbricks`（モデル、版、コマ数、進んだ距離、使った見本の動き）、`license` を残す。
+   - `motionbricks`: 条件（`kind`、`speed`、`direction`、`turn`、`seconds`、`action`、`ending`、`root`）を `lib/motion-gen-options.json` で確かめ（きゃらすたの `motion-gen` と同じ規則と既定）、`tools/motionbricks_gen.py` を MotionBricks の uv の環境で動かして VRMA と接地を作る（`--fake` ではふだんの python の作りものの動き）。`speed` は動きの速さ（m/s）なので、再生の速さには使わない。`root` は compose の区間の `root` として扱い、`motionbricks_gen.py` はいつも進む動きを作る。結果は `WORK/cache/mb-<条件の値>` に残す。許諾は `motion-gen` の取り込みと同じ記録（`lib/model-licenses.json` の `motionbricksGen`。評価用のみ）に使った見本の動きの BVH を入れたもの。`generated.segments[]` に条件、`motionbricks`（モデル、バージョン、コマ数、進んだ距離、使った見本の動き）、`license` を残す。
    - `vrma`: `vrma_read.py` で読む。保管場所のモーションは ID（`motion`）で指定し、読んだ ID、保管場所、sha256、接地のファイル名（`contacts`。無ければ null）を `generated.segments[].motionRecord` に残す。
      `motion.json` に `contacts` があれば、横の `contacts.json` を接地に使い、推定しない。列は `order` の名前で並べ替え、`fps` が 30 でなければ線形に直す。
      `license` に `evaluationOnly` が無く、`terms` に見本の動きの許諾（Sample Data Evaluation License）がある古い MotionBricks の記録は、評価用として読む（`lib/library.mjs` が一覧で補うのと同じ。`motion.json` は書き換えない）。
@@ -210,7 +210,7 @@ REST の体で組み立てて測る。キャラに当てた値は `tools/motion_
 
 ## 画面からつなぐ（motion-recipe）
 
-動きの画面の「モーションを足す」の「つくる」（`public/recipe-motion.mjs`）で 2 つ以上の区間を並べると、ジョブ `motion-recipe`（`lib/motion-recipe.mjs`）を積む。区間が 1 つのときは単体のジョブを積む（下の「つくるの区間が 1 つのとき」）。新しい生成の仕組みは無く、`compose.py` を子プロセスで呼ぶだけ。
+モーションを作る画面（`#motions/<キャラ>[/<バージョン>]/new`、`public/motion-create.mjs` と `public/recipe-motion.mjs`）で 2 つ以上の区間を並べて「つないで作る」を押すと、ジョブ `motion-recipe`（`lib/motion-recipe.mjs`）を積む。区間が 1 つのときは単体のジョブを積む（下の「つくるの区間が 1 つのとき」）。新しい生成の仕組みは無く、`compose.py` を子プロセスで呼ぶだけ。
 
 - レシピ: 区間は保管場所のモーション（`{source: 'motion', motion, trim?, speed?}`）か、確認待ちのジョブの結果（`{source: 'job', job, n?, trim?, speed?}`）か、MotionBricks の条件（`{source: 'motionbricks', kind?, speed?, direction?, turn?, seconds?, action?, ending?, root?, trim?}`）で、2〜8 本。`job` は動画（`video-motion`）、MotionBricks（`motion-gen`）のジョブ。動画と MotionBricks は 1 本なので `n` を書かない。MotionBricks の条件は `motion-gen` と同じ規則で確かめて既定を埋め（`lib/motion-gen.mjs` の `motionGenConditions`）、そのまま計画の `motionbricks` の区間にする。その `speed` は動きの速さ（m/s）で、再生の速さは無い。`trim` の終わりは動く秒数を超えてよい（止まる分の長さは作るまで分からないので、`compose.py` が最後のコマに収める）。積めるのは確認待ち（`review: waiting`）のジョブだけで、取り込み済みなら取り込んだモーションを使う。`trim` は `[開始の秒, 終了の秒 か null]` でモーションの長さの中、`speed` は 0.25〜4。区間の間は `bridge: {seconds, method}`（0〜3 秒、`motionbricks` か `interpolate`。既定は 1.2 秒の MotionBricks）。全体の `bridge` が既定で、区間の `bridge` はその区間の前のつなぎ。
 - ジョブの結果の読み方: 取り込みと同じファイルと利用条件を読む。動画は `jobs/<ジョブ>/out/clip/clip.vrma` と `contacts.json`、利用条件はジョブの結果の `license`（個人利用のみ）。MotionBricks は `jobs/<ジョブ>/motion.vrma` と `contacts.json`、利用条件はジョブの結果の `license`（評価用のみ）。条件は書き換えずに `compose.py` へ渡すので、評価用や個人利用の条件はそのまま全体の条件になる。利用条件の記録が無いジョブは積めない（推測で埋めない）。
@@ -220,9 +220,9 @@ REST の体で組み立てて測る。キャラに当てた値は `tools/motion_
 - 結果は確認待ち（`review: waiting`）。画面は `GET /api/motion-recipes`（選べる値、確認待ち、区間に使える確認待ちの結果 `sources`。動画は 1 本で、`{job, n, type, kind, name, durationSec, license, limit}`）、`/api/motion-recipes/<ジョブ>/motion.vrma` と `contacts.json`（確認待ちの間だけ配る）を読み、ビューアの `playCandidate` で再生する。`report.json` の `seams`、`elsewhereP99`、`footSlide`、`hipsHeight`、`handInBody` を並べる。
 - 取り込む（`POST /api/motion-recipes/<ジョブ>/import`）: `lib.importMotion` で `compose-<ジョブ>` に入れる。`license` は `license.json`、接地は `contacts.json`、`generated` は `generated.json` に `job`、`fake`、`recipe`（積んだレシピ）、`report`（`report.json` の全部）を足したもの。区間のモーションの `motion.json` は書き換えない（ADR 0002）。捨てる（`.../discard`）は作業フォルダを保管場所の `trash/motion-recipe-<ジョブ>` へ移す。
 - 順番待ちか実行中のレシピが使うモーションは、ごみ箱へ移せない。同じく、順番待ちか実行中のレシピが区間に使う確認待ちのジョブは捨てられない（`busy`、409）。
-- 画面: 「つくる」は区間の種類（MotionBricks の条件、動画、保管場所のモーション、確認待ちの結果（取り込む前））を選んで「足す」。保管場所のモーションと確認待ちの結果は一覧から選ぶ。MotionBricks の条件、動画は、区間の中に今までの条件のフォームが開く（`public/gen-motion.mjs` の `genFields`、`public/video-motion.mjs` の `videoFields`）。並べたあとに元のジョブを取り込んだか捨てた区間は、注意を出す。
+- 画面: 作る画面の「区間を追加」の種類のボタン（MotionBricks の条件、動画、保管場所から、確認待ちの結果）で区間を足す。保管場所のモーションと確認待ちの結果は、選んだ区間の設定の選択肢で選ぶ。MotionBricks の条件、動画は、選んだ区間の設定に今までの条件のフォームが開く（`public/gen-motion.mjs` の `genFields`、`public/video-motion.mjs` の `videoFields`）。並べたあとに元のジョブを取り込んだか捨てた区間は、注意を出す。
 - つくるの区間が 1 つのとき: 動画は `video-motion`、MotionBricks の条件は `motion-gen` をそのまま積む（ボタンは「動画から作る」「MotionBricks で作る」）。結果と確認の流れはそれぞれのジョブのまま。保管場所のモーションか確認待ちの結果が 1 つだけのときは積まない。
-- 動画の区間は、2 つ以上並べたときには使えない（ボタンを押せなくし、「先にその区間だけで作り、確認の欄に出た結果を確認待ちの結果として足す」と出す）。動画の区間のジョブを先に積み、終わってから結果を区間にしたレシピを積む形は、ジョブの間の待ち合わせと失敗の扱いが要るので、今回は作らなかった。MotionBricks の条件は `compose.py` の中で作るので、2 つ以上でも使える。
+- 動画の区間は、2 つ以上並べたときには使えない（ボタンを押せなくし、「先にその区間だけで作り、確認待ちに入った結果を確認待ちの結果として足す」と出す）。動画の区間のジョブを先に積み、終わってから結果を区間にしたレシピを積む形は、ジョブの間の待ち合わせと失敗の扱いが要るので、今回は作らなかった。MotionBricks の条件は `compose.py` の中で作るので、2 つ以上でも使える。
 - 許諾: 評価用のみの区間（MotionBricks で作ったモーション、MotionBricks の条件の区間、MotionBricks のジョブの結果）が入ると全体が評価用のみになる。MotionBricks のつなぎ（`BRIDGE_LICENSE`）は二次配布 不可で、見本の動きを使わないので評価用にはしない。画面は積む前にこの 2 つを出す。
 
 ## GPU

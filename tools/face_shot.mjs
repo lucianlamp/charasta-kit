@@ -1,5 +1,5 @@
 // 顔を 1 枚撮る(Grok へ渡す最初の絵。休めの姿勢、瞬きなし、口は閉じたまま、1280x720)。
-//   node tools/face_shot.mjs --char <キャラ> [--ver <版>] --out face.png [--port 8870] [--dist 0.7]
+//   node tools/face_shot.mjs --char <キャラ> [--ver <バージョン>] --out face.png [--port 8870] [--dist 0.7]
 // サーバーが動いている前提。声のジョブ(lib/jobs.mjs)が呼ぶ。
 import fs from 'node:fs';
 import path from 'node:path';

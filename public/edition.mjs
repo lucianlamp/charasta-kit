@@ -2,7 +2,7 @@
 // サーバー(lib/edition.mjs)が /api/overview の labels に入れ、画面は public/app.mjs がそれを使う。DOM も import も使わない(サーバーとテストが読み込める)
 export const EDITIONS = ['full', 'kit'];
 
-// agent: 頼みごとを受けるエージェントの呼び方(助詞付き)。キットは Codex でも Claude Code でも使うので「エージェント」
+// agent: 依頼を受けるエージェントの呼び方(助詞付き)。キットは Codex でも Claude Code でも使うので「エージェント」
 // methods: 3D の作り方 [鍵, 名前, 説明]。styles: キャラのスタイルの名前(ID は同じ)。shortStyles: ショートの型の名前。newShortStyle: 「新しいショート」で作る型
 const FULL = {
   methods: [
@@ -19,7 +19,7 @@ const FULL = {
 const KIT = {
   methods: [['tripo', 'きゃらくる（Tripo Studio）', 'Tripo Studio で候補・再テクスチャ・自動リグを進める。']],
   styles: {standard: 'スタンダード体型', chibi: 'チビ体型'},
-  shortStyles: {drama: '対話型', dance: 'ダンス MV'},
+  shortStyles: {...FULL.shortStyles, drama: '対話型', dance: 'ダンス MV'},   // 保管場所に残るフル版の型(雑学など)も内部名でなく名前で出す。作れる型は増えない(lib/edition.mjs)
   newShortStyle: 'drama',
   agent: {name: 'エージェント', ga: 'エージェントが', ni: 'エージェントに', no: 'エージェントの', he: 'エージェントへの', wo: 'エージェントを'},
 };

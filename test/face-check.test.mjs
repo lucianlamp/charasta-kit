@@ -1,4 +1,4 @@
-// 版の顔の確認(lib/face-check.mjs): 方式の判定、API、確かめの撮影のジョブ。ブラウザでは撮らない(CHARASTA_FAKE_CAPTURE)。ffmpeg は要る。
+// バージョンの顔の確認(lib/face-check.mjs): 方式の判定、API、確かめの撮影のジョブ。ブラウザでは撮らない(CHARASTA_FAKE_CAPTURE)。ffmpeg は要る。
 // 本物の VRM を本物のブラウザで撮る試験は CHARASTA_TEST_VRM=<VRM のパス> のときだけ動く(test/face-check-real.test.mjs)。
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -89,7 +89,7 @@ async function addMotion(s, id) {
   await fs.writeFile(path.join(dir, 'motion.vrma'), fakeGlb());
 }
 
-test('API: 版の顔の情報、不正な入力、撮影の結果の形、版の model.vrm は変えない', async () => {
+test('API: バージョンの顔の情報、不正な入力、撮影の結果の形、バージョンの model.vrm は変えない', async () => {
   await withServer(STUDIO_ENV, async (s, lib, data) => {
     let r = await call(s.base, 'GET', '/api/characters/c1/versions/v1/face');
     assert.equal(r.status, 200); assert.equal(r.body.method, 'shapekey'); assert.deepEqual(r.body.checks, {});
@@ -115,7 +115,7 @@ test('API: 版の顔の情報、不正な入力、撮影の結果の形、版の
 // 終わらない撮影。上限が来るまで必ず実行中なので、409 の確かめが時間に依存しない
 const HANG = {...STUDIO_ENV, CHARASTA_FAKE_CAPTURE: 'hang', CHARASTA_SHOOT_TIMEOUT_MS: '1500'};
 
-test('実行中: 同じ版の同じ種類は 409、使っているモーションと版はごみ箱へ移せない', async () => {
+test('実行中: 同じバージョンの同じ種類は 409、使っているモーションとバージョンはごみ箱へ移せない', async () => {
   await withServer(HANG, async s => {
     await addMotion(s, 'm1');
     const a = await job(s, {set: 'motion', motionId: 'm1'});
@@ -128,7 +128,7 @@ test('実行中: 同じ版の同じ種類は 409、使っているモーショ�
   });
 });
 
-test('VRM 0 の版: 情報は読めるが、モーションの撮影は前後が逆になるので断る', async () => {
+test('VRM 0 のバージョン: 情報は読めるが、モーションの撮影は前後が逆になるので断る', async () => {
   await withServer(STUDIO_ENV, async (s, lib) => {
     await addMotion(s, 'm1');
     await lib.importVersion({charId: 'c1', id: 'v0', label: '', note: 'n', data: fakeGlb(v0), sourcePath: 'z.vrm'});
@@ -212,7 +212,7 @@ test('motion: 表情とコマの一覧と髪の測定。測れないときは ha
   });
 });
 
-test('版をごみ箱へ移して戻すと、撮影も一緒に戻る', async () => {
+test('バージョンをごみ箱へ移して戻すと、撮影も一緒に戻る', async () => {
   await withServer(STUDIO_ENV, async s => {
     await job(s, {set: 'grid'});
     await waitAll(s.base);

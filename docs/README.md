@@ -6,10 +6,10 @@
 
 | 文書 | 中身 |
 |---|---|
-| `characters.md` | キャラと版、保管場所の形、`character.json` と `version.json`、サーバーの API、ごみ箱、取り込みの CLI |
-| `character-style.md` | キャラのスタイル（スタンダード体型、チビ体型）、スタイルの画面、版の検査 |
+| `characters.md` | キャラとバージョン、保管場所の形、`character.json` と `version.json`、サーバーの API、ごみ箱、取り込みの CLI |
+| `character-style.md` | キャラのスタイル（スタンダード体型、チビ体型）、スタイルの画面、バージョンの検査 |
 | `edition.md` | 版の種類（作者の版 full と配るキット kit）、キットで外した機能、決め方 |
-| `adjust.md` | 体型と揺れもの（仕上げの中の画面、下見、ジョブ `adjust`、揺れものの組、直しの頼みごと `adjust-requests/` と `scripts/adjust-requests.mjs`、エージェントの手順） |
+| `adjust.md` | 体型と揺れもの（仕上げの中の画面、下見、ジョブ `adjust`、揺れものの組、直しの依頼 `adjust-requests/` と `scripts/adjust-requests.mjs`、エージェントの手順） |
 | `screens.md` | 画面の全体（ファイル、URL、ジョブの引き出し、ビューア、4 工程の進み具合、完成モデルとプロフィール、デザインと違えた所、ステージ、削除とごみ箱） |
 | `jobs.md` | ジョブの動き方、形と API、ジョブの種類と、それぞれの文書 |
 
@@ -34,7 +34,7 @@
 
 | 文書 | 中身 |
 |---|---|
-| `expression-studio.md` | 表情の方式の使い分け、表情づくり（顔テクスチャ方式）の工程・依頼・候補、シェイプキー方式の版の確認 |
+| `expression-studio.md` | 表情の方式の使い分け、表情づくり（顔テクスチャ方式）の工程・依頼・候補、シェイプキー方式のバージョンの確認 |
 | `face-atlas.md` | 顔テクスチャ方式の表情の作り方（顔の絵、区画、視線、動画からの中割り、リップシンク） |
 | `vroid-format.md` | Tripo Studio で作ったキャラを VRoid と同じ中身にそろえる変換と検査、きゃらくるの表情を `Fcl_` の 57 キーへ移す |
 | `vroid-face.md` | 自前の部品で VRoid 形式の顔を作る（予備の方法） |
@@ -43,7 +43,7 @@
 
 | 文書 | 中身 |
 |---|---|
-| `stages.md` | ステージの頼みごと（「新しいステージを頼む」、`stage-requests/`、API、`scripts/stage-requests.mjs`、エージェントが stage-studio にシーンを足す手順） |
+| `stages.md` | ステージの依頼（「新しいステージを依頼」、`stage-requests/`、API、`scripts/stage-requests.mjs`、エージェントが stage-studio にシーンを足す手順） |
 | `shorts.md` | ショート（対話型）の編集画面、`short` ジョブ、歩く 1 テイク、声の提供元、2 人の描画、timeline と自動演出、合成、図 |
 | `shorts-dance-mv.md` | ダンス MV（型 `dance`）、拍から割る、演出 `music.look`、前からの `mv` ジョブ |
 | `shorts-graphic-mv.md` | グラフィック MV（`music.look = graphic`）、切り抜いた踊る人と大きな文字 |

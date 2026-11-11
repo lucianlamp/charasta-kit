@@ -1,6 +1,6 @@
 # 声とセリフ
 
-用語は `CONTEXT.md` の「モーションとセリフ」。キャラのセリフ（文、読み、感情、声の種類、音声ファイル）を作って再生する。画面は完成モデルの「撮る」の中にある（`docs/shoot.md`）。ショートの声（VOICEVOX、ElevenLabs）は出演者が持つ別のもので、`docs/shorts.md` の「声の提供元」。
+用語は `CONTEXT.md` の「モーションとセリフ」。キャラのセリフ（文、読み、感情、声の種類、音声ファイル）を作って再生する。画面は完成モデルにある: セリフの選択と再生は「撮る」の細かい条件の中、セリフを作るのはその横の「新しいセリフ」のモーダル、声の種類はプロフィールの声の「変える」のモーダル（`docs/shoot.md`、`docs/screens.md`）。ショートの声（VOICEVOX、ElevenLabs）は出演者が持つ別のもので、`docs/shorts.md` の「声の提供元」。
 
 ## 決めたこと
 
@@ -20,7 +20,7 @@
 
 ## voice ジョブ（声の生成）
 
-入力: `charId`、`verId`（顔を撮る版、省くと最新）、`lineId`（省くと文から作る）、`text`、`reading`、`emotion`、`voice`（省くとキャラの声）。
+入力: `charId`、`verId`（顔を撮るバージョン、省くと最新）、`lineId`（省くと文から作る）、`text`、`reading`、`emotion`、`voice`（省くとキャラの声）。
 
 1. **顔を撮る**: ビューア（`/viewer?char=&ver=`）を Playwright（`tools/gpu_browser.mjs`）で開き、休めの姿勢・瞬きなしで顔に寄って 1280×720 で撮る（`window.viewer.face()`）。
 2. **Grok で声付きの動画を作る**: `tools/grok_voice.py`。`grok --prompt-file <依頼文> --always-approve --output-format plain` を 1 回呼ぶ。依頼文は `reference_to_video` を 1 回だけ、引数は `first_frame`（顔の画像）、`voices: [<声>]`、`duration`（文の長さから 3〜8 秒）、`resolution_name: 480p`、`aspect_ratio: 16:9`、`prompt`（`<AUDIO_0>` がこの子で、日本語で「<text>」と一度だけ言う。カメラ固定、音楽なし、声だけ）。失敗しても再試行しない。動画は保管場所の作業フォルダ（`jobs/<jobId>/`）に保存。参考: `<skills>/grok-build-video/scripts/grok_video.py`（依頼文の決まり文句、エラーの見分け方）。
@@ -50,7 +50,7 @@
 ## サーバー側の実装メモ
 
 - voice の入力: `charId`、`text`（必須、200 文字まで）、`reading`、`emotion`（happy / angry / sad / relaxed / surprised）、`verId`（省くとキャラの最新）、`lineId`（省くと `line-…` を自動採番。返したジョブの `input.lineId` で分かる）、`voice`（`grok:eve` か `{provider, id}`。省くとキャラの声。provider は grok だけ作れる）。結果は `{lineId, voicedSec, audioUrl, sourceUrl}`。
-- video の入力: `charId`、`lineId`（必須）、`verId`、`framing`（face / upper、既定 face）。結果は `{lineId, verId, framing, url}`。同じ版・構図の動画があれば置き換える。
+- video の入力: `charId`、`lineId`（必須）、`verId`、`framing`（face / upper、既定 face）。結果は `{lineId, verId, framing, url}`。同じバージョン・構図の動画があれば置き換える。
 - `PATCH /api/characters/<id>` は更新後のキャラ詳細（`GET` と同じ形）を返す。`DELETE /api/characters/<id>/lines/<lineId>` は `{ok: true, trashed: "trash/…", item}` を返す。
 
 ## テスト

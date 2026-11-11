@@ -1,6 +1,6 @@
-// 動きの「つくる」の MotionBricks の条件の区間の部品と、MotionBricks で作った動きの確認の欄(docs/motionbricks.md)。
-// 区間が 1 つなら motion-gen ジョブを積み、2 つ以上ならレシピの motionbricks の区間になる(public/recipe-motion.mjs)。結果は確認の欄で見てから取り込む。
-import {h, getJSON, send} from './dom.mjs';
+// モーションを作る画面の MotionBricks の条件の区間の部品と、MotionBricks で作った動きの確認の中身(docs/motionbricks.md)。
+// 区間が 1 つなら motion-gen ジョブを積み、2 つ以上ならレシピの motionbricks の区間になる(public/recipe-motion.mjs)。結果は確認のモーダル(public/motion-review.mjs)で見てから取り込む。
+import {h, send} from './dom.mjs';
 
 const sec = v => Number(v).toFixed(1) + ' 秒';
 
@@ -46,41 +46,24 @@ export function genFields(o, onChange = () => {}) {
     h('label', {}, '種類', kind), speed.el, speedHint, turn.el, seconds.el, actLabel,
     h('details', {}, h('summary', {}, '細かい条件'), h('div', {class: 'form-stack'}, dirLabel,
       h('label', {}, '終わり方', ending), h('label', {}, '移動（その場はビューアで見やすい）', rootSel))));
-  return {el, conditions, name, available: o.available, seconds: () => Number(seconds.input.value)};
+  // 下書きに残す値と、読み直したときに戻す(public/motion-create.mjs)
+  const save = () => ({kind: kind.value, speed: speed.input.value, turn: turn.input.value, seconds: seconds.input.value, action: action.value, direction: direction.value, ending: ending.value, root: rootSel.value});
+  const load = v => {
+    if (o.kinds[v.kind]) { kind.value = v.kind; sync(); }
+    for (const [el, x] of [[speed.input, v.speed], [turn.input, v.turn], [seconds.input, v.seconds], [action, v.action], [direction, v.direction], [ending, v.ending], [rootSel, v.root]]) if (x != null) el.value = x;
+    speed.show(); turn.show(); seconds.show();
+  };
+  return {el, conditions, name, save, load, available: o.available, seconds: () => Number(seconds.input.value)};
 }
 
 // 区間 1 つのとき: motion-gen ジョブを積む
 export const queueGen = (fields, label) => send('POST', '/api/jobs', {type: 'motion-gen', ...fields.conditions(), label: label || undefined});
 
-// 確認待ちのジョブを box に出す。preview(record) は VRMA をビューアで再生する。changed() は取り込み・捨てるのあとで呼ぶ
-export async function showGenReviews(box, {preview, changed}) {
-  const {waiting} = await getJSON('/api/motion-gen');
-  box.replaceChildren(...waiting.map(j => reviewCard(j, {preview, changed})));
-}
-
-function reviewCard(j, {preview, changed}) {
-  const r = j.result, id = encodeURIComponent(j.id);
-  const label = h('input', {maxlength: '100', value: r.label, 'aria-label': 'ラベル'});
-  const motionId = h('input', {value: r.motionId, 'aria-label': 'モーション ID'});
-  const msg = h('span', {class: 'muted'});
-  const act = async (fn, busy) => {
-    buttons.forEach(b => { b.disabled = true; }); msg.className = 'muted'; msg.textContent = busy;
-    try { await fn(); await changed(); }
-    catch (e) { msg.className = 'err'; msg.textContent = e.message; buttons.forEach(b => { b.disabled = false; }); }
-  };
-  const see = h('button', {type: 'button', disabled: !preview, onclick: async () => {
-    try { await preview({id: `gen-${j.id}`, name: r.label, label: `${r.label}（確認中）`, file: r.vrmaUrl, contactsUrl: r.contactsUrl, generated: {root: j.input.root}}); msg.className = 'muted'; msg.textContent = ''; }
-    catch (e) { msg.className = 'err'; msg.textContent = '再生できない: ' + e.message; }
-  }}, '見る');
-  const take = h('button', {type: 'button', class: 'primary', onclick: () => act(() => send('POST', `/api/motion-gen/${id}/import`, {label: label.value.trim(), motionId: motionId.value.trim()}), '取り込み中…')}, '取り込む');
-  const drop = h('button', {type: 'button', onclick: () => act(() => send('POST', `/api/motion-gen/${id}/discard`), '捨てている…')}, '捨てる');
-  const buttons = [see, take, drop];
-  return h('section', {class: 'form-stack sep video-review gen-review', 'data-review': j.id},
-    h('h2', {}, 'MotionBricks の動きを確かめて取り込む'),
-    h('div', {class: 'muted'}, `${r.label}。${sec(r.durationSec)}、${r.frames} コマ、進んだ距離 ${Number(r.travelM).toFixed(1)} m`),
-    h('div', {class: 'seg'}, see),
-    h('div', {class: 'limit warn'}, '評価用のみ（動画は公開できない）'),
-    h('details', {}, h('summary', {class: 'muted'}, '利用条件の全文'), h('div', {class: 'muted'}, r.license?.summary ?? '')),
-    h('label', {}, 'ラベル', label), h('label', {}, 'モーション ID', motionId),
-    h('div', {class: 'seg'}, take, drop), msg);
+// 確認待ちの結果 1 件を、確認のモーダルの中身にする(public/motion-review.mjs の形)
+export function genReview(j) {
+  const r = j.result;
+  return {id: j.id, kind: 'MotionBricks', label: r.label, motionId: r.motionId, api: `/api/motion-gen/${encodeURIComponent(j.id)}`,
+    preview: {id: `gen-${j.id}`, name: r.label, label: `${r.label}（確認中）`, file: r.vrmaUrl, contactsUrl: r.contactsUrl, generated: {root: j.input.root}},
+    facts: [['長さ', `${sec(r.durationSec)}、${r.frames} コマ`], ['進んだ距離', `${Number(r.travelM).toFixed(1)} m`]],
+    tag: {text: '評価用のみ（動画は公開できない）', warn: true}, terms: r.license?.summary ?? ''};
 }

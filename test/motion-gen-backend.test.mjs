@@ -16,7 +16,7 @@ import {tempDir, startServer} from './helpers.mjs';
 
 const ENGINE_PY = path.join(root, 'tools', 'mb_onnx_engine.py');
 
-test('uv の引数: trt は MotionBricks の環境のまま、auto と onnx は onnxruntime を --with で足す(版は設定で替えられる)', () => {
+test('uv の引数: trt は MotionBricks の環境のまま、auto と onnx は onnxruntime を --with で足す(バージョンは設定で替えられる)', () => {
   assert.deepEqual(mbUvArgs('D:/mb', {motionbricksBackend: 'trt'}), ['run', '--project', 'D:/mb', '--no-sync', 'python']);
   for (const b of [undefined, 'auto', 'onnx']) assert.deepEqual(mbUvArgs('D:/mb', {motionbricksBackend: b}), ['run', '--project', 'D:/mb', '--no-sync', '--with', ONNXRUNTIME_DEFAULT, 'python'], String(b));
   assert.deepEqual(mbUvArgs('D:/mb', {motionbricksOnnxRuntime: 'onnxruntime-directml==1.24.0'}).slice(4, 6), ['--with', 'onnxruntime-directml==1.24.0']);
@@ -45,7 +45,7 @@ test('設定: motionbricksBackend の既定は auto で、知らない値は読�
   assert.throws(() => loadConfig(dir, {}), /motionbricksBackend/);
 });
 
-test('Node と Python で、選べる推論と onnxruntime の既定の版が同じ', () => {
+test('Node と Python で、選べる推論と onnxruntime の既定のバージョンが同じ', () => {
   const py = fsSync.readFileSync(ENGINE_PY, 'utf8');
   assert.equal(/^ONNXRUNTIME_DEFAULT = "([^"]+)"/m.exec(py)?.[1], ONNXRUNTIME_DEFAULT);
   assert.deepEqual(JSON.parse(/^BACKENDS = \(([^)]*)\)/m.exec(py)[1].replace(/^/, '[').replace(/$/, ']')), MB_BACKENDS);

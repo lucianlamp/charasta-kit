@@ -17,12 +17,12 @@
 ## 決めたこと（ADR 0001 から）
 
 - きゃらくるのプロジェクトには書き込まない。材料（骨とウェイト付きの Blender ファイル、頭のテクスチャ）は、表情づくりの作業場所へコピーしてから使う。
-- 判断の要らない処理（撮影、位置合わせ、組み立て、測定、確かめの撮影）は画面のボタンで動く（ジョブ。`docs/jobs.md`）。
+- 判断の要らない処理（撮影、位置合わせ、組み立て、測定、確認用の撮影）は画面のボタンで動く（ジョブ。`docs/jobs.md`）。
 - 判断が要る処理（何を描くか、デザインが保たれているか、どの案を採るか）は Claude が進め、採用・却下は画面で人が決める。Claude は自分で採用しない。
 
 ## 置き場所
 
-`<保管場所>/studio/<キャラ>/<表情づくりの ID>/`（コードのリポジトリの外。版と違って中身は変わる）
+`<保管場所>/studio/<キャラ>/<表情づくりの ID>/`（コードのリポジトリの外。バージョンと違って中身は変わる）
 
 ```
 work.json        状態: 工程ごとの状態、依頼、採用、区画の範囲、ジョブの記録
@@ -32,7 +32,7 @@ candidates/<依頼 ID>/   Claude が出した候補の絵
 drawn/           採用した絵（neutral.png、neutral_bald.png、… 今の draw/ と同じ名前）
 video/           表情の動画（任意。下の「中割り」）
 out/             試作の VRM（試作ごとに番号）
-checks/<試作>/   確かめの撮影（角度の表、表情、視線、口の形）
+checks/<試作>/   確認用の撮影（角度の表、表情、視線、口の形）
 ```
 
 ## 工程
@@ -46,8 +46,8 @@ checks/<試作>/   確かめの撮影（角度の表、表情、視線、口の�
 | 5 | 組み立て | ボタン | `align.py --same` → `face_vrm.py select` → `atlas.py` → `face_vrm.py build` → `paint_gaze.py` → `build_gaze.py` → メタを写す。試作の VRM を `out/` に |
 | 6 | 表情の絵 | 依頼 | 表情ごとに、キャラ全体（髪・服あり）の絵で表情を描かせ、髪を除いたものを採用 |
 | 7 | 中割り | ボタン（任意） | 表情の動画（最初のコマ = 中立、最後のコマ = 採用した表情の絵）から `expr_video.py build`。動画が無い表情は二値（中割りなし）で入る |
-| 8 | 確かめ | ボタン | ビューアで角度の表・表情・視線・口の形・表情と視線の組み合わせを撮り、画面に一覧で出す |
-| 9 | 版にする | ボタン | 試作を選び、変えたことを書いて、キャラの版として取り込む（`scripts/import-version.mjs` と同じ） |
+| 8 | 確認 | ボタン | ビューアで角度の表・表情・視線・口の形・表情と視線の組み合わせを撮り、画面に一覧で出す |
+| 9 | バージョンとして保存 | ボタン | 試作を選び、変えたことを書いて、キャラのバージョンとして取り込む（`scripts/import-version.mjs` と同じ） |
 
 - 工程 2・5・7・8 はジョブ（`studio-*` の種類）として 1 件ずつ動く。Blender は背景で動かし、GPU を使う。
 - どの工程も、前の工程の入力が変わったら「古い」と画面に出す（work.json に入力のハッシュを残す）。
@@ -77,7 +77,7 @@ drawn/             採用した絵。drawn/expr/（描いた表情の区画）�
 video/<表情>.mp4    中割りの動画（手で置く）
 work/              中間のファイル（cheek.blend、face.blend、video/ = expr_video.py の作業フォルダと解析の控え）
 out/<NNN>/model.vrm    試作（番号は 001 から）
-checks/<NNN>/      試作 NNN の確かめの撮影と index.json
+checks/<NNN>/      試作 NNN の確認用の撮影と index.json
 trash/             差し替えた材料・絵・動画・撮り直した確かめの前のもの（消さずにここへ移す）
 ```
 
@@ -126,8 +126,8 @@ trash/             差し替えた材料・絵・動画・撮り直した確か�
 | 4 区画の範囲 | API（画面で四角を動かす） | 検査して work.json に置く（組み立てのときに face/rects.json に書く） |
 | 5 組み立て | ジョブ `studio-build` | `face_vrm.py select` → `atlas.py` → `face_vrm.py build` → `paint_gaze.py` → `ball_from_iris.py`（設定があれば）→ `build_gaze.py` → `patch_vrm.mjs --meta-from` → 試作（設定があれば `spring_tune.py`） |
 | 7 中割り | ジョブ `studio-video` | `expr_video.py build`（組み立ての face_gaze.vrm と手で置いた動画）→ 試作（設定があれば `spring_tune.py`） |
-| 8 確かめ | ジョブ `studio-checks` | `tools/studio_checks.mjs` で試作をビューアで撮る（下） |
-| 9 版にする | API | 試作を版として取り込み、スマホ用の軽い VRM を作る（`import-version.mjs` と同じ） |
+| 8 確認 | ジョブ `studio-checks` | `tools/studio_checks.mjs` で試作をビューアで撮る（下） |
+| 9 バージョンとして保存 | API | 試作をバージョンとして取り込み、スマホ用の軽い VRM を作る（`import-version.mjs` と同じ） |
 
 - Blender は `config.json` の `blender`（探し方は `README.md` の設定の表）を背景で動かす。呼び方は既存の .sh と同じで、スクリプトの失敗を拾えるよう `--python-exit-code 1` だけ足した。きゃらくるのアプリのフォルダ（`charakuruApp`）は `mtoon-export.py` を読むだけ。
 - `patch_vrm.mjs`（charakuru-claude-code スキル）と `spring_tune.py`は移さず、`config.json` の `patchVrm`・`springTune` で場所を指す。
@@ -137,7 +137,7 @@ trash/             差し替えた材料・絵・動画・撮り直した確か�
 
 ### 古いかどうか
 
-工程ごとに、使うファイルの sha256 と設定の JSON をまとめたハッシュ（入力の指紋）を、ジョブを始めたときに残す。今の指紋と違えば「古い」。前の工程が古いか、きゃらくる側の元のファイルが変わった（大きさか更新時刻）ときは、後の工程に「前の工程が古い」を出す。
+工程ごとに、使うファイルの sha256 と設定の JSON をまとめたハッシュ（入力の指紋）を、ジョブを始めたときに残す。今の指紋と違えば「古い」。前の工程が古いか、きゃらくる側の元のファイルが変わった（大きさか更新時刻）ときは、後の工程に「前の工程が変わった。もう一度動かす」（入力側の札は「入力が変わった。もう一度動かす」）を出す。
 
 | 工程 | 指紋に入れるもの |
 |---|---|
@@ -154,12 +154,12 @@ trash/             差し替えた材料・絵・動画・撮り直した確か�
 | `GET /api/charakuru/projects` | きゃらくるのプロジェクト（`{id, name, savedAt, hasBlend, blendModified, hasReview}`。名前は project.charakit の project.json から読む） |
 | `GET /api/studio/<キャラ>` | 表情づくりの一覧 |
 | `POST /api/studio/<キャラ>` | `{id?, note?}` で作る。201 で状態を返す。同じ ID は 409 |
-| `GET /api/studio/<キャラ>/<ID>` | 状態（work.json に、工程ごとの `stale`・`upstreamStale`・`sourceChanged`・ジョブの今の状態 `job`、ファイルと試作と確かめの撮影の URL を足したもの） |
+| `GET /api/studio/<キャラ>/<ID>` | 状態（work.json に、工程ごとの `stale`・`upstreamStale`・`sourceChanged`・ジョブの今の状態 `job`、ファイルと試作と確認用の撮影の URL を足したもの） |
 | `POST /api/studio/<キャラ>/<ID>/copy` | `{project}` か `{fromStudio}`。材料をコピーして状態を返す |
 | `PUT /api/studio/<キャラ>/<ID>/rects` | `{upper, mouth?}`（四角 `[x0,y0,x1,y1]` か、そのリスト 8 個まで）。正面を撮る前は 400 |
 | `PATCH /api/studio/<キャラ>/<ID>/options` | 設定を 2 段目まで重ねる（`{video: {env}}` は `video.videos` を残す。配列と null は置き換える） |
 | `POST /api/studio/<キャラ>/<ID>/videos/<表情>` | mp4 の本文で中割りの動画を置く（手で置く） |
-| `POST /api/studio/<キャラ>/<ID>/promote` | `{proto, verId, label, note, latest}` で版にする。201 で `{version, lite}` |
+| `POST /api/studio/<キャラ>/<ID>/promote` | `{proto, verId, label, note, latest}` でバージョンにする。201 で `{version, lite}` |
 | `POST /api/jobs` | `{type: "studio-front" \| "studio-build" \| "studio-video" \| "studio-checks", charId, studioId, proto?, set?}` |
 
 ### CLI（`scripts/studio.mjs`）
@@ -169,9 +169,9 @@ trash/             差し替えた材料・絵・動画・撮り直した確か�
 ### 画面
 
 - 今の配置は `docs/screens.md`。
-- ビューアは `?studio=<ID>&ver=proto-<番号>` で試作を開く（版の一覧の先頭に試作を足す）。
+- ビューアは `?studio=<ID>&ver=proto-<番号>` で試作を開く（バージョンの一覧の先頭に試作を足す）。
 
-### 確かめの撮影（`tools/studio_checks.mjs`）
+### 確認用の撮影（`tools/studio_checks.mjs`）
 
 休めの姿勢（腕は下ろす）で、ビューアの `face(0.6)`（頭の 7cm 上を 0.6m 前から）を頭のまわりに yaw / pitch だけ回して、720×720 で撮る。視野はビューアの既定（30°）。1 枚ごとに揺れ骨を初めに戻し、1/60 秒を 30 回進めてから撮る。ビューア自身の毎フレームの描画は止め、表情は `window.lock` で固定する。
 
@@ -189,7 +189,7 @@ trash/             差し替えた材料・絵・動画・撮り直した確か�
 5. **試作は組み立て（工程 5）と中割り（工程 7）のどちらでも番号を振る**。動画が無いキャラは工程 5 の試作をそのまま使える。`spring_tune.py` は設定 `springTune` があるとき、試作を置く前に動く。
 6. **区画の範囲は正面の撮影のあとにしか保存できない**（座標がその撮影の画素なので）。撮り直しでカメラが変わると「古い」になる。
 7. **目の中の範囲（hole_upper.png）は採用した絵として取り込む**。区画の座標に移したもので、元の緑塗り（hole_green.png）も取り込んで出どころを残した。作り方は下の「目の中の範囲（hole_upper.png）の作り方」。
-8. **確かめの撮影の撮り方を決めた**（上）。揺れ骨を 1 枚ごとに戻すのは、撮る順で髪が変わらないようにするため。
+8. **確認用の撮影の撮り方を決めた**（上）。揺れ骨を 1 枚ごとに戻すのは、撮る順で髪が変わらないようにするため。
 9. **作り直しの確かめはテスト用の保管場所で行う**。2 つ目のサーバーが本番の保管場所を指すと、`jobs/` を本番のサーバーと取り合う（起動時に、動いているジョブを「止まった」にしてしまう）。テスト用の保管場所は、別の設定ファイル（`CHARASTA_CONFIG`）と別のポートのサーバーで使う。
 
 ## 依頼と候補
@@ -249,36 +249,36 @@ trash/             差し替えた材料・絵・動画・撮り直した確か�
 7. **同じ絵を替える依頼が複数あっても、先に採用した変更を黙って消さない**。依頼を出すときの `target` の sha256 を `base` に残し、候補を置くときと採用するときに今の `target` の sha256 と照らす。違えば 409（`code: exists`）で止め、理由（「…は依頼 rNNN のあとに替わった。この依頼は取り下げて、今の絵から出し直す」）が画面の依頼の行に出る。別の依頼の採用だけでなく、依頼のあとの CLI `adopt` で絵が替わった場合も同じ判定で止まる。止まった依頼は取り下げ、今の絵を元に出し直す。
 8. **CLI は、同じ表情づくりを持つサーバーが動いている間、`work.json` を直接書かない**。設定のポートで status の GET が通り、返る `dir` が CLI の保管場所の同じ表情づくりを指すとき、`rects`・`options`・`video` は API（`PUT rects`、`PATCH options`、`POST videos/<表情>`）を通す。`adopt` は API が無いので、その間は断る（画面か API で行うか、サーバーを止めてからやる）。`candidate` は、サーバーの `dir` が CLI の保管場所と違えば（`CHARASTA_LIBRARY` だけでテスト用を指して、本番のサーバーに当たる場合）送らずに止める。サーバーが動いていない、または別の保管場所のサーバーなら、`rects`・`options`・`video`・`adopt` は今までどおり直接書く。
 
-## シェイプキー方式の版の確認
+## シェイプキー方式のバージョンの確認
 
 ### 分担
 
 - 顔画像の方式（ちび体型）: 作るのも管理もきゃらすたの表情スタジオ。この文書の工程のまま。
-- シェイプキー方式（普通の頭身。`Fcl_` の 57 キー）: 作るのはきゃらくるのキットの表情工程と `studio/vroid/kit_fcl.py`(使い分けは冒頭の節)。自前の顔の部品(`studio/vroid/face_own`)は予備。どちらでも、きゃらすたは確認と管理だけで、版の VRM を変えない。表情スタジオの工程に、方式の選択、部品の絵の依頼、組み立てのジョブは足さない。
+- シェイプキー方式（普通の頭身。`Fcl_` の 57 キー）: 作るのはきゃらくるのキットの表情工程と `studio/vroid/kit_fcl.py`(使い分けは冒頭の節)。自前の顔の部品(`studio/vroid/face_own`)は予備。どちらでも、きゃらすたは確認と管理だけで、バージョンの VRM を変えない。表情スタジオの工程に、方式の選択、部品の絵の依頼、組み立てのジョブは足さない。
 
-### 版として取り込む
+### バージョンとして取り込む
 
-今の経路で足りる。`node scripts/import-version.mjs --char <キャラ> --id <版> --label "…" --note "…" --src <VRM>` が sha256 の記録とスマホ用の軽い VRM を作り、軽い VRM にも 57 キーが残る（`tools/make_lite.py` は画像だけ縮める）。サムネイルは今までどおり `node tools/thumb.mjs --char <キャラ> --ver <版>`。画面の「きゃらくるのプロジェクトから版を取り込む」は `work/review.vrm` を読むので、この VRM には使わない。
+今の経路で足りる。`node scripts/import-version.mjs --char <キャラ> --id <バージョン> --label "…" --note "…" --src <VRM>` が sha256 の記録とスマホ用の軽い VRM を作り、軽い VRM にも 57 キーが残る（`tools/make_lite.py` は画像だけ縮める）。サムネイルは今までどおり `node tools/thumb.mjs --char <キャラ> --ver <バージョン>`。画面の「きゃらくるのプロジェクトからバージョンを取り込む」は `work/review.vrm` を読むので、この VRM には使わない。
 
-### 表情の確認の画面（`#face/<キャラ>[/<版>]`、`public/face-check.mjs`）
+### 表情の確認の画面（`#face/<キャラ>[/<バージョン>]`、`public/face-check.mjs`）
 
-上部バーで選んだ版の VRM を見る。`#expression/<キャラ>` は、選んでいる版が `Fcl_` のキー(`Face.M_F00_000_00_Fcl_ALL_Angry` のように材質の前置きが付く β 版も含む)を持つとき、ここへ移る。表情づくりの左の欄と始める画面にも入口がある。
+上部バーで選んだバージョンの VRM を見る。`#expression/<キャラ>` は、選んでいるバージョンが `Fcl_` のキー(`Face.M_F00_000_00_Fcl_ALL_Angry` のように材質の前置きが付く β 版も含む)を持つとき、ここへ移る。表情づくりの左の欄と始める画面にも入口がある。
 
 - どの方式の顔かの表示（`Fcl_` のキーがあればシェイプキー方式、`FaceAtlas` の画像か `Face_layers` があれば顔画像の方式、ほかはそのほか）、キーの数、視線の方式。
 - プリセット 14 個の切り替え、`Fcl_` のキーのスライダー（眉、目、口、歯、全部のまとまりごと）、視線の左右と上下。割り当ての無いプリセットは押せない。
-- 版どうしの比較: 比べる版を選ぶと 2 つのビューアを並べ、同じプリセット、キー、視線を当てる。相手にないキーは飛ばす。
-- 確かめの撮影の 3 種類を、ボタンで積んで一覧で見る。
+- ほかのバージョンとの比較: 比べるバージョンを選ぶと 2 つのビューアを並べ、同じプリセット、キー、視線を当てる。相手にないキーは飛ばす。
+- 確認用の撮影の 3 種類を、ボタンで積んで一覧で見る。
 
-動きはビューアの `window.viewer` を親の画面から操作し、`expressionManager.update` を包んで重みを毎フレーム置く。ビューア本体は変えない。VRM 0.x の版は左の欄に出し、プリセットの割り当ては `extensions.VRM.blendShapeMaster` から読む。
+動きはビューアの `window.viewer` を親の画面から操作し、`expressionManager.update` を包んで重みを毎フレーム置く。ビューア本体は変えない。VRM 0.x のバージョンは左の欄に出し、プリセットの割り当ては `extensions.VRM.blendShapeMaster` から読む。
 
-### 確かめの撮影（ジョブ `face-check`）
+### 確認用の撮影（ジョブ `face-check`）
 
-`POST /api/jobs` に `{type: "face-check", charId, verId, set, motionId?}`。結果は版のフォルダの `checks/<set>/`（`index.json`、`check.json`、絵）に置き、`/lib/characters/...` で配る。撮影は `<set>.tmp` に行い、前の撮影を `<set>.old` へ避けてから入れ替え、置けたら消す（置けなければ戻す。もう一度撮れるので trash へは移さない）。時間の上限は grid と keys が 10 分、motion が 20 分（`CHARASTA_SHOOT_TIMEOUT_MS` で決め打ち）。撮影中のモーションはごみ箱へ移せない。
+`POST /api/jobs` に `{type: "face-check", charId, verId, set, motionId?}`。結果はバージョンのフォルダの `checks/<set>/`（`index.json`、`check.json`、絵）に置き、`/lib/characters/...` で配る。撮影は `<set>.tmp` に行い、前の撮影を `<set>.old` へ避けてから入れ替え、置けたら消す（置けなければ戻す。もう一度撮れるので trash へは移さない）。時間の上限は grid と keys が 10 分、motion が 20 分（`CHARASTA_SHOOT_TIMEOUT_MS` で決め打ち）。撮影中のモーションはごみ箱へ移せない。
 
 | set | 道具 | 中身 |
 |---|---|---|
 | `grid` | `tools/studio_checks.mjs --set full` | 表情、口の形、視線、表情と視線、角度の表。72 枚 |
-| `keys` | `tools/face_keys.mjs` | 全部のキーと、開いた口の歯のキーの組み合わせ 5 つ。57 キーで 62 枚。`Fcl_` のキーが無い版は 400 |
+| `keys` | `tools/face_keys.mjs` | 全部のキーと、開いた口の歯のキーの組み合わせ 5 つ。57 キーで 62 枚。`Fcl_` のキーが無いバージョンは 400 |
 | `motion` | `tools/face_motion.mjs`、`tools/face_hair.mjs` | モーション中の顔の寄りを正面と斜めで 90 コマ。髪の頂点が顔の面より内側へ入る数と深さを `check.json` の `hair` に残す。顔の面か髪が見つからなければ `hair` は null で、画面に「髪は測れなかった」と出す |
 
-`GET /api/characters/<キャラ>/versions/<版>/face` は、方式、キー、プリセット、視線、撮影の一覧を返す。試しの動きは `CHARASTA_FAKE_CAPTURE=1`。
+`GET /api/characters/<キャラ>/versions/<バージョン>/face` は、方式、キー、プリセット、視線、撮影の一覧を返す。試しの動きは `CHARASTA_FAKE_CAPTURE=1`。

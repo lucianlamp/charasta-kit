@@ -3,7 +3,7 @@ import {h, getJSON, send} from './dom.mjs';
 import {enc, when} from './shared.mjs';
 import {confirmDialog} from './confirm.mjs';
 
-const KIND = {character: 'キャラ', version: '版', line: 'セリフ', shoot: '撮った動画', motion: 'モーション', short: 'ショート', 'video-motion': '確認待ちの動画', 'text-motion': '確認待ちの文章からの動き', 'motion-gen': '確認待ちの MotionBricks の動き', other: '旧形式'};
+const KIND = {character: 'キャラ', version: 'バージョン', line: 'セリフ', shoot: '撮った動画', motion: 'モーション', short: 'ショート', 'video-motion': '確認待ちの動画', 'text-motion': '確認待ちの文章からのモーション', 'motion-gen': '確認待ちの MotionBricks のモーション', other: '旧形式'};
 export const fmtSize = n => n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
 
 export async function showTrash({main}) {
@@ -12,7 +12,7 @@ export async function showTrash({main}) {
   let data = {items: [], count: 0, totalBytes: 0};
 
   // 完全に消す前の確認。「戻せないことを確かめた」のチェックを入れるまで押せない
-  const purge = (title, text, run) => confirmDialog({title, body: [h('p', {}, text)], check: '戻せないことを確かめた', confirm: '完全に消す', run});
+  const purge = (title, text, run) => confirmDialog({title, body: [h('p', {}, text)], check: '戻せないことを確認した', confirm: '完全に消す', run});
 
   function row(it) {
     const note = h('span', {class: 'err'});

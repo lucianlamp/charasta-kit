@@ -1,4 +1,4 @@
-// ライブラリの集計(lib/overview.mjs)、利用条件の札、作り方の記録、きゃらくるのプロジェクトからの版の取り込み。
+// ライブラリの集計(lib/overview.mjs)、利用条件の札、作り方の記録、きゃらくるのプロジェクトからのバージョンの取り込み。
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
@@ -19,7 +19,7 @@ test('stageProgress: 記録から出す。判定できないものは「途中�
   assert.deepEqual(stageProgress({versions: 0, motions: 3}), {create: 'none', motion: 'none', expression: 'none', finish: 'none'});
   assert.equal(stageProgress({versions: 0, motions: 3, method: 'kimi'}).create, 'doing');
   assert.equal(stageProgress({versions: 0, motions: 3, projects: 1}).create, 'doing');
-  assert.deepEqual(stageProgress({versions: 1, motions: 0}), {create: 'done', motion: 'none', expression: 'none', finish: 'none'});
+  assert.deepEqual(stageProgress({versions: 1, motions: 0}), {create: 'done', motion: 'none', expression: 'none', finish: 'done'});   // 表情づくりが無くバージョンがあれば、仕上げで残る作業は無い
   assert.equal(stageProgress({versions: 1, motions: 1}).motion, 'done');
   assert.equal(stageProgress({versions: 1, motions: 1, expressions: ALL}).expression, 'done');
   assert.equal(stageProgress({versions: 1, motions: 1, expressions: ['happy']}).expression, 'doing');
@@ -27,10 +27,12 @@ test('stageProgress: 記録から出す。判定できないものは「途中�
   assert.equal(stageProgress({versions: 1, motions: 1, studios: [{versions: [], prototypes: 0}]}).expression, 'doing');
   assert.equal(stageProgress({versions: 1, motions: 1, studios: [{versions: [], prototypes: 0}]}).finish, 'none');
   assert.equal(stageProgress({versions: 1, motions: 1, studios: [{versions: [], prototypes: 2}]}).finish, 'doing');
+  assert.equal(stageProgress({versions: 0, motions: 1}).finish, 'none');   // バージョンが無ければ仕上げも無い
+  assert.equal(stageProgress({versions: 2, motions: 1, adjusted: 1, studios: [{versions: [], prototypes: 2}]}).finish, 'done');   // 体型と揺れもので作ったバージョンがある
   assert.equal(stageProgress({versions: 1, motions: 1, studios: [{versions: ['v2'], prototypes: 2}]}).finish, 'done');
 });
 
-test('finishedVersions: 版にした版と最新の版。新しい順', () => {
+test('finishedVersions: バージョンにしたバージョンと最新バージョン。新しい順', () => {
   const ch = {latestVersion: 'v1', versions: [{id: 'v1', order: 1}, {id: 'v2', order: 2}, {id: 'v3', order: 3}]};
   assert.deepEqual(finishedVersions(ch, []).map(v => [v.id, v.promoted, v.latest]), [['v1', false, true]]);
   assert.deepEqual(finishedVersions(ch, [{versions: ['v3']}]).map(v => [v.id, v.promoted, v.latest]), [['v3', true, false], ['v1', false, true]]);
@@ -96,7 +98,7 @@ test('スタイル: 作るときと PATCH で記録し、無いキャラは null
   assert.deepEqual(ov.chars.map(c => [c.id, c.style]), [['c1', 'standard'], ['c2', 'chibi'], ['c4', null]]);
 });
 
-test('API: /api/overview、POST /api/characters、プロジェクトからの版の取り込み(元は読むだけ)', async () => {
+test('API: /api/overview、POST /api/characters、プロジェクトからのバージョンの取り込み(元は読むだけ)', async () => {
   const app = await fakeCharakuru(), s = await startServer({charakuruApp: app, env: STUDIO_ENV, charakuruUrl: 'http://127.0.0.1:8766/'});
   try {
     assert.equal((await call(s.base, 'POST', '/api/characters', {id: 'c1', name: 'C1', method: 'tripo', style: 'chibi'})).status, 201);
@@ -117,11 +119,13 @@ test('API: /api/overview、POST /api/characters、プロジェクトからの版
 
     const src = path.join(app, 'projects', 'p1', 'work', 'review.vrm'), before = await fs.stat(src);
     const url = '/api/characters/c1/versions';
-    assert.equal((await call(s.base, 'POST', url, {project: 'p1', verId: 'v1'})).status, 400);   // 変えたことが要る
     assert.equal((await call(s.base, 'POST', url, {project: 'nope', verId: 'v1', note: 'n'})).status, 404);
     assert.equal((await call(s.base, 'POST', url, {project: '../x', verId: 'v1', note: 'n'})).status, 400);
-    const r = await call(s.base, 'POST', url, {project: 'p1', verId: 'v1', note: '最初の版'});
+    const r = await call(s.base, 'POST', url, {project: 'p1'});   // 最初のバージョンは ID と変えたことを省ける
     assert.equal(r.status, 201); assert.equal(r.body.version.source.charakuruProject, 'p1');
+    assert.equal(r.body.version.id, 'v1'); assert.equal(r.body.version.note, '最初の取り込み');
+    assert.equal((await call(s.base, 'POST', url, {project: 'p1', verId: 'v2'})).status, 400);   // 2 つ目からは変えたことが要る
+    assert.equal((await call(s.base, 'POST', url, {project: 'p1', note: 'ID なし'})).status, 400);   // 2 つ目からは ID も要る
     assert.equal((await call(s.base, 'POST', url, {project: 'p1', verId: 'v1', note: '同じ ID'})).status, 409);
     assert.equal((await fs.stat(src)).mtimeMs, before.mtimeMs);
     ov = (await call(s.base, 'GET', '/api/overview')).body;

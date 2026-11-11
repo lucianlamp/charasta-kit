@@ -22,7 +22,7 @@ test('手で直した欄: シーン、カメラ、角度を割ったときの値
   assert.deepEqual(danceEdits(cut, base), []);
   assert.deepEqual(danceEdits({...cut, telop: 'やあ'}, base), [], 'テロップは割り方に入らない');
   assert.deepEqual(danceEdits({...cut, camera: 'orbit', angle: 0}, base), ['カメラ', '角度']);
-  assert.deepEqual(danceEdits({...cut, stage: 'b'}, base), ['シーン']);
+  assert.deepEqual(danceEdits({...cut, stage: 'b'}, base), ['ステージ']);
   assert.deepEqual(danceEdits(cut, undefined), [], '覚えていないカットは注意しない');
   assert.deepEqual(danceEdits({stage: 'a', camera: 'close'}, danceSplitOf({stage: 'a', camera: 'close', angle: 0})), [], '角度が無いのは 0');
 });
@@ -50,7 +50,7 @@ test('#mv から作るショートの本文', () => {
   assert.deepEqual(danceShortBody({id: 'c1'}, null), {charId: 'c1', title: 'c1 のダンス MV'});
 });
 
-test('#mv から作る入口: 送信中の保護はキャラ/版ごと。別のキャラは別のショートに着地し、同じキャラは 1 回しか送らない', async () => {
+test('#mv から作る入口: 送信中の保護はキャラ/バージョンごと。別のキャラは別のショートに着地し、同じキャラは 1 回しか送らない', async () => {
   const el = () => ({append() {}, replaceChildren() {}, setAttribute() {}, addEventListener() {}});
   const saved = {document: globalThis.document, Node: globalThis.Node, fetch: globalThis.fetch, history: globalThis.history, location: globalThis.location};
   const landed = [], posts = [];

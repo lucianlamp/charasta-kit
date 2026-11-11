@@ -13,21 +13,21 @@ export const VRM_STYLES = ['standard', 'chibi'];
 export const CHAR_STYLES = {
   standard: {
     label: LABEL.standard,
-    band: [['表情', 'シェイプキー(Fcl の 57 キー)'], ['形式', 'VRoid 形式の検査']],
+    band: '表情はシェイプキーで動かす。VRoid と同じ作りかを確認する',
     points: ['表情はシェイプキー', 'VRoid 形式で検査'],
-    steps: [['作り方', 'きゃらくる(Tripo Studio)で rig と表情まで'], ['表情', 'キットの表情を kit_fcl で Fcl の 57 キーへ'], ['仕上げ', 'VRoid 形式への変換、輪郭線 0.8 mm、検査']],
+    steps: [['作り方', '選んだ作り方で、骨組みと表情まで作る'], ['表情', 'シェイプキーで動かす。VRoid と同じ名前のキーを使う'], ['仕上げ', 'VRoid 形式への変換、輪郭線 0.8 mm、検査']],
   },
   chibi: {
     label: LABEL.chibi,
-    band: [['表情', '画像(顔テクスチャのコマ)'], ['形式', '軽い版と三角形の数']],
-    points: ['表情は顔テクスチャの画像', '軽い版と三角形の数で検査'],
-    steps: [['作り方', 'きゃらくる(Tripo Studio)で rig まで'], ['表情', '表情スタジオで image_gen の絵を顔テクスチャに'], ['仕上げ', '軽い版、三角形の数の検査']],
+    band: '表情は顔の画像を切り替えて動かす。軽量版があるか、三角形が多すぎないかを確認する',
+    points: ['表情は顔の画像', '軽量版と三角形の数で検査'],
+    steps: [['作り方', '選んだ作り方で、骨組みまで作る'], ['表情', '表情スタジオで描いた顔の絵を、顔の画像にする'], ['仕上げ', '軽量版、三角形の数の検査']],
   },
   creature: {
     label: LABEL.creature,
-    band: [['形式', 'Blender(骨と動き)']],
-    points: ['Blender の骨と動き', '表情は無く、動きの Action を使う'],
-    steps: [['作り方', 'Blender で骨と動きを作り、scripts/import-creature.mjs で取り込む'], ['表情', 'なし(動きの Action を使う)']],
+    band: 'Blender で作った骨と動きで動かす。表情は無い',
+    points: ['Blender の骨と動き', '表情は無く、Blender で作った動きを使う'],
+    steps: [['作り方', 'Blender で骨と動きを作り、取り込む'], ['表情', 'なし（Blender で作った動きを使う）']],
   },
 };
 export const UNSET_LABEL = 'スタイル未設定';
@@ -61,7 +61,7 @@ export function pickStyleTab(stored, counts) {
   return counts.standard > 0 ? 'standard' : 'all';
 }
 
-// 生き物の動きの名前。rest と fly は日本語、clips は名前のまま。creature は overview の chars[].creature か版の creature
+// 生き物の動きの名前。rest と fly は日本語、clips は名前のまま。creature は overview の chars[].creature かバージョンの creature
 export const REST_LABEL = '止まる', FLY_LABEL = '羽ばたく';
 export function motionNames(creature) {
   if (!creature) return [];
@@ -88,7 +88,7 @@ export const takeCreatureExample = charId => JSON.stringify({charId, perch: 0, p
 export function bandText(tab, chars = []) {
   const style = CHAR_STYLES[tab];
   if (!style) return null;
-  const parts = style.band.map(([k, v]) => `${k}: ${v}`);
+  const parts = [style.band];
   if (tab === 'creature') {
     const names = [...new Set(chars.filter(isCreature).flatMap(c => motionNames(c.creature)))];
     if (names.length) parts.push(`動き: ${names.slice(0, 6).join('、')}${names.length > 6 ? ' など' : ''}`);
@@ -96,7 +96,7 @@ export function bandText(tab, chars = []) {
   return parts.join(' / ');
 }
 
-// スタイルを変えるときに選べるもの。版があるキャラは、生き物とそれ以外のあいだを移れない(サーバーも断る)
+// スタイルを変えるときに選べるもの。バージョンがあるキャラは、生き物とそれ以外のあいだを移れない(サーバーも断る)
 export function restyleChoices(style, hasVersions) {
   if (!hasVersions) return [...STYLE_IDS];
   return style === 'creature' ? [] : [...VRM_STYLES];

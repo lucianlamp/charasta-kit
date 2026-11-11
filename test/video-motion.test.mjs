@@ -310,7 +310,7 @@ test('sam3d: 試しの動きで取り込むまで通り、記録に SAM License�
   assert.equal(done.result.options.engine, 'sam3d'); assert.equal(done.result.license.redistribution, false);
   const parts = done.result.license.terms.map(x => x.part + ' ' + x.license).join('\n');
   assert.match(parts, /SAM License/); assert.match(parts, /DINOv3 License/); assert.match(parts, /MHR[\s\S]*Apache-2\.0/); assert.match(parts, /ゲート付き/);
-  assert.ok(done.result.license.terms.some(x => x.part === '利用者が確かめること' && /重みを取った自分の承認/.test(x.license) && /動画の権利/.test(x.license)));
+  assert.ok(done.result.license.terms.some(x => x.part === '利用者が確認すること' && /重みを取った自分の承認/.test(x.license) && /動画の権利/.test(x.license)));
   assert.ok(!done.result.license.terms.some(x => /ExMR|非営利の利用に限る/.test(x.license)), 'ExMR の条件は混ぜない');
   const m = await q.importVideoMotion(job.id, {motionId: 'sam-clip'});
   assert.equal(m.generated.tool, 'sam3d'); assert.match(m.generated.model, /SAM 3D Body/); assert.match(m.source.pack, /SAM 3D Body/);

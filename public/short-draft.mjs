@@ -34,7 +34,7 @@ function geminiBox({bodyOf, msg, queued, before = async () => {}}) {
     copy.disabled = false;
   }}, '依頼文をコピー');
   const take = h('button', {type: 'button', class: 'primary', onclick: async () => {
-    take.disabled = true; say('muted', '確かめている…'); problems.replaceChildren(); fix.hidden = copyFix.hidden = true;
+    take.disabled = true; say('muted', '確認中…'); problems.replaceChildren(); fix.hidden = copyFix.hidden = true;
     try {
       await before();
       const r = await fetch('/api/short-draft/import', {method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify({...bodyOf(), answer: answer.value})}), j = await r.json();
@@ -43,7 +43,7 @@ function geminiBox({bodyOf, msg, queued, before = async () => {}}) {
         problems.replaceChildren(...j.errors.map(e => h('li', {}, e)));
         fix.value = j.fixPrompt; fix.hidden = copyFix.hidden = false;
       } else if (!r.ok) throw Error(j.error);
-      else { answer.value = ''; queued(j); say('muted', '積んだ。雑学は主張を確かめるので数分かかる。できると編集画面が開く。'); }
+      else { answer.value = ''; queued(j); say('muted', '受け付けた。雑学は主張を確認するので数分かかる。できると編集画面が開く。'); }
     } catch (e) { say('err', '取り込めない: ' + e.message); }
     take.disabled = false;
   }}, '取り込む');
@@ -108,14 +108,14 @@ async function draftFields({ov, msg, watcher}) {
     start.disabled = true; msg.className = 'muted'; msg.textContent = '送っている…';
     try {
       watcher.queued(await send('POST', '/api/jobs', {type: 'short-draft', source: 'claude', ...conditions()}));
-      msg.textContent = '積んだ。雑学は調べるので数分かかる。できると編集画面が開く。';
-    } catch (e) { msg.className = 'err'; msg.textContent = '積めない: ' + e.message; }
+      msg.textContent = '受け付けた。雑学は調べるので数分かかる。できると編集画面が開く。';
+    } catch (e) { msg.className = 'err'; msg.textContent = '始められない: ' + e.message; }
     start.disabled = false;
   }}, '下書きを作る');
   const maker = makerSelect('作り手'), claudeBox = h('div', {class: 'actions', hidden: true}, start), gemini = geminiBox({bodyOf: conditions, msg, queued: watcher.queued});
   maker.onchange = () => { claudeBox.hidden = maker.value !== 'claude'; gemini.hidden = maker.value !== 'gemini'; };
   return [h('label', {}, '作り手', maker), h('label', {}, 'テーマ', theme), h('div', {class: 'cut-grid'}, h('label', {}, '型', style), h('label', {}, '長さ（秒）', seconds)),
-    h('h2', {}, '出演者'), castBox, h('button', {type: 'button', class: 'quiet', onclick: () => { if (rows.length < MAX_CAST && chars.length) addRow(); }}, '出演者を足す'), h('label', {}, '補足', note), claudeBox, gemini];
+    h('h2', {}, '出演者'), castBox, h('button', {type: 'button', class: 'quiet', onclick: () => { if (rows.length < MAX_CAST && chars.length) addRow(); }}, '出演者を追加'), h('label', {}, '補足', note), claudeBox, gemini];
 }
 
 // 編集画面の事実の確認の欄。出典が無い主張は「要確認」と出し、押すまで本番の書き出しを止める。確かめたあとに台本を直すと全部を要確認に戻す。
@@ -126,7 +126,7 @@ export function claimsPanel(s, onChange) {
     const pending = new Set(pendingClaims(s)), changed = scriptChanged(s);
     title.textContent = `事実の確認（${s.claims.length} 件、要確認 ${pending.size} 件）`;
     box.open ||= pending.size > 0 || changed;
-    body.replaceChildren(changed ? h('div', {class: 'claim'}, h('p', {}, h('span', {class: 'tag warn'}, '要確認'), '主張を確かめたあとに台本が変わった。直した文と主張と出典を読み直す。'),
+    body.replaceChildren(changed ? h('div', {class: 'claim'}, h('p', {}, h('span', {class: 'tag warn'}, '要確認'), '主張を確認したあとに台本が変わった。直した文と主張と出典を読み直す。'),
       h('button', {type: 'button', onclick: () => { s.scriptKey = scriptKey(s.cuts); onChange(); }}, '直した文を確認した')) : '', ...s.claims.map((c, i) => {
       const need = !c.sources.length;
       return h('div', {class: 'claim'}, h('p', {}, pending.has(c) ? h('span', {class: 'tag warn'}, '要確認') : null, c.text),
@@ -152,8 +152,8 @@ export function serialPanel(s, touch, {save, alive}) {
   const msg = h('span', {class: 'muted'}), box = h('div', {class: 'pending-list'}), watcher = draftWatcher(box, alive), note = h('input', {maxlength: '1000', placeholder: '任意。この話で進めたいこと', 'aria-label': '次の話の補足'});
   const next = h('button', {type: 'button', class: 'primary', onclick: async () => {
     next.disabled = true; msg.className = 'muted'; msg.textContent = '送っている…';
-    try { await save(); watcher.queued(await send('POST', '/api/jobs', {type: 'short-draft', source: 'claude', fromShortId: s.id, note: note.value})); msg.textContent = '積んだ。できると新しいショートの編集画面が開く。'; }
-    catch (e) { msg.className = 'err'; msg.textContent = '積めない: ' + e.message; }
+    try { await save(); watcher.queued(await send('POST', '/api/jobs', {type: 'short-draft', source: 'claude', fromShortId: s.id, note: note.value})); msg.textContent = '受け付けた。できると新しいショートの編集画面が開く。'; }
+    catch (e) { msg.className = 'err'; msg.textContent = '始められない: ' + e.message; }
     next.disabled = false;
   }}, '次の話を作る');
   const maker = makerSelect('次の話の作り手'), claudeBox = h('div', {class: 'actions', hidden: true}, next), gemini = geminiBox({bodyOf: () => ({fromShortId: s.id, note: note.value}), msg, queued: watcher.queued, before: save});

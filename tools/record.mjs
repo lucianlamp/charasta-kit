@@ -1,5 +1,5 @@
 // きゃらすたのビューアで、顔テクスチャ方式の VRM のデモ動画（表情・視線・口）を 1 コマずつ撮る。
-// node tools/record.mjs --char <キャラ> [--ver <版>] --out OUT_DIR [--motion VRMA_02]  -> OUT_DIR/f00000.jpg ...
+// node tools/record.mjs --char <キャラ> [--ver <バージョン>] --out OUT_DIR [--motion VRMA_02]  -> OUT_DIR/f00000.jpg ...
 // 並列に撮るときは START / END（秒）を分け、それぞれ別の OUT_DIR に出す。つなぐ:
 //   ffmpeg -framerate 30 -i OUT_DIR/f%05d.jpg -c:v libx264 -pix_fmt yuv420p -crf 18 out.mp4
 // 画面は隠して、時間は 1/FPS ずつ手で進め、1 コマごとに screenshot する。自動まばたきと表情ボタンは window.lock で上書きする。

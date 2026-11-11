@@ -126,7 +126,7 @@ test('採用: 候補が drawn/ の絵になり、前の絵は trash/ へ。依�
   assert.equal((await studio.status('c1', 's1')).steps.build.stale, false);
 });
 
-test('API と CLI: 画面から依頼 -> CLI で未着手を読む -> CLI で候補を置く(サーバーを通す) -> 画面で却下・採用 -> 組み立て直して版にする', async () => {
+test('API と CLI: 画面から依頼 -> CLI で未着手を読む -> CLI で候補を置く(サーバーを通す) -> 画面で却下・採用 -> 組み立て直してバージョンにする', async () => {
   const app = await fakeCharakuru();
   const s = await startServer({env: STUDIO_ENV, charakuruApp: app});
   const call = async (method, url, body) => {
@@ -170,7 +170,7 @@ test('API と CLI: 画面から依頼 -> CLI で未着手を読む -> CLI で候
     assert.deepEqual(list[0].candidates.map(x => [x.n, x.state, x.reason]), [[1, '却下', '口が大きすぎる']]);
     assert.equal(list[0].candidates[0].path, path.join(s.libraryDir, 'studio', 'c1', 's1', 'candidates', 'r001', 'c01.png'));
 
-    // 組み立てて試作 1 -> 次の候補を採用 -> 組み立てが古い -> 組み立て直して試作 2 -> 版にする
+    // 組み立てて試作 1 -> 次の候補を採用 -> 組み立てが古い -> 組み立て直して試作 2 -> バージョンにする
     await call('POST', '/api/jobs', {type: 'studio-front', charId: 'c1', studioId: 's1'}); await s.server.jobs.whenIdle();
     await call('PUT', '/api/studio/c1/s1/rects', {upper: [100, 100, 900, 600]});
     await call('POST', '/api/jobs', {type: 'studio-build', charId: 'c1', studioId: 's1'}); await s.server.jobs.whenIdle();

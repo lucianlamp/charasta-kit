@@ -1,5 +1,5 @@
-// サムネイル撮影: 版の正面の全身を 512x512 で撮り、保管場所の versions/<ver>/thumb.png に書く。
-// node tools/thumb.mjs --char <キャラ> --ver <版> [--port <ポート>]   （サーバーが動いている前提。--port は設定と違うポートで動いているとき）
+// サムネイル撮影: バージョンの正面の全身を 512x512 で撮り、保管場所の versions/<ver>/thumb.png に書く。
+// node tools/thumb.mjs --char <キャラ> --ver <バージョン> [--port <ポート>]   （サーバーが動いている前提。--port は設定と違うポートで動いているとき）
 import fs from 'node:fs';
 import path from 'node:path';
 import {loadConfig, loadPlaywright, parseArgs, needId, viewerUrl, openViewer, HIDE_PANEL_CSS} from './common.mjs';
@@ -8,7 +8,7 @@ import {launchGPU} from './gpu_browser.mjs';
 const args = parseArgs(), config = loadConfig();
 const char = needId(args.char, 'char'), ver = needId(args.ver, 'ver');
 const dir = path.join(config.libraryDir, 'characters', char, 'versions', ver);
-if (!fs.existsSync(path.join(dir, 'version.json'))) throw Error(`版がない: ${dir}`);
+if (!fs.existsSync(path.join(dir, 'version.json'))) throw Error(`バージョンがない: ${dir}`);
 
 const {chromium} = loadPlaywright();
 const {browser} = await launchGPU(chromium);

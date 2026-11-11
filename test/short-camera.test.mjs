@@ -41,16 +41,17 @@ test('カメラの軸: 1 つの軸を変えると、ほかの軸をなるべく�
   assert.equal(chooseCamera('talk_bust', 'move', '横', 'talk'), null);
 });
 
-test('カメラの軸: 画面のボタン。使えない値は off で理由を持ち、今のカメラが種類に無ければ選び直しを促す', () => {
-  const {axes, offNote, hint} = cameraAxes('front_walk', 'creature');
+test('カメラの軸: 画面のボタン。その種類で 1 つも使えない値は出さず、今のカメラが種類に無ければ選び直しを促す', () => {
+  const {axes, hint} = cameraAxes('front_walk', 'creature');
   const who = axes.find(a => a.key === 'who').items;
-  assert.deepEqual(who.map(o => [o.value, o.on, o.off]), [['話す人', false, false], ['決まった人', false, true], ['2 人', true, false], ['生き物', false, false], ['手紙', false, true]]);
-  assert.equal(who[1].why, '枝の生き物がいる動画では使えない');
-  assert.equal(who[3].camera, 'crow_close');
-  assert.match(offNote, /^薄い選択肢\(決まった人、手紙、大写し、肩越し、下から、寄っていく、引いていく\)は枝の生き物がいる動画では使えない$/);
+  assert.deepEqual(who.map(o => [o.value, o.on]), [['話す人', false], ['2 人', true], ['生き物', false]]);   // 選んだ人と手紙はこの種類に無いので出さない
+  assert.equal(who[2].camera, 'crow_close');
+  assert.ok(axes.every(a => a.items.every(o => !('off' in o))));
+  assert.deepEqual(axes.find(a => a.key === 'dist').items.map(o => o.value), ['寄り', '胸から上', '全身', '引き']);   // 大写しは歩く 1 テイクにも生き物にも無い
   assert.equal(hint, '');
   const talk = cameraAxes('close_who', 'talk');
   assert.equal(talk.axes.find(a => a.key === 'who').items.find(o => o.value === '手紙').why, '手紙を持つカットだけ');
-  assert.equal(talk.axes.find(a => a.key === 'who').items.find(o => o.value === '生き物').why, '立って話す動画では使えない');
+  assert.equal(talk.axes.find(a => a.key === 'who').items.some(o => o.value === '生き物'), false);
   assert.equal(cameraAxes('crow_close', 'talk').hint, '立って話す動画では使えないカメラ。軸から選び直す');
+  assert.deepEqual(cameraAxes('close', 'dance').axes.find(a => a.key === 'who').items.map(o => o.value), ['選んだ人']);
 });

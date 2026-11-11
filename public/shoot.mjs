@@ -1,6 +1,6 @@
 // 完成モデルの「撮る」: 枠とプレビュー、タイムライン、撮る条件の欄(よく使う 2 つのほかは細かい条件に畳む)。ジョブは lib/shoot.mjs(docs/shoot.md)、画面の決めごとは docs/shoot.md。
 import {h, getJSON, send} from './dom.mjs';
-import {libUrl, uploadAudio, viewerFrame, viewerReady} from './shared.mjs';
+import {libUrl, optionName, uploadAudio, viewerFrame, viewerReady} from './shared.mjs';
 import {MAX_SECONDS, MAX_AUDIO_BYTES, shootSeconds} from './shoot-plan.mjs';
 import {moveToTrash} from './confirm.mjs';
 
@@ -12,12 +12,21 @@ const EXPRESSIONS = [['motion', 'モーションに合わせる'], ['neutral', '
 const BACKGROUNDS = [['viewer', 'ビューアの色'], ['#ffffff', '白'], ['#000000', '黒'], ['#00b140', '緑']];
 const voiceText = v => v ? `${v.provider}:${v.id}` : 'なし';
 const motionName = m => m.label || m.name || m.id;
+// 撮るのモーションの初期値: 前回このブラウザで選んだもの、無ければ「全身を見せる」「挨拶」、それも無ければ先頭。読み書きできない環境でも動く
+const LAST_MOTION = 'charasta.shootMotion', PLAIN_MOTIONS = ['全身を見せる', '挨拶'];
+const lastMotion = {
+  get() { try { return localStorage.getItem(LAST_MOTION); } catch { return null; } },
+  set(id) { try { localStorage.setItem(LAST_MOTION, id); } catch { /* 残せなくても困らない */ } },
+};
+// モーションの画面の「これで撮る」: 次に撮るの欄を開いたときの初期値にする
+export const rememberShootMotion = id => lastMotion.set(id);
+const firstMotion = motions => motions.find(m => m.id === lastMotion.get()) ?? PLAIN_MOTIONS.map(l => motions.find(m => m.label === l)).find(Boolean) ?? motions[0] ?? null;
 const clock = s => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`;
 const lengthOf = url => new Promise(res => { const a = new Audio(); a.preload = 'metadata'; a.onloadedmetadata = () => res(Number.isFinite(a.duration) ? a.duration : 0); a.onerror = () => res(0); a.src = url; });
 
-// getChar: 今のキャラの記録(ジョブのあとで読み直される)。queued: 積んだジョブを渡す。reload: セリフを消したあとに読み直す。more: 細かい条件の末尾に足す要素
-export function shootPanel({getChar, ver, motions, queued, reload, more = []}) {
-  const c0 = getChar(), s = {line: '', motion: motions[0]?.id ?? '', expression: 'motion', framing: 'full', aspect: '9:16', quality: '1080p30', loops: 1, seconds: 5,
+// getChar: 今のキャラの記録(ジョブのあとで読み直される)。queued: 積んだジョブを渡す。reload: セリフを消したあとに読み直す。onNewLine: セリフの選択の横の「新しいセリフ」で呼ぶ(無ければボタンを出さない)
+export function shootPanel({getChar, ver, motions, queued, reload, onNewLine}) {
+  const c0 = getChar(), s = {line: '', motion: firstMotion(motions)?.id ?? '', expression: 'motion', framing: 'full', aspect: '9:16', quality: '1080p30', loops: 1, seconds: 5,
     background: 'viewer', lineSec: 0, audioFile: null, audioSec: 0, audioNote: '', audioPublic: false, audioStart: 0};
   const motion = () => motions.find(m => m.id === s.motion) ?? null;
   const audioLeft = () => Math.max(0, s.audioSec - s.audioStart);   // 開始位置から後ろの音声の長さ
@@ -70,7 +79,7 @@ export function shootPanel({getChar, ver, motions, queued, reload, more = []}) {
     const T = total(), m = motion(), rows = [];
     const row = (label, bars) => rows.push(h('span', {}, label), h('div', {class: 'tl-track'}, bars));
     if (s.line) row('セリフ', bar('tl-line', 0, Math.min(s.lineSec, T), T));
-    if (m) row('動き', Array.from({length: Math.ceil(T / m.durationSec)}, (_, i) => bar('tl-motion', i * m.durationSec, Math.min((i + 1) * m.durationSec, T), T)));
+    if (m) row('モーション', Array.from({length: Math.ceil(T / m.durationSec)}, (_, i) => bar('tl-motion', i * m.durationSec, Math.min((i + 1) * m.durationSec, T), T)));
     const expr = s.expression === 'motion' ? (m?.expressions ?? []).flatMap(e => Array.from({length: Math.ceil(T / m.durationSec)}, (_, i) => bar('tl-expr', (i + e.from) * m.durationSec, Math.min((i + e.to) * m.durationSec, T), T)))
       : s.expression === 'neutral' ? [] : [bar('tl-expr', 0, T, T)];
     if (expr.length) row('表情', expr);
@@ -129,7 +138,8 @@ export function shootPanel({getChar, ver, motions, queued, reload, more = []}) {
       const l = cur();
       if (await moveToTrash({kind: 'line', charId: c0.id, id: l.id}, l.text || l.id)) await reload();
     };
-    lineBox.replaceChildren(h('label', {}, 'セリフ', sel), detail);
+    const add = onNewLine ? h('button', {type: 'button', onclick: onNewLine}, '新しいセリフ') : null;
+    lineBox.replaceChildren(h('div', {class: 'line-pick'}, h('label', {}, 'セリフ', sel), add), detail);
   }
 
   // 音声ファイル: 撮るときに送る
@@ -153,20 +163,20 @@ export function shootPanel({getChar, ver, motions, queued, reload, more = []}) {
 
   const shoot = h('button', {class: 'primary big'}, '撮る');
   shoot.onclick = async () => {
-    if (s.audioFile && s.audioSec && s.audioStart >= s.audioSec) { msg.className = 'err'; msg.textContent = '積めない: 音声の開始位置が音声の長さより後ろ'; return; }
+    if (s.audioFile && s.audioSec && s.audioStart >= s.audioSec) { msg.className = 'err'; msg.textContent = '始められない: 音声の開始位置が音声の長さより後ろ'; return; }
     shoot.disabled = true; msg.className = 'muted'; msg.textContent = '送っている…';
     try {
       const audioId = s.audioFile ? (await uploadAudio(s.audioFile)).id : null;
       queued(await send('POST', '/api/jobs', {type: 'shoot', charId: c0.id, verId: ver.id, motionId: s.motion || null, loops: s.loops, seconds: s.motion || s.line || s.audioFile ? undefined : s.seconds,
         expression: s.expression, framing: s.framing, aspect: s.aspect, quality: s.quality, lineId: s.line || null, audioId, audioSummary: s.audioNote, audioPublic: s.audioPublic, audioStart: s.audioStart, background: s.background}));
-      msg.textContent = '積んだ';
-    } catch (e) { msg.className = 'err'; msg.textContent = '積めない: ' + e.message; }
+      msg.textContent = '受け付けた';
+    } catch (e) { msg.className = 'err'; msg.textContent = '始められない: ' + e.message; }
     shoot.disabled = false;
   };
 
   const reframe = () => { setRatio(); preview(); };
   const controls = h('div', {class: 'form-stack'},
-    select('モーション', [['', 'なし'], ...motions.map(m => [m.id, `${motionName(m)}（${m.limit.text}）`])], 'motion', () => { s.loops = 1; preview(); renderLength(); renderSummary(); renderTerms(); }),
+    select('モーション', [['', 'なし'], ...motions.map(m => [m.id, optionName(m, motionName(m))])], 'motion', () => { if (s.motion) lastMotion.set(s.motion); s.loops = 1; preview(); renderLength(); renderSummary(); renderTerms(); }),
     h('fieldset', {}, h('legend', {}, '縦横'), seg(ASPECTS.map(a => [a, a]), 'aspect', reframe)),
     h('details', {}, h('summary', {}, '細かい条件（写す範囲、画質、長さ、背景、表情、音声、セリフ）'), h('div', {class: 'form-stack'},
       h('fieldset', {}, h('legend', {}, '写す範囲'), seg(Object.entries(CAMERAS), 'framing', preview)),
@@ -174,11 +184,11 @@ export function shootPanel({getChar, ver, motions, queued, reload, more = []}) {
       lengthBox,
       select('背景', BACKGROUNDS, 'background', async () => look(await viewerReady(frame))),
       select('表情', EXPRESSIONS, 'expression', async () => { look(await viewerReady(frame)); renderSummary(); }),
-      h('details', {}, h('summary', {}, '音声ファイル（曲を足す）'), h('div', {class: 'form-stack'},
+      h('details', {}, h('summary', {}, '音声ファイル（曲を追加）'), h('div', {class: 'form-stack'},
         h('label', {}, '音声ファイル（mp3、wav、m4a）', audioPick), audioClear, h('label', {}, '音声の利用条件（任意）', audioNote),
-        h('label', {class: 'check'}, audioPublic, 'この音声は動画と一緒に公開してよい（選ばなければ、公開前に確かめる扱い）'),
+        h('label', {class: 'check'}, audioPublic, 'この音声は動画と一緒に公開してよい（選ばなければ、公開前に確認する扱い）'),
         h('label', {}, '音声の開始位置（秒）', audioStart), audioInfo)),
-      lineBox, more, summary, termsFolded)),
+      lineBox, summary, termsFolded)),
     termsTop, shoot, msg);
 
   setRatio(); renderLines(); renderLength(); renderSummary(); renderTerms(); preview();

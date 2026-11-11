@@ -41,7 +41,7 @@ export function beatCutsBody(music, seconds) {
 }
 
 // 拍から割ったときの値と比べる欄。手で変えると、stage-studio の make_mv.py が --shots-in を受けないうちは書き出しで止まる
-export const DANCE_SPLIT_FIELDS = [['stage', 'シーン'], ['camera', 'カメラ'], ['angle', '角度']];
+export const DANCE_SPLIT_FIELDS = [['stage', 'ステージ'], ['camera', 'カメラ'], ['angle', '角度']];
 export const danceSplitOf = c => ({stage: c.stage, camera: c.camera, angle: Number(c.angle) || 0});
 // base(割ったときの値)から変わった欄の名前。base が無ければ空
 export function danceEdits(cut, base) {
@@ -63,7 +63,7 @@ export function toggleStage(stages, id) {
   return list.length ? list : undefined;
 }
 
-// #mv/<キャラ>[/<版>] から作るダンス MV のショートの本文(POST /api/dance-shorts)
+// #mv/<キャラ>[/<バージョン>] から作るダンス MV のショートの本文(POST /api/dance-shorts)
 export const danceShortBody = (char, verId) => ({charId: char.id, ...(verId ? {verId} : {}), title: `${char.name ?? char.id} のダンス MV`});
 
 // ---- グラフィック MV(music.look === 'graphic')。docs/shorts-graphic-mv.md の「グラフィック」 ----
@@ -74,7 +74,7 @@ export const GRAPHIC_QUALITIES = {
   final: {label: '本番', pct: 100, samples: 64, width: 1080, height: 1920, sec: {full: 1.25, mid: 1.8, face: 2.69, compose: 0.23}, encode: 40},
 };
 export const GRAPHIC_WORDS = ['MOVE', 'STEP', 'TURN', 'FEEL', 'BEAT', 'RHYTHM', 'KICK', 'DANCE'];
-// 色の組。pop は試作の 5 色、mono は灰色の濃淡。chara は版のサムネイルからサーバーが求める(lib/graphic-mv.mjs の charaPalette)
+// 色の組。pop は試作の 5 色、mono は灰色の濃淡。chara はバージョンのサムネイルからサーバーが求める(lib/graphic-mv.mjs の charaPalette)
 export const GRAPHIC_PALETTES = {
   pop: {bg: ['#FFE600', '#19D3FF', '#2337FF'], ink: '#0E0E14', accent: '#FF2D87', light: '#F3F0E8'},
   mono: {bg: ['#EDEDED', '#A8A8A8', '#3C3C3C'], ink: '#111111', accent: '#7A7A7A', light: '#F7F7F7'},

@@ -6,7 +6,7 @@
 export const BODY_FIELDS = [
   {key: 'head', label: '頭の大きさ', unit: '倍', min: 0.85, max: 1.15, step: 0.01, neutral: 1, tool: 'head', scale: 1},
   {key: 'neck', label: '首の長さ', unit: 'cm', min: -2, max: 2, step: 0.1, neutral: 0, tool: 'neck', scale: 0.01},
-  {key: 'shoulder', label: '肩幅(片側)', unit: 'cm', min: -3, max: 3, step: 0.1, neutral: 0, tool: 'shoulder', scale: 0.01},
+  {key: 'shoulder', label: '肩幅（片側）', unit: 'cm', min: -3, max: 3, step: 0.1, neutral: 0, tool: 'shoulder', scale: 0.01},
   {key: 'arm', label: '腕の太さ', unit: '倍', min: 0.7, max: 1.2, step: 0.01, neutral: 1, tool: 'arm', scale: 1},
   {key: 'waist', label: '腰回り', unit: '倍', min: 0.8, max: 1.2, step: 0.01, neutral: 1, tool: 'waist', scale: 1},
   {key: 'leg', label: '脚の太さ', unit: '倍', min: 0.7, max: 1.2, step: 0.01, neutral: 1, tool: 'leg', scale: 1},
@@ -21,7 +21,7 @@ export function checkBody(body = {}) {
   const out = {...BODY_NEUTRAL};
   for (const [k, v] of Object.entries(body)) {
     const f = BODY_FIELDS.find(x => x.key === k);
-    if (!f) throw Error(`体型の鍵 ${k} は無い(${BODY_FIELDS.map(x => x.key).join('、')})`);
+    if (!f) throw Error(`体型の鍵 ${k} は無い（${BODY_FIELDS.map(x => x.key).join('、')}）`);
     if (typeof v !== 'number' || !Number.isFinite(v) || v < f.min || v > f.max) throw Error(`${f.label}は ${f.min} から ${f.max}${f.unit === '倍' ? ' 倍' : ' ' + f.unit}`);
     out[k] = round(v);
   }
@@ -34,7 +34,7 @@ export const bodyChanged = body => BODY_FIELDS.some(f => Math.abs((body?.[f.key]
 export const bodyArgs = body => BODY_FIELDS.filter(f => Math.abs(body[f.key] - f.neutral) > 1e-9).flatMap(f => ['--' + f.tool, String(round(body[f.key] * f.scale, 5))]);
 
 const fmt = (f, v) => f.unit === '倍' ? `${v.toFixed(2)} 倍` : `${v > 0 ? '+' : ''}${v.toFixed(1)} cm`;
-// 変えた値の 1 行(版の「変えたこと」の下書き)。例「頭の大きさ 0.94 倍、肩幅(片側) -1.2 cm」
+// 変えた値の 1 行(バージョンの「変えたこと」の下書き)。例「頭の大きさ 0.94 倍、肩幅(片側) -1.2 cm」
 export const bodySummary = body => BODY_FIELDS.filter(f => Math.abs((body[f.key] ?? f.neutral) - f.neutral) > 1e-9).map(f => `${f.label} ${fmt(f, body[f.key])}`).join('、');
 
 // ---- 揺れもの ----
@@ -107,12 +107,12 @@ export function checkSprings(springs = {}) {
   if (!springs || typeof springs !== 'object' || Array.isArray(springs)) throw Error('揺れものは {組の鍵: {stiffness, dragForce, gravityPower}} で渡す');
   const keys = [...SPRING_KINDS, OTHER_KIND].map(k => k.key), out = {};
   for (const [k, v] of Object.entries(springs)) {
-    if (!keys.includes(k)) throw Error(`揺れものの組 ${k} は無い(${keys.join('、')})`);
+    if (!keys.includes(k)) throw Error(`揺れものの組 ${k} は無い（${keys.join('、')}）`);
     if (!v || typeof v !== 'object' || Array.isArray(v)) throw Error(`揺れもの ${k} の値は {stiffness, dragForce, gravityPower}`);
     out[k] = {};
     for (const [f, x] of Object.entries(v)) {
       const field = SPRING_FIELDS.find(s => s.key === f);
-      if (!field) throw Error(`揺れもの ${k} の値 ${f} は無い(stiffness、dragForce、gravityPower)`);
+      if (!field) throw Error(`揺れもの ${k} の値 ${f} は無い（stiffness、dragForce、gravityPower）`);
       if (typeof x !== 'number' || !Number.isFinite(x) || x < 0 || x > field.limit) throw Error(`揺れもの ${k} の ${field.label}は 0 から ${field.limit}`);
       out[k][f] = round(x, 4);
     }

@@ -1,4 +1,4 @@
-// ごみ箱(lib/trash.mjs、server.mjs の削除と戻す API): キャラ・版・セリフ・撮った動画・モーションを trash/ へ移し、戻し、完全に消す。
+// ごみ箱(lib/trash.mjs、server.mjs の削除と戻す API): キャラ・バージョン・セリフ・撮った動画・モーションを trash/ へ移し、戻し、完全に消す。
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
@@ -13,7 +13,7 @@ const call = async (base, method, url, body) => {
   return {status: r.status, body: await r.json().catch(() => null)};
 };
 
-// c1(版 v1・v2・v3 の 3 つ、v3 が最新、セリフ a、撮った動画 s1、表情づくり st1 が v2 を作った)とモーション m1(c1 の v2 に合わせたもの)、m2
+// c1(バージョン v1・v2・v3 の 3 つ、v3 が最新、セリフ a、撮った動画 s1、表情づくり st1 が v2 を作った)とモーション m1(c1 の v2 に合わせたもの)、m2
 async function seed(extra = {}) {
   const lib = new Library(await tempDir());
   await lib.createCharacter({id: 'c1', name: 'キャラ1', voice: 'grok:eve'});
@@ -36,7 +36,7 @@ async function seed(extra = {}) {
 }
 const ids = list => list.map(x => x.id);
 
-test('キャラをごみ箱へ移す: 版・セリフ・撮った動画・表情づくりごと移り、trash.json が残る。戻すと一覧とサムネイルが元どおり', async () => {
+test('キャラをごみ箱へ移す: バージョン・セリフ・撮った動画・表情づくりごと移り、trash.json が残る。戻すと一覧とサムネイルが元どおり', async () => {
   const {lib, trash} = await seed();
   const before = await lib.listCharacters();
   const item = await trash.move('character', {charId: 'c1'});
@@ -56,13 +56,13 @@ test('キャラをごみ箱へ移す: 版・セリフ・撮った動画・表情
   assert.equal(list.totalBytes, list.items[0].sizeBytes);
 
   await trash.restore(item.trashId);
-  assert.deepEqual(await lib.listCharacters(), before);   // 最新の版とサムネイルの URL まで同じ
+  assert.deepEqual(await lib.listCharacters(), before);   // 最新バージョンとサムネイルの URL まで同じ
   assert.equal((await lib.listCharacters())[0].latest.thumb, '/lib/characters/c1/versions/v3/thumb.png');
   assert.equal(await fs.readFile(path.join(lib.dir, 'studio/c1/st1/work.json'), 'utf8').then(t => JSON.parse(t).id), 'st1');
   assert.equal((await trash.list()).count, 0); assert.equal(await exists(path.join(lib.dir, 'trash', item.trashId)), false);
 });
 
-test('版を消す: 最新の版を消すと残りの最新の並びの版に latest が移り、戻すと latest も戻る。参照は壊れない', async () => {
+test('バージョンを消す: 最新バージョンを消すと残りの最新の並びのバージョンに latest が移り、戻すと latest も戻る。参照は壊れない', async () => {
   const {lib, trash} = await seed();
   assert.equal((await lib.getCharacterJson('c1')).latestVersion, 'v3');
   const item = await trash.move('version', {charId: 'c1', id: 'v3'});
@@ -70,13 +70,13 @@ test('版を消す: 最新の版を消すと残りの最新の並びの版に la
   assert.equal((await lib.getCharacterJson('c1')).latestVersion, 'v2');
   assert.deepEqual(ids((await lib.getCharacter('c1')).versions), ['v1', 'v2']);
   assert.equal((await lib.listCharacters())[0].latest.id, 'v2');
-  // v2 が最新になったので、v2 を消すと v1 へ移る。消した版を参照する撮った動画・セリフの動画・表情づくり・モーションは残る
+  // v2 が最新になったので、v2 を消すと v1 へ移る。消したバージョンを参照する撮った動画・セリフの動画・表情づくり・モーションは残る
   const v2 = await trash.move('version', {charId: 'c1', id: 'v2'});
   assert.equal(v2.meta.movedTo, 'v1');
   const c = await lib.getCharacter('c1');
   assert.equal(c.latestVersion, 'v1'); assert.equal(c.shoots[0].verId, 'v2'); assert.equal(c.lines[0].videos[0].verId, 'v2');
   assert.equal((await lib.listMotions()).find(m => m.id === 'm1').fittedTo.verId, 'v2');
-  // 版が 1 つになったら断る
+  // バージョンが 1 つになったら断る
   await assert.rejects(trash.move('version', {charId: 'c1', id: 'v1'}), {code: 'last-version', message: /キャラごと消す/});
   assert.deepEqual(ids((await lib.getCharacter('c1')).versions), ['v1']);
 
@@ -88,7 +88,7 @@ test('版を消す: 最新の版を消すと残りの最新の並びの版に la
   assert.equal((await lib.getCharacter('c1')).versions[2].thumb, '/lib/characters/c1/versions/v3/thumb.png');
 });
 
-test('版の order: 消したあとに取り込んでも、残っている版と重ならない', async () => {
+test('バージョンの order: 消したあとに取り込んでも、残っているバージョンと重ならない', async () => {
   const {lib, trash} = await seed();
   await trash.move('version', {charId: 'c1', id: 'v1'}); await trash.move('version', {charId: 'c1', id: 'v2'});
   const v4 = await lib.importVersion({charId: 'c1', id: 'v4', data: fakeGlb({v: 4})});
@@ -96,7 +96,7 @@ test('版の order: 消したあとに取り込んでも、残っている版と
   assert.equal(v4.order, 4);
 });
 
-test('最新でない版を消すと latest は動かない', async () => {
+test('最新でないバージョンを消すと latest は動かない', async () => {
   const {lib, trash} = await seed();
   const item = await trash.move('version', {charId: 'c1', id: 'v1'});
   assert.equal(item.meta.wasLatest, false); assert.equal(item.meta.movedTo, null);
@@ -127,7 +127,7 @@ test('モーション・撮った動画・セリフを移して戻す。戻す�
   assert.deepEqual(ids(await lib.listMotions()), ['m1', 'm2']);
 });
 
-test('キャラが無いとき、そのキャラの版・セリフ・撮った動画は戻せない。キャラを先に戻せば戻せる', async () => {
+test('キャラが無いとき、そのキャラのバージョン・セリフ・撮った動画は戻せない。キャラを先に戻せば戻せる', async () => {
   const {lib, trash} = await seed();
   const v = await trash.move('version', {charId: 'c1', id: 'v1'});
   const ch = await trash.move('character', {charId: 'c1'});
@@ -141,7 +141,7 @@ test('キャラが無いとき、そのキャラの版・セリフ・撮った�
   assert.equal((await lib.getCharacterJson('c1')).name, '別人');
 });
 
-test('影響の一覧: 版を使う撮った動画・セリフの動画・表情づくり・合わせたモーションの数と、latest の移り先', async () => {
+test('影響の一覧: バージョンを使う撮った動画・セリフの動画・表情づくり・合わせたモーションの数と、latest の移り先', async () => {
   const {trash} = await seed();
   const v2 = await trash.impact('version', {charId: 'c1', id: 'v2'});
   assert.deepEqual(Object.fromEntries(v2.effects.map(e => [e.key, e.count])), {shoots: 1, lineVideos: 1, studios: 1, fitted: 1});
@@ -158,7 +158,7 @@ test('影響の一覧: 版を使う撮った動画・セリフの動画・表情
   assert.equal((await trash.list()).count, 0);
 });
 
-test('版が 1 つしか無いキャラの版は、影響の一覧に断る理由が出て、移せない', async () => {
+test('バージョンが 1 つしか無いキャラのバージョンは、影響の一覧に断る理由が出て、移せない', async () => {
   const {lib, trash} = await seed();
   await lib.createCharacter({id: 'c2', name: 'キャラ2'}); await lib.importVersion({charId: 'c2', id: 'only', data: fakeGlb({o: 1})});
   const i = await trash.impact('version', {charId: 'c2', id: 'only'});
@@ -182,7 +182,7 @@ test('順番待ちか実行中のジョブが対象を使っているときは�
     assert.equal(i.refusal.code, 'busy', kind); assert.match(i.refusal.message, new RegExp(j.id));
     await assert.rejects(trash.move(kind, ref), {code: 'busy'}, kind);
   }
-  // 別の版・別のモーションを使うジョブは関係ない
+  // 別のバージョン・別のモーションを使うジョブは関係ない
   active.splice(0, active.length, job('j5', {charId: 'c1', verId: 'v1', motionId: 'm1'}));
   assert.equal((await trash.impact('version', {charId: 'c1', id: 'v2'})).refusal, null);
   assert.equal((await trash.impact('motion', {id: 'm2'})).refusal, null);
@@ -296,7 +296,7 @@ test('API: DELETE と impact、GET /api/trash、restore、DELETE /api/trash/<id>
   } finally { await s.close(); }
 });
 
-test('API: 実行中のジョブが使う版・キャラは 409 で断る。使っていない版は消せ、ジョブが終われば消せる', async () => {
+test('API: 実行中のジョブが使うバージョン・キャラは 409 で断る。使っていないバージョンは消せ、ジョブが終われば消せる', async () => {
   const s = await startServer({env: {...FAKE_ENV, CHARASTA_FAKE_CAPTURE: 'hang', CHARASTA_SHOOT_TIMEOUT_MS: '700'}});
   try {
     const L = new Library(s.libraryDir);
@@ -308,7 +308,7 @@ test('API: 実行中のジョブが使う版・キャラは 409 で断る。使�
     assert.equal(r.status, 409); assert.equal(r.body.code, 'busy'); assert.match(r.body.error, new RegExp(job.body.id));
     assert.equal((await call(s.base, 'DELETE', '/api/characters/c1')).status, 409);
     assert.equal((await call(s.base, 'GET', '/api/characters/c1/versions/v2/impact')).body.refusal.code, 'busy');
-    assert.equal((await call(s.base, 'DELETE', '/api/characters/c1/versions/v1')).status, 200);   // 使われていない版は消せる
+    assert.equal((await call(s.base, 'DELETE', '/api/characters/c1/versions/v1')).status, 200);   // 使われていないバージョンは消せる
     await s.server.jobs.whenIdle();   // ジョブは時間の上限で failed になって終わる
     assert.equal((await call(s.base, 'GET', '/api/jobs/' + job.body.id)).body.state, 'failed');
     const done = await call(s.base, 'DELETE', '/api/characters/c1/versions/v2');   // 終わったので、残りの v2・v3 のうち v2 を消せる
@@ -317,7 +317,7 @@ test('API: 実行中のジョブが使う版・キャラは 409 で断る。使�
   } finally { await s.close(); }
 });
 
-test('API: 動画からモーションを作る本物のジョブ(video-motion)が使う版とキャラは、動いている間は断る', async () => {
+test('API: 動画からモーションを作る本物のジョブ(video-motion)が使うバージョンとキャラは、動いている間は断る', async () => {
   const s = await startServer({env: {CHARASTA_FAKE_VRMA_PIPELINE: 'hang', CHARASTA_VIDEO_MOTION_TIMEOUT_MS: '1500'}});
   try {
     const L = new Library(s.libraryDir);
@@ -329,7 +329,7 @@ test('API: 動画からモーションを作る本物のジョブ(video-motion)�
     for (const url of ['/api/characters/c1/versions/v2', '/api/characters/c1']) {
       const r = await call(s.base, 'DELETE', url); assert.equal(r.status, 409, url); assert.equal(r.body.code, 'busy', url);
     }
-    assert.equal((await call(s.base, 'DELETE', '/api/characters/c1/versions/v1')).status, 200);   // 使っていない版は消せる
+    assert.equal((await call(s.base, 'DELETE', '/api/characters/c1/versions/v1')).status, 200);   // 使っていないバージョンは消せる
     await s.server.jobs.whenIdle();
   } finally { await s.close(); }
 });
@@ -464,7 +464,7 @@ test('消した場所はファイルの中の id ではなく、確かめ済み�
   assert.equal(await exists(path.join(lib.dir, 'characters/c2')), false);
 });
 
-test('同じ ID で作り直した別のキャラへは、版・セリフ・撮った動画を戻せない', async () => {
+test('同じ ID で作り直した別のキャラへは、バージョン・セリフ・撮った動画を戻せない', async () => {
   const {lib, trash} = await seed();
   const v = await trash.move('version', {charId: 'c1', id: 'v1'}), l = await trash.move('line', {charId: 'c1', id: 'a'}), s = await trash.move('shoot', {charId: 'c1', id: 's1'});
   assert.ok(v.meta.charCreatedAt);
@@ -476,13 +476,13 @@ test('同じ ID で作り直した別のキャラへは、版・セリフ・撮�
   assert.equal((await trash.list()).count, 4);
 });
 
-test('戻す版の order が今の最新より大きければ、最新に戻す(v3、v2 の順に消して、同じ順に戻しても v3 になる)', async () => {
+test('戻すバージョンの order が今の最新より大きければ、最新に戻す(v3、v2 の順に消して、同じ順に戻しても v3 になる)', async () => {
   const {lib, trash} = await seed();
   const v3 = await trash.move('version', {charId: 'c1', id: 'v3'}), v2 = await trash.move('version', {charId: 'c1', id: 'v2'});
   assert.equal((await lib.getCharacterJson('c1')).latestVersion, 'v1');
   await trash.restore(v3.trashId); assert.equal((await lib.getCharacterJson('c1')).latestVersion, 'v3');
   await trash.restore(v2.trashId); assert.equal((await lib.getCharacterJson('c1')).latestVersion, 'v3');   // v2 は v3 より古いので最新は動かない
-  // 最新でなかった版は、order が大きくても最新にしない
+  // 最新でなかったバージョンは、order が大きくても最新にしない
   const old = await trash.move('version', {charId: 'c1', id: 'v1'});
   await lib.updateCharacter('c1', {latestVersion: 'v2'});
   await trash.restore(old.trashId);
@@ -504,7 +504,7 @@ test('表情づくりの工程が動いている(ジョブでない材料のコ�
   assert.ok(await trash.move('character', {charId: 'c1'}));
 });
 
-test('API: 他サイトの Origin からの DELETE(/api/trash、キャラ、版)は 403 で、何も消えない', async () => {
+test('API: 他サイトの Origin からの DELETE(/api/trash、キャラ、バージョン)は 403 で、何も消えない', async () => {
   const s = await startServer({env: FAKE_ENV});
   try {
     const L = new Library(s.libraryDir);
@@ -540,7 +540,7 @@ test('API: セリフの音声や動画を途中で止めた読み込みが残っ
   } finally { await s.close(); }
 });
 
-test('生き物を参照するショートのジョブ(take.creature / cast)が動いているあいだは、キャラも版も断る。影響の一覧にショートの件数が出る', async () => {
+test('生き物を参照するショートのジョブ(take.creature / cast)が動いているあいだは、キャラもバージョンも断る。影響の一覧にショートの件数が出る', async () => {
   const {lib, trash, active} = await seed();
   await lib.createCharacter({id: 'crow', name: 'カラス', style: 'creature'});
   const blend = path.join(lib.dir, 'crow.blend');

@@ -1,4 +1,4 @@
-# キャラと版、保管場所
+# キャラとバージョン、保管場所
 
 用語は `CONTEXT.md`、決めごとは `docs/adr/` を見る。サーバーは 127.0.0.1 だけで待ち受ける。
 
@@ -27,11 +27,11 @@
 <保管場所>/
   characters/<charId>/
     character.json
-    versions/<verId>/model.vrm, version.json, thumb.png, check.json(検査の結果。消してよい), adjust.json(体型と揺れものの直しで作った版の値。docs/adjust.md)
+    versions/<verId>/model.vrm, version.json, thumb.png, check.json(検査の結果。消してよい), adjust.json(体型と揺れものの直しで作ったバージョンの値。docs/adjust.md)
     lines/<lineId>/audio.(mp3|wav|m4a), line.json
   motions/<motionId>/
     motion.vrma, motion.json
-  adjust-requests/<ID>/request.json, shot.png(直しの頼みごと。docs/adjust.md)
+  adjust-requests/<ID>/request.json, shot.png(直しの依頼。docs/adjust.md)
   trash/<ごみ箱 ID>/
     trash.json, files/<元のパス>
   server.pid
@@ -59,7 +59,7 @@
 
 ```json
 { "id": "v2-expressions", "charId": "chara1", "label": "表情を入れた", "order": 2,
-  "note": "前の版から何を変えたか", "source": { "path": "元の場所", "charakuruProject": "<きゃらくるのプロジェクト ID> または null" },
+  "note": "前のバージョンから何を変えたか", "source": { "path": "元の場所", "charakuruProject": "<きゃらくるのプロジェクト ID> または null" },
   "sha256": "...", "sizeBytes": 0, "importedAt": "ISO" }
 ```
 
@@ -74,38 +74,38 @@
 | 道 | 返すもの |
 |---|---|
 | `GET /` | ギャラリーの画面（`public/index.html`） |
-| `GET /viewer?char=<id>&ver=<id>` | ビューアの画面（`public/viewer.html`）。ver を省くと最新の版 |
+| `GET /viewer?char=<id>&ver=<id>` | ビューアの画面（`public/viewer.html`）。ver を省くと最新バージョン |
 | `GET /api/characters` | `[{ id, name, note, style, latest: { id, label, thumb }, versionCount, lineCount }]` |
 | `GET /api/characters/<id>` | `{ ...character, tags, style, versions: [...version.json に kind、thumb、model の URL を足したもの], lines: [...line.json に audio の URL を足したもの], appearances: [{ shortId, title, style, updatedAt }] }`。`appearances` は `shorts/*/short.json` のうち `cast[].charId`、`charId` のどれかがこのキャラのもので、`updatedAt` の新しい順。読めない short.json は飛ばす |
 | `POST /api/characters` | 本文 `{ id, name, style, note?, voice?, method? }`。`style` は必須（`standard` か `chibi`、無いか不正なら 400 `bad-input`）。成功は 201 で character.json を返す |
 | `PATCH /api/characters/<id>` | 本文に `voice` / `note` / `latestVersion` / `method` / `tags` / `style` / `vrmMeta` のどれかを入れる。成功は 200 で `GET /api/characters/<id>` と同じ形を返す |
 | `GET /api/overview` の `chars[]` | 各キャラに `style`（`standard` / `chibi` / `null`）と `kind`（`vrm`）を含む。 |
-| `GET /api/characters/<id>/versions/<ver>/check` | 版の検査。`{ charId, verId, style, applicable, reason?, unavailable?, items: [{id, label, level, detail}], summary: {ok, warn, ng, unknown, total}, cached, checkedAt }`。`style` が `standard` なら VRoid 形式の検査、`chibi` ならチビの検査(軽い版、三角形、材質、テクスチャ、表情の方式)。未設定は `applicable: false` で `reason` を返す。スタンダードで手本(`studio/vroid/reference.json`)が無ければ `unavailable` に理由を入れて `items` は空。版が無ければ 404。結果は版のフォルダの `check.json` に置き、model.vrm と model-lite.vrm の大きさと更新時刻が同じなら読み直さない（docs/character-style.md） |
+| `GET /api/characters/<id>/versions/<ver>/check` | バージョンの検査。`{ charId, verId, style, applicable, reason?, unavailable?, items: [{id, label, level, detail}], summary: {ok, warn, ng, unknown, total}, cached, checkedAt }`。`style` が `standard` なら VRoid 形式の検査、`chibi` ならチビの検査(軽量版、三角形、材質、テクスチャ、表情の方式)。未設定は `applicable: false` で `reason` を返す。スタンダードで手本(`studio/vroid/reference.json`)が無ければ `unavailable` に理由を入れて `items` は空。バージョンが無ければ 404。結果はバージョンのフォルダの `check.json` に置き、model.vrm と model-lite.vrm の大きさと更新時刻が同じなら読み直さない（docs/character-style.md） |
 | `GET /api/characters/<id>/versions/<ver>/adjust` | 体型を直せるかと、揺れものの組と今の値（`docs/adjust.md`）。直すのはジョブ `adjust` |
 | `GET /api/motions` | `[...motion.json に file の URL を足したもの]` |
 | `POST /api/motions` | VRMA の取り込み。本文は VRMA そのもの、ヘッダ `x-filename`（元の名前）と `x-license`（JSON: holder、summary、redistribution）。返すのは作った motion.json |
 | `GET /lib/<保管場所の中のパス>` | 保管場所のファイル（読むだけ。パスの外へ出るものは 404） |
 | `GET /vendor/<file>`、`GET /app/<file>` | vendor と public の静的ファイル |
 
-書き込みの API は `POST /api/motions` と、下の「ごみ箱」の消す・戻す・完全に消す。版とセリフの取り込みは `scripts/` の CLI で行う。
+書き込みの API は `POST /api/motions` と、下の「ごみ箱」の消す・戻す・完全に消す。バージョンとセリフの取り込みは `scripts/` の CLI で行う。
 
 ## ごみ箱
 
-消す操作は保管場所の `trash/` への移動で、すぐには失わない（`lib/trash.mjs`）。対象は、キャラ（版、セリフ、撮った動画、表情づくり `studio/<キャラ>` ごと）、版、セリフ、撮った動画、モーション。音声ファイル（`audio/`）は対象にしない（撮った動画の記録が ID で指していて、同じファイルが 1 つにまとまっているため）。
+消す操作は保管場所の `trash/` への移動で、すぐには失わない（`lib/trash.mjs`）。対象は、キャラ（バージョン、セリフ、撮った動画、表情づくり `studio/<キャラ>` ごと）、バージョン、セリフ、撮った動画、モーション。音声ファイル（`audio/`）は対象にしない（撮った動画の記録が ID で指していて、同じファイルが 1 つにまとまっているため）。
 
 ```
 trash/<日時>-<種類>-<ID>/trash.json   { kind, id, charId, charName, label, paths, trashedAt, sizeBytes, meta }
 trash/<日時>-<種類>-<ID>/files/<元のパス>   例 files/characters/c1/versions/v2/、キャラは characters/c1 と studio/c1 の 2 か所
 ```
 
-- `kind` は `character` / `version` / `line` / `shoot` / `motion`。`paths` は保管場所からの元のパス。`meta` は版の `{wasLatest, movedTo}`。
+- `kind` は `character` / `version` / `line` / `shoot` / `motion`。`paths` は保管場所からの元のパス。`meta` はバージョンの `{wasLatest, movedTo}`。
 - `trash.json` が無い項目は、この仕組みより前に移したもの（動画からのモーションを捨てた作業フォルダ、前の形のセリフ）。一覧には `kind: "other"` で出し、戻せない（完全に消すことはできる）。動画からのモーションを「捨てる」操作は、今は `kind: "video-motion"`、`paths: []` の記録を付ける。つないだモーションを「捨てる」操作は `kind: "motion-recipe"`、`paths: []`。
 - 同じ名前の項目が既にあれば、別の名前にする（前の項目を上書きしない）。
 
 | 道 | 中身 |
 |---|---|
 | `DELETE /api/characters/<id>` | キャラを移す |
-| `DELETE /api/characters/<id>/versions/<ver>` | 版を移す |
+| `DELETE /api/characters/<id>/versions/<ver>` | バージョンを移す |
 | `DELETE /api/characters/<id>/lines/<lineId>` | セリフを移す |
 | `DELETE /api/characters/<id>/shoots/<動画 ID>` | 撮った動画を移す |
 | `DELETE /api/motions/<id>` | モーションを移す |
@@ -119,18 +119,18 @@ trash/<日時>-<種類>-<ID>/files/<元のパス>   例 files/characters/c1/vers
 
 断る条件（`LibraryError`。理由は文で返す）:
 
-- `busy`（409）: 順番待ちか実行中の処理が対象を使っている。キャラは `charId` が同じジョブ全部（表情づくりの工程を含む）と、表情づくりの `work.json` で動いている工程（ジョブでない材料のコピーや CLI の実行も。`lib/studio.mjs` の `busyOf`）、版は `charId` と `verId` が同じジョブ、セリフは `charId` と `lineId` が同じジョブ、モーションは `motionId` が同じジョブ。ファイルが開かれていて移せないときも `busy`（Windows）。
-- `last-version`（409）: 版が 1 つしか無いキャラの版。キャラの削除へ案内する。
-- `exists`（409）: 戻す先に同じ ID があるとき。何も動かさない。版・セリフ・撮った動画は、消したときのキャラの `createdAt`（`meta.charCreatedAt`）が今のキャラと違うとき（同じ ID で作り直した別のキャラ）も戻さない。
-- `not-found`（404）: 戻すとき、版・セリフ・撮った動画の持ち主のキャラが無い。先にキャラを戻す。
+- `busy`（409）: 順番待ちか実行中の処理が対象を使っている。キャラは `charId` が同じジョブ全部（表情づくりの工程を含む）と、表情づくりの `work.json` で動いている工程（ジョブでない材料のコピーや CLI の実行も。`lib/studio.mjs` の `busyOf`）、バージョンは `charId` と `verId` が同じジョブ、セリフは `charId` と `lineId` が同じジョブ、モーションは `motionId` が同じジョブ。ファイルが開かれていて移せないときも `busy`（Windows）。
+- `last-version`（409）: バージョンが 1 つしか無いキャラのバージョン。キャラの削除へ案内する。
+- `exists`（409）: 戻す先に同じ ID があるとき。何も動かさない。バージョン・セリフ・撮った動画は、消したときのキャラの `createdAt`（`meta.charCreatedAt`）が今のキャラと違うとき（同じ ID で作り直した別のキャラ）も戻さない。
+- `not-found`（404）: 戻すとき、バージョン・セリフ・撮った動画の持ち主のキャラが無い。先にキャラを戻す。
 - `bad-id`（400）/ `outside`（404）: ID やごみ箱 ID がパスを越える形。ごみ箱 ID は英数字と `._-` だけで、戻すときの元の場所は、`trash.json` の `kind`、`charId`、`id` から作り直し、記録の `paths` がその場所のどれかでなければ（バックスラッシュ、`..`、別の場所）`bad-input`（400）で断る。
 
 動き:
 
-- 最新の版を消したら、`latestVersion` を残りの版のうち `order` が最大のものへ移す。戻す版が最新だったもので、今の最新の版より `order` が大きければ、`latestVersion` も戻す（v3、v2 の順に消して同じ順に戻しても v3 になる）。
-- 消した版・キャラを指す記録（撮った動画の `verId`、セリフの動画、表情づくりの `versions`、動画から作ったモーションの `fittedTo`）は書き換えない（ADR 0002）。画面は記録の名前のまま出し、動きの一覧では「削除済み」と添える。
-- 取り込む版の `order` は、残っている版の最大の次にする（消したあとに取り込んでも並びが重ならない）。
-- 戻すと、一覧とサムネイル（版のフォルダの `thumb.png`）は元どおりになる。
+- 最新バージョンを消したら、`latestVersion` を残りのバージョンのうち `order` が最大のものへ移す。戻すバージョンが最新だったもので、今の最新バージョンより `order` が大きければ、`latestVersion` も戻す（v3、v2 の順に消して同じ順に戻しても v3 になる）。
+- 消したバージョン・キャラを指す記録（撮った動画の `verId`、セリフの動画、表情づくりの `versions`、動画から作ったモーションの `fittedTo`）は書き換えない（ADR 0002）。画面は記録の名前のまま出し、動きの一覧では「削除済み」と添える。
+- 取り込むバージョンの `order` は、残っているバージョンの最大の次にする（消したあとに取り込んでも並びが重ならない）。
+- 戻すと、一覧とサムネイル（バージョンのフォルダの `thumb.png`）は元どおりになる。
 - 移す順は、先に `trash.json`（`paths` は全部、`sizeBytes` は移す前に数える）を書き、そのあとフォルダを移す。途中で止まっても、記録の `paths` のうち `files/` に残っているものだけを「戻す」で戻せる（`files/` に無い `paths` は飛ばし、全部が元の場所にあれば項目だけ消す）。
 - 移す途中や戻す途中で失敗したら、動かした分を `renameRetry` で元へ戻す。全部戻せたときだけ項目を消す。戻せなかった分は `trash.json` の `paths` を更新してごみ箱に残し、理由を `busy` で返す（キャラのデータをここで失わない）。戻す途中の失敗で元の場所へ出たままの分は、記録の `paths` から外す。
 - 場所を作るときは、確かめ済みの ID（URL の `charId`、`id`）を使い、`character.json` や `motion.json` の中の `id` は使わない。

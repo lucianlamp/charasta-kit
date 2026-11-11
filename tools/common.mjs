@@ -37,7 +37,7 @@ export function needId(value, name) {
   return value;
 }
 
-// http://127.0.0.1:<port>/viewer?char=&ver=   ver を省くと最新の版。--port で設定のポートを上書きする(サーバーが別のポートで動いているとき)
+// http://127.0.0.1:<port>/viewer?char=&ver=   ver を省くと最新バージョン。--port で設定のポートを上書きする(サーバーが別のポートで動いているとき)
 // --studio ID --proto N: 表情づくりの試作(ver=proto-N)
 // follow=0: ビューアのカメラの追従を切る(撮影の道具はカメラを自分で置くので、hips について動かさない)
 // 足の IK は既定でビューアと同じくオン(撮影は画面で見える動きを写す)。--footik 0 で切る。止めて手で置いた姿勢には、ビューアは IK をかけない
@@ -50,11 +50,11 @@ export function viewerUrl(args, config = loadConfig()) {
   return `http://127.0.0.1:${args.port ? Number(args.port) : config.port}/viewer?${q}`;
 }
 
-// 生き物のキャラ(style が creature)は VRM の版が無いので、ビューアで撮る道具は使えない(サムネイルは scripts/import-creature.mjs が Blender で撮る)
+// 生き物のキャラ(style が creature)は VRM のバージョンが無いので、ビューアで撮る道具は使えない(サムネイルは scripts/import-creature.mjs が Blender で撮る)
 export function rejectCreature(char, config = loadConfig()) {
   let style = null;
   try { style = JSON.parse(fs.readFileSync(path.join(config.libraryDir, 'characters', char, 'character.json'), 'utf8')).style; } catch { /* キャラが無ければビューアの側で断られる */ }
-  if (style === 'creature') throw Error(`${char} は生き物のキャラで、VRM の版が無い。ビューアで撮る道具は使えない(docs/creature.md)`);
+  if (style === 'creature') throw Error(`${char} は生き物のキャラで、VRM のバージョンが無い。ビューアで撮る道具は使えない(docs/creature.md)`);
 }
 
 // ビューアの画面が読み込まれるまで待つ（window.viewer.vrm が入る）

@@ -31,8 +31,8 @@ const patch = (c, body) => send('PATCH', '/api/characters/' + enc(c.id), body);
 function tagEditor(c) {
   let tags = [...(c.tags ?? [])];
   const list = h('div', {class: 'chips'}), msg = h('span', {class: 'muted'});
-  const input = h('input', {maxlength: String(MAX_TAG_LENGTH), placeholder: 'タグを足す', 'aria-label': 'タグ'});
-  const add = h('button', {type: 'button'}, '足す');
+  const input = h('input', {maxlength: String(MAX_TAG_LENGTH), placeholder: 'タグを追加', 'aria-label': 'タグ'});
+  const add = h('button', {type: 'button'}, '追加');
   const busy = on => { add.disabled = on; input.disabled = on; for (const b of list.querySelectorAll('button')) b.disabled = on; };
   const save = async next => {
     busy(true);
@@ -40,7 +40,7 @@ function tagEditor(c) {
     busy(false);
   };
   const render = () => list.replaceChildren(...(tags.length ? tags.map(t => h('button', {type: 'button', class: 'chip-btn', 'aria-label': `${t} を外す`, title: '押すと外す', onclick: () => save(tags.filter(x => x !== t))}, t, ' ×'))
-    : [h('span', {class: 'muted'}, 'タグはまだ無い')]));
+    : [h('span', {class: 'muted'}, 'タグはまだない')]));
   const tryAdd = () => { const r = addTag(tags, input.value); if (r.error) { msg.className = 'err'; msg.textContent = r.error; return; } save(r.tags); };
   add.onclick = tryAdd;
   input.onkeydown = e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); tryAdd(); } };
@@ -62,7 +62,7 @@ function noteEditor(c) {
 
 // スタイル: 札と「変える」。枠の中で今と違うスタイルを選び、表情を作り直すことになると確かめてから PATCH で送る
 // 未設定(前からのキャラ)も同じ枠で決める。null には戻せない(サーバーが断る)
-// 版があるキャラは、生き物とそれ以外のあいだを移れない。生き物で版があれば「変える」を出さない
+// バージョンがあるキャラは、生き物とそれ以外のあいだを移れない。生き物でバージョンがあれば「変える」を出さない
 function styleEditor(c) {
   const chip = h('span', {}), msg = h('span', {class: 'muted', role: 'status'});
   const show = () => chip.replaceChildren(styleChip(c.style));
@@ -86,7 +86,7 @@ function styleEditor(c) {
 
 // 出演した動画: 保存場所の shorts のうち、このキャラが出るもの(新しい順)。押すとショートの編集画面へ
 function appearanceList(list) {
-  if (!list.length) return h('p', {class: 'muted'}, '出演した動画はまだ無い。');
+  if (!list.length) return h('p', {class: 'muted'}, '出演した動画はまだない。');
   return h('div', {class: 'appear-list'}, list.map(a => h('a', {class: 'appear-row', href: '#short/' + enc(a.shortId)},
     h('span', {class: 'appear-title'}, a.title || a.shortId),
     a.style ? h('span', {class: 'chip'}, STYLE_LABEL[a.style] ?? a.style) : null,

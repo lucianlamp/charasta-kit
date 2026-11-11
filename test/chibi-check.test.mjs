@@ -1,4 +1,4 @@
-// 版の検査(lib/chibi-check.mjs、lib/version-check.mjs、GET /api/characters/<キャラ>/versions/<版>/check): チビの項目、スタイルごとの分岐、キャッシュの無効化
+// バージョンの検査(lib/chibi-check.mjs、lib/version-check.mjs、GET /api/characters/<キャラ>/versions/<バージョン>/check): チビの項目、スタイルごとの分岐、キャッシュの無効化
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
@@ -41,7 +41,7 @@ test('画像の大きさ: PNG と JPEG(EXIF の後ろの SOF)を先頭から読�
   assert.equal(imageSize(Buffer.alloc(3)), null);
 });
 
-test('チビの検査: 軽い版があり、三角形が目安以内で、画像が上限以内で、顔テクスチャなら全部 ok(材質の数は目安が無いので unknown)', async () => {
+test('チビの検査: 軽量版があり、三角形が目安以内で、画像が上限以内で、顔テクスチャなら全部 ok(材質の数は目安が無いので unknown)', async () => {
   const model = await measure(glb({images: [{name: 'FaceAtlas_main', data: png(8192, 4096)}, {name: 'body', data: png(4096, 4096)}], tris: 16000, materials: 5, extra: {nodes: [{name: 'Face_layers'}, {name: 'Face', mesh: 0}]}}));
   const lite = await measure(glb({images: faceAtlasImages(4096), tris: 16000, materials: 5, extra: {nodes: [{name: 'Face_layers'}, {name: 'Face', mesh: 0}]}}));
   const items = chibiCheck(model, lite);
@@ -49,13 +49,13 @@ test('チビの検査: 軽い版があり、三角形が目安以内で、画像
   assert.deepEqual(items.map(i => i.level), ['ok', 'ok', 'unknown', 'ok', 'ok']);
   assert.match(items.find(i => i.id === 'materials').detail, /^5 個/);
   assert.match(items.find(i => i.id === 'triangles').detail, /^16000$/);
-  const tex = items.find(i => i.id === 'textures').detail;   // 軽い版との差が読める
+  const tex = items.find(i => i.id === 'textures').detail;   // 軽量版との差が読める
   assert.match(tex, /model\.vrm は 2 枚、最大 8192 px/);
   assert.match(tex, /model-lite\.vrm は 2 枚、最大 4096 px/);
   assert.deepEqual(summaryOf(items), {ok: 4, warn: 0, ng: 0, unknown: 1, total: 5});
 });
 
-test('チビの検査: 軽い版が無ければ warn で作り方を出し、画像は model.vrm を上限と比べる', async () => {
+test('チビの検査: 軽量版が無ければ warn で作り方を出し、画像は model.vrm を上限と比べる', async () => {
   const model = await measure(glb({images: [{name: 'body', data: png(4096, 4096)}], tris: 9000}));
   const items = chibiCheck(model, null);
   assert.equal(level(items, 'lite'), 'warn');
@@ -64,7 +64,7 @@ test('チビの検査: 軽い版が無ければ warn で作り方を出し、画
   assert.match(items.find(i => i.id === 'textures').detail, /body 4096×4096/);
 });
 
-test('チビの検査: 軽い版の画像の上限は元の大きさで決まる(元が 4096 以下なら 2048、4096 超なら 4096)', async () => {
+test('チビの検査: 軽量版の画像の上限は元の大きさで決まる(元が 4096 以下なら 2048、4096 超なら 4096)', async () => {
   const model = await measure(glb({images: [{name: 'a', data: png(4096, 4096)}, {name: 'b', data: png(6000, 3000)}]}));
   const ok = await measure(glb({images: [{name: 'a', data: png(2048, 2048)}, {name: 'b', data: png(4096, 2048)}]}));
   const bad = await measure(glb({images: [{name: 'a', data: png(4096, 4096)}, {name: 'b', data: png(4096, 2048)}]}));
@@ -147,7 +147,7 @@ test('キャッシュ: 同じファイルなら読み直さず、model.vrm か m
     assert.ok((await fs.stat(path.join(dir, CHECK_FILE))).isFile());
     const again = (await t.get(p)).body;
     assert.equal(again.cached, true); assert.equal(again.checkedAt, first.checkedAt); assert.deepEqual(again.items, first.items);
-    // 軽い版を足す: lite の項目が ok になる
+    // 軽量版を足す: lite の項目が ok になる
     await fs.writeFile(path.join(dir, 'model-lite.vrm'), glb({images: faceAtlasImages(2048), tris: 5000}));
     const withLite = (await t.get(p)).body;
     assert.equal(withLite.cached, false); assert.equal(withLite.items.find(i => i.id === 'lite').level, 'ok');

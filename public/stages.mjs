@@ -33,12 +33,12 @@ function detail(stage, ov) {
   return h('section', {class: 'stage-detail', 'aria-label': `${stage.label} の詳しい情報`},
     h('div', {class: 'stage-detail-head'}, h('h2', {}, stage.label), h('span', {class: 'mono muted'}, stage.id)),
     h('div', {class: 'stage-big-box'}, pic),
-    stage.thumb ? null : h('p', {class: 'muted'}, 'このシーンにはまだ見本の絵が無い。'),
+    stage.thumb ? null : h('p', {class: 'muted'}, 'このステージにはまだ見本の絵がない。'),
     h('h3', {}, '使えるもの'),
     h('dl', {class: 'stage-supports'}, stageSupports(can(ov, 'creature')).flatMap(x => [h('dt', {}, x.label), h('dd', {}, `カメラ ${x.cameras} 種`)])),
-    h('p', {class: 'muted'}, 'カメラの種類はどのシーンでも同じ。'),
+    h('p', {class: 'muted'}, 'カメラの種類はどのステージでも同じ。'),
     h('h3', {}, `使っている動画（${usageText(stage)}）`),
-    uses.length ? h('div', {class: 'stage-uses'}, uses) : h('p', {class: 'empty small'}, 'このシーンを使うショートと MV はまだ無い。'));
+    uses.length ? h('div', {class: 'stage-uses'}, uses) : h('p', {class: 'empty small'}, 'このステージを使うショートと MV はまだない。'));
 }
 
 // ---- 新しいステージの頼みごと(docs/stages.md)。作るのはエージェントで、画面は頼む・取り下げる・結果を見るだけ ----
@@ -49,7 +49,7 @@ const MAX_REFS = 4, MAX_REF_BYTES = 8 * 1024 * 1024;   // lib/stage-requests.mjs
 export function refsProblem(files) {
   if (files.length > MAX_REFS) return `参考の絵は ${MAX_REFS} 枚まで`;
   const big = files.find(f => f.size > MAX_REF_BYTES);
-  if (big) return `${big.name} が大きすぎる(1 枚 ${MAX_REF_BYTES / 1048576} MB まで)`;
+  if (big) return `${big.name} が大きすぎる（1 枚 ${MAX_REF_BYTES / 1048576} MB まで）`;
   const other = files.find(f => !/^image\/(png|jpeg|webp)$/.test(f.type));
   return other ? `${other.name} は PNG、JPEG、WebP ではない` : null;
 }
@@ -64,13 +64,13 @@ function requestForm(onSent) {
   const desc = h('textarea', {maxlength: '1000', rows: '5', placeholder: '例: 昼の砂浜。奥に海の家と岩場があり、波打ち際で踊れる広さがほしい。'});
   const count = h('span', {class: 'muted'}, '0 / 1000');
   const files = h('input', {type: 'file', accept: 'image/png,image/jpeg,image/webp', multiple: true});
-  const msg = h('p', {class: 'muted', role: 'status'}), go = h('button', {type: 'submit', class: 'primary'}, '頼む'), close = h('button', {type: 'button'}, 'やめる');
+  const msg = h('p', {class: 'muted', role: 'status'}), go = h('button', {type: 'submit', class: 'primary'}, '依頼する'), close = h('button', {type: 'button'}, 'やめる');
   desc.oninput = () => { count.textContent = `${desc.value.length} / 1000`; };
-  const form = h('form', {class: 'stage-req-form form-stack', hidden: true, 'aria-label': '新しいステージを頼む'},
-    h('p', {class: 'muted'}, `作ってほしいシーンを書いて送ると、${AGENT.ga}作ってシーンの一覧に足す。できたら下の「頼んだステージ」に返事が出る。`),
+  const form = h('form', {class: 'stage-req-form form-stack', hidden: true, 'aria-label': '新しいステージを依頼'},
+    h('p', {class: 'muted'}, `作ってほしいステージを書いて送ると、${AGENT.ga}作ってステージの一覧に追加する。できたら下の「依頼したステージ」に返事が出る。`),
     h('label', {}, '名前', name),
     h('label', {}, h('span', {class: 'stage-req-label'}, 'どんな場所か', count), desc),
-    h('label', {}, '参考の絵(任意。4 枚まで、1 枚 8 MB まで)', files),
+    h('label', {}, '参考の絵（任意。4 枚まで、1 枚 8 MB まで）', files),
     msg, h('div', {class: 'stage-req-actions'}, close, go));
   close.onclick = () => { form.hidden = true; };
   form.onsubmit = async e => {
@@ -82,7 +82,7 @@ function requestForm(onSent) {
       const req = await send('POST', '/api/stage-requests', {label: name.value, description: desc.value});
       const failed = [];
       for (const f of picked) await uploadRef(req.id, f).catch(err => failed.push(`${f.name}(${err.message})`));
-      onSent(failed.length ? `頼みごとは送った。送れなかった絵: ${failed.join('、')}` : null);
+      onSent(failed.length ? `依頼は送った。送れなかった絵: ${failed.join('、')}` : null);
     } catch (err) { msg.className = 'err'; msg.textContent = '送れない: ' + err.message; go.disabled = false; }
   };
   return form;
@@ -91,7 +91,7 @@ function requestForm(onSent) {
 function requestRow(r, stages, reload) {
   const stage = stages.find(s => s.id === r.stageId);
   const cancel = r.state === 'waiting' ? h('button', {type: 'button'}, '取り下げる') : null;
-  if (cancel) cancel.onclick = () => confirmDialog({title: `「${r.label}」を取り下げる`, body: [h('p', {}, '頼みごとと参考の絵を消す。戻せない。')], confirm: '取り下げる',
+  if (cancel) cancel.onclick = () => confirmDialog({title: `「${r.label}」を取り下げる`, body: [h('p', {}, '依頼と参考の絵を消す。戻せない。')], confirm: '取り下げる',
     run: () => send('DELETE', `/api/stage-requests/${enc(r.id)}`)}).then(ok => ok && reload());
   const link = r.state === 'done' && r.stageId ? h('a', {class: 'button', href: `#stages/${enc(r.stageId)}`}, stage ? `「${stage.label}」を見る` : 'できたステージを見る') : null;
   return h('li', {class: 'stage-req'},
@@ -105,30 +105,30 @@ function requestRow(r, stages, reload) {
 export async function showStages({main, ov}, pickedId, sentNote = null) {
   const data = await getJSON('/api/stages');
   if (!data.configured) {
-    const note = missingNote(ov, ['stageStudio']) ?? h('p', {class: 'err', role: 'status'}, 'stage-studio の場所が設定されていない(設定の stageStudioDir)');
+    const note = missingNote(ov, ['stageStudio']) ?? h('p', {class: 'err', role: 'status'}, 'stage-studio の場所が設定されていない（設定の stageStudioDir）');
     main.replaceChildren(h('div', {class: 'stages-page'}, h('div', {class: 'page-head'}, h('h1', {}, 'ステージ')), note));
     return;
   }
   const {requests} = await getJSON('/api/stage-requests');
   const picked = data.stages.find(s => s.id === pickedId) ?? data.stages[0];
   const reload = note => showStages({main, ov}, picked?.id, note);
-  const form = requestForm(note => reload(note ?? '頼みごとを送った。').then(() => main.querySelector('.stage-reqs')?.scrollIntoView({block: 'start'})));
-  const ask = h('button', {type: 'button', class: 'primary', 'aria-expanded': 'false'}, '新しいステージを頼む');
+  const form = requestForm(note => reload(note ?? '依頼を送った。').then(() => main.querySelector('.stage-reqs')?.scrollIntoView({block: 'start'})));
+  const ask = h('button', {type: 'button', class: 'primary', 'aria-expanded': 'false'}, '新しいステージを依頼');
   ask.onclick = () => { form.hidden = !form.hidden; ask.setAttribute('aria-expanded', String(!form.hidden)); if (!form.hidden) form.querySelector('input')?.focus(); };
   const card = s => h('a', {class: 'stage-card', href: `#stages/${enc(s.id)}`, 'aria-current': s.id === picked.id ? 'true' : null},
     thumb(s.thumb, '', 'stage-thumb'),
     h('span', {class: 'stage-card-text'}, h('span', {class: 'stage-card-name'}, s.label), h('span', {class: 'mono muted'}, s.id), h('span', {class: 'muted'}, usageText(s))));
-  const reqs = h('section', {class: 'stage-reqs', 'aria-label': '頼んだステージ'},
-    h('h2', {}, `頼んだステージ（${requests.length}）`),
+  const reqs = h('section', {class: 'stage-reqs', 'aria-label': '依頼したステージ'},
+    h('h2', {}, `依頼したステージ（${requests.length}）`),
     sentNote ? h('p', {class: 'muted', role: 'status'}, sentNote) : null,
-    requests.length ? h('ul', {class: 'stage-req-list'}, requests.map(r => requestRow(r, data.stages, () => reload()))) : h('p', {class: 'empty small'}, 'まだ頼んでいない。'));
+    requests.length ? h('ul', {class: 'stage-req-list'}, requests.map(r => requestRow(r, data.stages, () => reload()))) : h('p', {class: 'empty small'}, 'まだ依頼していない。'));
   main.replaceChildren(h('div', {class: 'stages-page'},
     h('div', {class: 'page-head'}, h('h1', {}, 'ステージ'), ask),
     form,
-    picked ? [h('p', {class: 'muted'}, `シーン ${data.stages.length} 個。ショートと MV の舞台に使う。`),
+    picked ? [h('p', {class: 'muted'}, `ステージ ${data.stages.length} 個。ショートと MV の舞台に使う。`),
       h('div', {class: 'stages-body'},
-        h('nav', {class: 'stage-list', 'aria-label': 'シーン'}, data.stages.map(card)),
+        h('nav', {class: 'stage-list', 'aria-label': 'ステージ'}, data.stages.map(card)),
         detail(picked, ov))]
-      : h('p', {class: 'empty'}, 'シーンがまだ無い。「新しいステージを頼む」で作ってもらえる。'),
+      : h('p', {class: 'empty'}, 'ステージがまだない。「新しいステージを依頼」で作ってもらえる。'),
     reqs));
 }

@@ -1,5 +1,5 @@
 // セリフ 1 つのリップシンクを 1 コマずつ撮る（30 fps、顔のアップ）。音声は ffmpeg で付ける。
-//   node tools/lipsync.mjs --char <キャラ> [--ver <版>] --line hello --out frames_dir [--seconds 3.2] [--framing face|upper] [--port 8870]
+//   node tools/lipsync.mjs --char <キャラ> [--ver <バージョン>] --line hello --out frames_dir [--seconds 3.2] [--framing face|upper] [--port 8870]
 //   ffmpeg -framerate 30 -i frames_dir/f%04d.png -i <保管場所>/characters/<キャラ>/lines/hello/audio.mp3 -t SECONDS -c:v libx264 -pix_fmt yuv420p -c:a aac out.mp4
 // --line はセリフ ID。ビューアの window.viewer.playVoice(lineId, true) で口の計画だけ作り、voice.time を手で進める。
 // --seconds を省くと、音声の長さ（voice.audio.duration）を使う。

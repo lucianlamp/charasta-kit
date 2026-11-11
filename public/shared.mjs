@@ -5,6 +5,16 @@ import {editionLabels} from './edition.mjs';
 export const enc = encodeURIComponent;
 export const libUrl = (...parts) => '/lib/' + parts.map(enc).join('/');
 export const viewerHref = (charId, verId, lineId) => '/viewer?' + new URLSearchParams({char: charId, ...(verId && {ver: verId}), ...(lineId && {line: lineId})});
+// モーションの利用条件の札のうち、一覧の行と選択肢に出すもの。ほぼ全行に付く既定の「二次配布 不可」は出さず、それより強い制限(個人利用のみ、評価用のみ など)だけを返す。
+// 選択肢の名前に「評価用」が入っていて札も「評価用のみ」のように重なるときは、札を足さない。出さないときは ''
+export const DEFAULT_LIMIT_TEXT = '二次配布 不可';
+export function limitTag(m, name = '') {
+  const text = m?.limit?.text;
+  if (!text || text === DEFAULT_LIMIT_TEXT) return '';
+  return text.startsWith('評価用') && name.includes('評価用') ? '' : text;
+}
+// 選択肢の文字: 名前に、出す札があれば「（札）」を付ける
+export const optionName = (m, name) => { const t = limitTag(m, name); return t ? `${name}（${t}）` : name; };
 export const fmtDate = s => { const d = new Date(s); return isNaN(d) ? '' : d.toLocaleDateString('ja-JP'); };
 export const when = s => s ? new Date(s).toLocaleString('ja-JP', {month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit'}) : '';
 export const mb = n => (n / 1048576).toFixed(1) + ' MB';
@@ -25,8 +35,8 @@ export function thumb(src, alt, cls = 'thumb') {
 // ---- ジョブ ----
 const FRAMING = {face: '顔', upper: '上半身'};
 export const JOB_STATE = {queued: '待ち', running: '実行中', done: '完了', failed: '失敗'};
-const JOB_LABEL = {voice: '声', video: '動画', shoot: '撮る', mv: 'MV', short: 'ショート', 'short-draft': 'ショートの下書き', 'short-figures': 'ショートの図', 'motion-gen': 'モーションを作る', 'video-motion': '動画から作る', 'motion-text': '文章から作る', 'studio-front': '表情づくり: 正面を撮る', 'studio-build': '表情づくり: 組み立て',
-  'studio-video': '表情づくり: 中割り', 'studio-checks': '表情づくり: 確かめ', 'face-check': '版の顔の確かめ', 'game-export': 'ゲーム用の書き出し', adjust: '体型と揺れもの'};
+const JOB_LABEL = {voice: '声', video: '動画', shoot: '撮る', mv: 'MV', short: 'ショート', 'short-draft': 'ショートの下書き', 'short-figures': 'ショートの図', 'motion-gen': 'モーションを作る', 'motion-recipe': 'つないで作る', 'video-motion': '動画から作る', 'motion-text': '文章から作る', 'studio-front': '表情づくり: 正面を撮る', 'studio-build': '表情づくり: 組み立て',
+  'studio-video': '表情づくり: 中割り', 'studio-checks': '表情づくり: 確認', 'face-check': 'バージョンの顔の確認', 'game-export': 'ゲーム用の書き出し', adjust: '体型と揺れもの'};
 const FACE_SET = {grid: '格子と表情', keys: 'キー別', motion: 'モーション'};
 const REVIEW = {waiting: '確認待ち', imported: '取り込んだ', discarded: '捨てた'};
 export const jobActive = j => j.state === 'queued' || j.state === 'running';
@@ -35,7 +45,7 @@ const jobWhat = j => j.type === 'voice' ? `「${j.input?.text ?? ''}」` : j.typ
   : j.type === 'short' ? [j.input?.short?.title, j.input?.quality === 'final' ? '本番' : '試し'].join('・')
   : j.type === 'short-draft' || j.type === 'short-figures' ? j.input?.label ?? ''
   : j.type === 'mv' ? [j.input?.motionId, (j.input?.stages ?? []).join(' + '), j.input?.quality === 'final' ? '本番' : '試し'].join('・')
-  : j.type === 'motion-gen' || j.type === 'video-motion' || j.type === 'motion-text' ? j.input?.label ?? ''
+  : j.type === 'motion-gen' || j.type === 'video-motion' || j.type === 'motion-text' || j.type === 'motion-recipe' ? j.input?.label ?? ''
   : j.type === 'game-export' ? [j.input?.verId, ...(j.input?.motions ?? [])].join('・')
   : j.type === 'adjust' ? h('a', {href: `#adjust/${enc(j.input?.charId)}/${enc(j.state === 'done' ? j.input?.newVerId : j.input?.verId)}`}, `${j.input?.verId} から ${j.input?.newVerId}`)
   : j.type === 'face-check' ? h('a', {href: `#face/${enc(j.input?.charId)}/${enc(j.input?.verId)}`}, [j.input?.verId, FACE_SET[j.input?.set], j.input?.motionId].filter(Boolean).join('・'))

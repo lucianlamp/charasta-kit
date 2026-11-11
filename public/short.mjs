@@ -1,6 +1,6 @@
 // ショート動画: 一覧(#shorts)と編集画面(#short/<ID>)。ジョブは lib/short.mjs(docs/shorts.md)、画面は docs/shorts.md。
 import {h, getJSON, send} from './dom.mjs';
-import {AGENT, enc, figuresReport, jobActive, pendingRow, thumb, uploadAudio, viewerFrame, viewerReady, watchJobs} from './shared.mjs';
+import {AGENT, enc, figuresReport, fmtDate, jobActive, pendingRow, thumb, uploadAudio, viewerFrame, viewerReady, watchJobs} from './shared.mjs';
 import {moveToTrash} from './confirm.mjs';
 import {can, missingNote} from './capabilities.mjs';
 import {MAX_AUDIO_BYTES} from './shoot-plan.mjs';
@@ -50,7 +50,7 @@ const motionNamed = (motions, name) => (motions.find(m => (m.label ?? '').includ
 function dramaSample(ov, choices, motions) {
   const chars = vrmChars(ov.chars).filter(x => x.latest), cast2 = ['avatar-sample-b', 'beta-sample-2'].map(id => chars.find(x => x.id === id)).filter(Boolean);
   const [a, b] = cast2.length === 2 ? cast2 : chars;
-  if (!b) throw Error('版のあるキャラが 2 人要る');
+  if (!b) throw Error('バージョンのあるキャラが 2 人要る');
   const voice = (name, speaker) => { const v = choices.elevenVoices.find(x => x.name.startsWith(name)); return v ? {provider: 'elevenlabs', voiceId: v.id, voiceName: v.name} : {provider: 'voicevox', speaker, speakerName: '', speed: 1.1}; };
   const cast = [{name: RIN, charId: a.id, verId: a.latest.id, ...voice('Aya', 8)}, {name: HIYORI, charId: b.id, verId: b.latest.id, ...voice('Nao', 3)}];
   const stage = (choices.stages.find(x => x.id === 'classroom') ?? choices.stages[0]).id;
@@ -67,10 +67,10 @@ export async function showShorts({main, ov, reload, alive}) {
   const shorts = await getJSON('/api/shorts'), msg = h('span', {class: 'muted'});
   const make = sample => async () => {
     const c = vrmChars(ov.chars).find(x => x.latest);
-    if (!c) { msg.className = 'err'; msg.textContent = '版のあるキャラが要る'; return; }
+    if (!c) { msg.className = 'err'; msg.textContent = 'バージョンのあるキャラが要る'; return; }
     try {
       const [choices, motions] = await Promise.all([getJSON('/api/short-options'), getJSON('/api/motions')]);
-      if (!choices.stages.length || !motions.length) throw Error('シーンとモーションが要る');
+      if (!choices.stages.length || !motions.length) throw Error('ステージとモーションが要る');
       const motionId = (motions.find(m => /話す/.test(m.label ?? '')) ?? motions[0]).id, stage = choices.stages[0].id;
       const cuts = sample ? SAMPLE.map(([camera, text, telop]) => ({stage, motionId, expression: 'neutral', camera, text, telop})) : [{stage, motionId, expression: 'neutral', camera: 'talk_bust', text: '', telop: ''}];
       const s = await send('POST', '/api/shorts', {title: sample ? 'タコの雑学' : '新しいショート', style: sample ? 'trivia' : newStyle, series: sample ? 'サクッと雑学' : '', defaultBgm: sample, charId: c.id, verId: c.latest.id, speaker: 8, speakerName: '春日部つむぎ', cuts});
@@ -90,7 +90,7 @@ export async function showShorts({main, ov, reload, alive}) {
   const makeDrama = async () => {
     try {
       const [choices, motions] = await Promise.all([getJSON('/api/short-options'), getJSON('/api/motions')]);
-      if (!choices.stages.length || !motions.length) throw Error('シーンとモーションが要る');
+      if (!choices.stages.length || !motions.length) throw Error('ステージとモーションが要る');
       const s = await send('POST', '/api/shorts', dramaSample(ov, choices, motions));
       location.hash = '#short/' + enc(s.id);
     } catch (e) { msg.className = 'err'; msg.textContent = '作れない: ' + e.message; }
@@ -105,9 +105,10 @@ export async function showShorts({main, ov, reload, alive}) {
       h('button', {type: 'button', class: 'primary', onclick: make(false)}, talk ? '新しいショート' : `${STYLE_LABEL[newStyle]}を作る`)),
     note, msg, draft?.form, draft?.box,
     shorts.length ? h('div', {class: 'stack-small'}, shorts.map(s => h('div', {class: 'short-row'},
-      h('a', {class: 'short-name', href: '#short/' + enc(s.id)}, s.title), h('span', {class: 'muted'}, [`${s.cuts.length} カット`, MAKER_LABEL[s.draftBy] && `下書き ${MAKER_LABEL[s.draftBy]}`].filter(Boolean).join('、')),
+      s.thumb ? h('img', {class: 'short-thumb', src: s.thumb, alt: '', loading: 'lazy'}) : h('span', {class: 'short-thumb empty', 'aria-hidden': 'true'}),
+      h('a', {class: 'short-name', href: '#short/' + enc(s.id)}, s.title), h('span', {class: 'muted'}, [STYLE_LABEL[s.style ?? 'trivia'] ?? s.style, `${s.cuts.length} カット`, MAKER_LABEL[s.draftBy] && `下書き ${MAKER_LABEL[s.draftBy]}`, s.updatedAt && `更新 ${fmtDate(s.updatedAt)}`].filter(Boolean).join('、')),
       h('button', {type: 'button', class: 'quiet', onclick: async () => { if (await moveToTrash({kind: 'short', id: s.id}, s.title)) reload(); }}, '削除'))))
-      : h('p', {class: 'muted'}, 'ショートはまだない。カットごとにシーン、動き、セリフを並べて縦動画を作る。')));
+      : h('p', {class: 'muted'}, 'ショートはまだない。カットごとにステージ、モーション、セリフを並べて縦動画を作る。')));
 }
 
 // ---- 編集画面(#short/<ID>) ----
@@ -147,8 +148,8 @@ export async function showShort({main, alive, jobsChanged}, id) {
   let s = {...short, cast: castOf(short)}, picked = 0, timer = null;
   let kind = shortKind(s);   // 生き物を選ぶと walk と creature のあいだで変わる(左の「生き物」)
   const dance = kind === 'dance';   // ダンス MV: 声が無く、カットは「拍から割る」で作る(docs/shorts-dance-mv.md)
-  let dancing = null;   // 左の列の「曲とシーン」(dance のときだけ)
-  const graphicLook = () => dance && s.music?.look === 'graphic';   // グラフィック MV: カットは場面、ワイプ、言葉。シーン、カメラ、テロップは使わない
+  let dancing = null;   // 左の列の「曲とステージ」(dance のときだけ)
+  const graphicLook = () => dance && s.music?.look === 'graphic';   // グラフィック MV: カットは場面、ワイプ、言葉。ステージ、カメラ、テロップは使わない
   let faceHits = [];   // 最後に書き出したグラフィック MV で、顔に文字がかかったコマの数(カットごと)
   const chars = vrmChars(overview.chars).filter(x => x.latest), expressionOf = (c, k) => c.actors?.[k]?.expression ?? c.expression, motionOf = (c, k) => c.actors?.[k]?.motionId ?? c.motionId;
   const speakerIndex = c => s.cast.findIndex(m => m.name && m.name === c.who);
@@ -258,16 +259,16 @@ export async function showShort({main, alive, jobsChanged}, id) {
     okBig.hidden = !c; okBig.setAttribute('aria-pressed', String(on)); okBig.textContent = on ? 'このカットは確認済み' : 'このカットを確認した';
     if (okRow) { okRow.classList.toggle('on', on); okRow.querySelector('input').checked = on; }
   }
-  // 直してほしいこと。「Claude に頼む」は ask を保存して askedAt を入れるだけ(Claude が後で読む)
+  // 直してほしいこと。「Claude に依頼する」は ask を保存して askedAt を入れるだけ(Claude が後で読む)
   function askBox(target, aria, placeholder) {
     const area = h('textarea', {rows: '2', maxlength: '200', placeholder, 'aria-label': aria}, target.ask ?? '');
-    const waiting = h('span', {class: 'se-wait', hidden: !asked(target)}, '頼んだ直し: 対応待ち');
-    const btn = h('button', {type: 'button', class: 'outline', disabled: !target.ask?.trim()}, `${AGENT.ni}頼む`);
+    const waiting = h('span', {class: 'se-wait', hidden: !asked(target)}, '依頼した直し: 対応待ち');
+    const btn = h('button', {type: 'button', class: 'outline', disabled: !target.ask?.trim()}, `${AGENT.ni}依頼する`);
     area.oninput = () => { target.ask = area.value; if (!area.value.trim()) delete target.askedAt; btn.disabled = !area.value.trim(); waiting.hidden = !asked(target); touch(); };
     // 頼み直すと前の返事は消す(返事は次に頼むまで残す)
     btn.onclick = () => { target.ask = area.value.trim(); target.askedAt = new Date().toISOString(); delete target.reply; delete target.repliedAt; reply?.remove(); waiting.hidden = false; renderLive(); save().catch(() => {}); };
     // Claude が直したあとの返事
-    const reply = target.reply ? h('p', {class: 'se-reply'}, h('strong', {}, `${AGENT.no}対応${target.repliedAt ? `(${new Date(target.repliedAt).toLocaleString('ja-JP', {month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit'})})` : ''}: `), target.reply) : null;
+    const reply = target.reply ? h('p', {class: 'se-reply'}, h('strong', {}, `${AGENT.no}対応${target.repliedAt ? `（${new Date(target.repliedAt).toLocaleString('ja-JP', {month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit'})}）` : ''}: `), target.reply) : null;
     return [area, h('div', {class: 'actions'}, btn, waiting), reply];
   }
 
@@ -278,13 +279,12 @@ export async function showShort({main, alive, jobsChanged}, id) {
   }
 
   function cameraBox(c) {
-    const {axes, offNote, hint} = cameraAxes(c.camera, kind);
+    const {axes, hint} = cameraAxes(c.camera, kind);
     const box = h('section', {class: 'se-camera', 'aria-label': 'カメラ'},
       h('div', {class: 'se-cam-head'}, cameraSketch(c.camera), h('div', {class: 'se-cam-name'}, h('span', {class: 'muted'}, 'カメラ'), h('strong', {}, cameraLabel(c.camera)), hint ? h('span', {class: 'muted'}, hint) : null)),
       ...axes.map(a => h('div', {class: 'se-axis', role: 'group', 'aria-label': a.label}, h('span', {class: 'muted'}, a.label),
-        h('div', {class: 'se-axis-items'}, a.items.map(o => h('button', {type: 'button', class: 'chip-btn', 'aria-pressed': String(o.on), disabled: o.off, title: o.why || null,
-          onclick: () => { if (!o.camera || o.camera === c.camera) return; c.camera = o.camera; touch(); box.replaceWith(cameraBox(c)); preview(); if (dance) showEdits(c); }}, o.value))))),
-      offNote ? h('span', {class: 'muted'}, offNote) : null);
+        h('div', {class: 'se-axis-items'}, a.items.map(o => h('button', {type: 'button', class: 'chip-btn', 'aria-pressed': String(o.on), title: o.why || null,
+          onclick: () => { if (!o.camera || o.camera === c.camera) return; c.camera = o.camera; touch(); box.replaceWith(cameraBox(c)); preview(); if (dance) showEdits(c); }}, o.value))))));
     return box;
   }
 
@@ -292,9 +292,9 @@ export async function showShort({main, alive, jobsChanged}, id) {
   function cueField(c, i) {
     const opts = cueOptions(cueSpec(s.take?.creature, overview.chars)), now = opts.find(o => o.id === c.creature);
     const sel = h('select', {'aria-label': `カット ${i + 1} の生き物の動き`}, h('option', {value: ''}, 'なし'),
-      opts.map(o => h('option', {value: o.id, disabled: o.lacks.length > 0 && o.id !== c.creature}, o.lacks.length ? `${o.label}(この生き物に無い)` : o.label)));
+      opts.map(o => h('option', {value: o.id, disabled: o.lacks.length > 0 && o.id !== c.creature}, o.lacks.length ? `${o.label}（この生き物に無い）` : o.label)));
     sel.value = c.creature ?? '';
-    const warn = h('span', {class: 'limit warn', hidden: !now?.lacks.length}, now?.lacks.length ? `この生き物に無い動き(${now.lacks.join('、')})。書き出す前に選び直す` : '');
+    const warn = h('span', {class: 'limit warn', hidden: !now?.lacks.length}, now?.lacks.length ? `この生き物に無いモーション（${now.lacks.join('、')}）。書き出す前に選び直す` : '');
     sel.onchange = () => { if (sel.value) c.creature = sel.value; else delete c.creature; warn.hidden = true; touch(); };
     return h('label', {}, '生き物の動き', sel, warn);
   }
@@ -343,9 +343,9 @@ export async function showShort({main, alive, jobsChanged}, id) {
       const here = h('input', {type: 'checkbox', 'aria-label': `カット ${i + 1} に ${m.name} が出る`});
       here.checked = !c.actors?.[k]?.absent;
       here.onchange = () => actorSet(k, 'absent', !here.checked);
-      const hold = h('input', {type: 'checkbox', 'aria-label': `カット ${i + 1} の ${m.name} 動きの最後の姿勢から`});
+      const hold = h('input', {type: 'checkbox', 'aria-label': `カット ${i + 1} の ${m.name} モーションの最後の姿勢から`});
       hold.checked = !!c.actors?.[k]?.hold; hold.onchange = () => actorSet(k, 'hold', hold.checked);
-      return h('div', {class: 'cut-grid'}, h('label', {class: 'check'}, here, m.name || '出演者'), select(`${m.name} の小道具`, PROP_OPTIONS, () => c.actors?.[k]?.prop ?? '', v => actorSet(k, 'prop', v)), h('label', {class: 'check'}, hold, '動きの最後の姿勢から'), select(`${m.name} の動き`, motions.map(x => [x.id, motionName(x)]), () => motionOf(c, k), v => actorSet(k, 'motionId', v)), select(`${m.name} の表情`, EXPRESSIONS, () => expressionOf(c, k), v => actorSet(k, 'expression', v)));
+      return h('div', {class: 'cut-grid'}, h('label', {class: 'check'}, here, m.name || '出演者'), select(`${m.name} の小道具`, PROP_OPTIONS, () => c.actors?.[k]?.prop ?? '', v => actorSet(k, 'prop', v)), h('label', {class: 'check'}, hold, 'モーションの最後の姿勢から'), select(`${m.name} のモーション`, motions.map(x => [x.id, motionName(x)]), () => motionOf(c, k), v => actorSet(k, 'motionId', v)), select(`${m.name} の表情`, EXPRESSIONS, () => expressionOf(c, k), v => actorSet(k, 'expression', v)));
     };
     // ダンス MV: 角度は stage-studio の plan が決めた値。シーン、カメラ、角度を手で直すと注意を出す
     const angle = h('input', {type: 'number', min: '-180', max: '180', step: '1', value: String(c.angle ?? 0), 'aria-label': `カット ${i + 1} の角度`});
@@ -359,7 +359,7 @@ export async function showShort({main, alive, jobsChanged}, id) {
     return [
       h('div', {class: 'se-cut-head'}, h('h2', {}, `カット ${i + 1} `, h('span', {class: 'se-who'}, whoName)), h('span', {class: 'mono muted'}, sp ? `${exact() ? '' : '約 '}${sp.start.toFixed(2)}–${sp.end.toFixed(2)} 秒` : '')),
       ...(dance ? [] : [h('label', {class: 'se-field'}, 'セリフ', text), h('div', {class: 'actions'}, listen, audio)]),
-      ...(graphicLook() ? graphicCutFields(c, i) : [h('label', {class: 'se-field'}, dance ? 'テロップ(改行で 2 行。空なら出ない)' : 'テロップ(改行で 2 行)', telop),
+      ...(graphicLook() ? graphicCutFields(c, i) : [h('label', {class: 'se-field'}, dance ? 'テロップ（改行で 2 行。空なら出ない）' : 'テロップ（改行で 2 行）', telop),
         cameraBox(c), ...(editNote ? [editNote] : [])]),
       h('section', {class: 'se-ask', 'aria-label': '直してほしいこと'}, h('label', {class: 'se-field'}, 'このカットで直してほしいこと', askArea), askActions, askReply),
       okRow,
@@ -368,11 +368,11 @@ export async function showShort({main, alive, jobsChanged}, id) {
           h('p', {class: 'muted'}, autoNote(i)),
           many ? select('話す人', [['', '語り（口は動かない）'], ...s.cast.map(m => [m.name, m.name])], () => c.who ?? '', sets('who', renderAll)) : null,
           figureBox,
-          dance ? h('p', {class: 'muted'}, 'シーン、カメラ、角度、秒は「拍から割る」で決まる。動きは左の「曲とシーン」で全カットに 1 つ。') : null,
-          dance ? h('div', {class: 'cut-grid'}, select('シーン', shortOptions.stages.map(x => [x.id, x.label]), () => c.stage, sets('stage', renderAll)), h('label', {}, '角度（度）', angle)) : null,
+          dance ? h('p', {class: 'muted'}, 'ステージ、カメラ、角度、秒は「拍から割る」で決まる。モーションは左の「曲とステージ」で全カットに 1 つ。') : null,
+          dance ? h('div', {class: 'cut-grid'}, select('ステージ', shortOptions.stages.map(x => [x.id, x.label]), () => c.stage, sets('stage', renderAll)), h('label', {}, '角度（度）', angle)) : null,
           dance ? null : h('div', {class: 'cut-grid'},
-            select('シーン', shortOptions.stages.map(x => [x.id, x.label]), () => c.stage, sets('stage', renderAll)),
-            ...(many ? [] : [select('動き', motions.map(m => [m.id, motionName(m)]), () => c.motionId, sets('motionId', preview)), select('表情', EXPRESSIONS, () => c.expression, sets('expression', preview))]),
+            select('ステージ', shortOptions.stages.map(x => [x.id, x.label]), () => c.stage, sets('stage', renderAll)),
+            ...(many ? [] : [select('モーション', motions.map(m => [m.id, motionName(m)]), () => c.motionId, sets('motionId', preview)), select('表情', EXPRESSIONS, () => c.expression, sets('expression', preview))]),
             h('label', {}, '長さ（秒。0 で声に合わせる）', seconds),
             eleven ? select('演じ方', shortOptions.tones.map(k => [k, TONE_LABEL[k] ?? k]), () => c.tone ?? '', sets('tone')) : null,
             select('音', [['', 'なし'], ...SOUNDS.map(k => [k, SOUND_LABEL[k]])], () => c.sound ?? '', sets('sound')),
@@ -403,7 +403,7 @@ export async function showShort({main, alive, jobsChanged}, id) {
   function renderRight() {
     const c = s.cuts[picked];
     okRow = null; editNote = null;
-    right.replaceChildren(...(c ? cutPane(c, picked) : [h('p', {class: 'muted'}, dance ? 'カットが無い。左の「曲とシーン」で踊る動きとシーンを選び、「拍から割る」を押す。' : 'カットが無い。下のタイムラインの「カットを足す」で足す。')]));
+    right.replaceChildren(...(c ? cutPane(c, picked) : [h('p', {class: 'muted'}, dance ? 'カットが無い。左の「曲とステージ」で踊るモーションとステージを選び、「拍から割る」を押す。' : 'カットが無い。下のタイムラインの「カットを追加」で追加する。')]));
     renderOk();
     if (c && dance) showEdits(c);
   }
@@ -422,8 +422,8 @@ export async function showShort({main, alive, jobsChanged}, id) {
   const cutOps = h('div', {class: 'se-tl-ops'},
     h('button', {type: 'button', class: 'quiet', onclick: move(-1)}, '前へ'), h('button', {type: 'button', class: 'quiet', onclick: move(1)}, '後へ'),
     h('button', {type: 'button', class: 'quiet', onclick: () => { if (!s.cuts[picked]) return; s.cuts.splice(picked, 1); picked = Math.max(0, Math.min(picked, s.cuts.length - 1)); renderAll(); touch(); }}, 'このカットを消す'),
-    h('button', {type: 'button', class: 'outline', onclick: () => { s.cuts.splice(picked + 1, 0, newCut()); picked = Math.min(picked + 1, s.cuts.length - 1); renderAll(); touch(); }}, 'カットを足す'));
-  const badges = c => h('span', {class: 'se-badges'}, asked(c) ? h('span', {class: 'se-dot ask', 'aria-label': '直しを頼んだ', title: '直しを頼んだ'}) : null,
+    h('button', {type: 'button', class: 'outline', onclick: () => { s.cuts.splice(picked + 1, 0, newCut()); picked = Math.min(picked + 1, s.cuts.length - 1); renderAll(); touch(); }}, 'カットを追加'));
+  const badges = c => h('span', {class: 'se-badges'}, asked(c) ? h('span', {class: 'se-dot ask', 'aria-label': '直しを依頼した', title: '直しを依頼した'}) : null,
     c.ok ? h('span', {class: 'se-dot ok', 'aria-label': '確認した', title: '確認した'}, icon('check', 10)) : null);
   const voiceColor = c => (!plainText(c.text) ? 'transparent' : speakerIndex(c) >= 0 ? CAST_COLOR[speakerIndex(c)] : s.cast.length > 1 ? NARRATION_COLOR : CAST_COLOR[0]);
   const picture = (i, c) => (origin.has(c) ? frames[origin.get(c)] : null) ?? stageThumb(c.stage);
@@ -503,7 +503,7 @@ export async function showShort({main, alive, jobsChanged}, id) {
       summary.textContent = `${s.cuts.length} カット、${t.toFixed(1)} 秒。試し ${minutes(graphicEstimateSec('preview', t, sh))}、本番 ${minutes(graphicEstimateSec('final', t, sh))}。文字と色だけの直しは重ねるからやり直す。`;
       return;
     }
-    if (dance) {   // 全カットを 1 回の描画で作るので、時間はシーンの数で決まる
+    if (dance) {   // 全カットを 1 回の描画で作るので、時間はステージの数で決まる
       const scenes = new Set(s.cuts.map(c => c.stage)).size || 1;
       summary.textContent = `${s.cuts.length} カット、${t.toFixed(1)} 秒。試し ${minutes(mvEstimateSec('preview', t, scenes))}、本番 ${minutes(mvEstimateSec('final', t, scenes))}。カットを 1 つ直しても全カットを描き直す。`;
       return;
@@ -533,12 +533,12 @@ export async function showShort({main, alive, jobsChanged}, id) {
   const watcher = watchJobs({filter: j => j.type === 'short' && j.input?.shortId === id, alive, onJobs: jobs => pendingBox.replaceChildren(...jobs.map(pendingRow)), onDone: async () => { await renderMade(); jobsChanged(); }});
   const queued = job => { watcher.queued(job); jobsChanged(); };
   const claimBox = s.claims ? claimsPanel(s, touch) : null;
-  const gateFinal = () => { claimBox?.render(); const n = pendingClaims(s).length, changed = scriptChanged(s); finalBtn.disabled = n > 0 || changed; finalNote.textContent = n || changed ? `要確認が残っている（${changed ? '台本が変わった' : `主張 ${n} 件`}）。確かめると本番を書き出せる。試しは書き出せる。` : ''; };
+  const gateFinal = () => { claimBox?.render(); const n = pendingClaims(s).length, changed = scriptChanged(s); finalBtn.disabled = n > 0 || changed; finalNote.textContent = n || changed ? `要確認が残っている（${changed ? '台本が変わった' : `主張 ${n} 件`}）。確認すると本番を書き出せる。試しは書き出せる。` : ''; };
   const start = quality => async e => {
     const b = e.currentTarget;
     b.disabled = true; msg.className = 'muted'; msg.textContent = '送っている…';
-    try { await save(); queued(await send('POST', '/api/jobs', {type: 'short', shortId: id, quality})); msg.textContent = '積んだ。進み具合はこの下に出る。'; }
-    catch (err) { msg.className = 'err'; msg.textContent = '積めない: ' + err.message; }
+    try { await save(); queued(await send('POST', '/api/jobs', {type: 'short', shortId: id, quality})); msg.textContent = '受け付けた。進み具合はこの下に出る。'; }
+    catch (err) { msg.className = 'err'; msg.textContent = '始められない: ' + err.message; }
     b.disabled = false; gateFinal();
   };
 
@@ -547,8 +547,8 @@ export async function showShort({main, alive, jobsChanged}, id) {
   const makeFigures = cut => async e => {
     const b = e.currentTarget;
     e.stopPropagation(); b.disabled = true; figureMsg.className = 'muted'; figureMsg.textContent = '送っている…';
-    try { await save(); figureWatcher.queued(await send('POST', '/api/jobs', {type: 'short-figures', shortId: id, ...(cut == null ? {} : {cut})})); jobsChanged(); figureMsg.textContent = '積んだ。1 枚に数分かかる。'; }
-    catch (err) { figureMsg.className = 'err'; figureMsg.textContent = '積めない: ' + err.message; }
+    try { await save(); figureWatcher.queued(await send('POST', '/api/jobs', {type: 'short-figures', shortId: id, ...(cut == null ? {} : {cut})})); jobsChanged(); figureMsg.textContent = '受け付けた。1 枚に数分かかる。'; }
+    catch (err) { figureMsg.className = 'err'; figureMsg.textContent = '始められない: ' + err.message; }
     b.disabled = false; gateFigures();
   };
   const figureBtn = h('button', {type: 'button', onclick: makeFigures()}, '図を作る');
@@ -564,7 +564,7 @@ export async function showShort({main, alive, jobsChanged}, id) {
   // ---- 左: 出演者、シーン、音、全体への頼みごと、型、確認の欄、書き出した動画 ----
   const series = h('input', {maxlength: '20', value: s.series ?? '', placeholder: can(overview, 'talkStyles') ? '例: サクッと雑学' : '例: 放課後の会話', 'aria-label': 'シリーズ帯'});   // キットに雑学の型は無い
   series.oninput = () => { s.series = series.value; touch(); };
-  // 出演者の欄: キャラ、版、声の提供元、声。名前を変えると、カットの話す人も合わせる
+  // 出演者の欄: キャラ、バージョン、声の提供元、声。名前を変えると、カットの話す人も合わせる
   const castBox = h('div', {class: 'form-stack'}), castList = h('div', {class: 'se-list'});
   const setVoice = (m, value) => {
     if (m.provider === 'elevenlabs') { m.voiceId = value; m.voiceName = shortOptions.elevenVoices.find(v => v.id === value)?.name ?? ''; delete m.speaker; delete m.speakerName; delete m.speed; }
@@ -585,13 +585,13 @@ export async function showShort({main, alive, jobsChanged}, id) {
     const speedBox = h('input', {type: 'number', min: '0.8', max: '1.8', step: '0.05', value: String(m.speed ?? 1.25), 'aria-label': `出演者 ${i + 1} の話す速さ`});
     speedBox.oninput = () => { m.speed = Math.min(1.8, Math.max(0.8, Number(speedBox.value) || 1.25)); touch(); };
     const choices = voiceOptions(m), current = m.provider === 'elevenlabs' ? m.voiceId : m.speaker;
-    if (dance) return h('div', {class: 'cut form-stack'},   // ダンス MV は 1 人で声が無い。キャラと版だけ
+    if (dance) return h('div', {class: 'cut form-stack'},   // ダンス MV は 1 人で声が無い。キャラとバージョンだけ
       select('キャラ', chars.map(x => [x.id, x.name]), () => m.charId, v => { m.charId = v; m.verId = chars.find(x => x.id === v).latest.id; reCast(); }),
-      select('版', versions.map(v => [v.id, v.label ?? v.id]), () => m.verId, v => { m.verId = v; reCast(); }));
+      select('バージョン', versions.map(v => [v.id, v.label ?? v.id]), () => m.verId, v => { m.verId = v; reCast(); }));
     return h('div', {class: 'cut form-stack'},
       h('label', {}, '名前', name),
       select('キャラ', chars.map(x => [x.id, x.name]), () => m.charId, v => { m.charId = v; m.verId = chars.find(x => x.id === v).latest.id; reCast(); }),
-      select('版', versions.map(v => [v.id, v.label ?? v.id]), () => m.verId, v => { m.verId = v; reCast(); }),
+      select('バージョン', versions.map(v => [v.id, v.label ?? v.id]), () => m.verId, v => { m.verId = v; reCast(); }),
       select('声の提供元', [['voicevox', 'VOICEVOX'], ...(shortOptions.elevenVoices.length ? [['elevenlabs', 'ElevenLabs']] : [])], () => m.provider ?? 'voicevox', v => { m.provider = v; setVoice(m, String(voiceOptions(m)[0]?.[0] ?? '')); reCast(); }),
       select('声', choices.length ? choices : [[current ?? '', m.speakerName || String(current ?? '')]], () => current ?? '', v => { setVoice(m, v); touch(); renderCastList(); }),
       m.provider === 'elevenlabs' ? null : h('label', {}, '話す速さ', speedBox),
@@ -617,14 +617,14 @@ export async function showShort({main, alive, jobsChanged}, id) {
     if (dance) { castBox.replaceChildren(...cards); return; }
     const allEleven = s.cast.length > 1 && s.cast.every(m => m.provider === 'elevenlabs'), dialogue = h('input', {type: 'checkbox', 'aria-label': '全カットを 1 回の会話で読ませる'});
     dialogue.checked = !!s.dialogue; dialogue.onchange = () => { if (dialogue.checked) s.dialogue = true; else delete s.dialogue; touch(); };
-    castBox.replaceChildren(...[...cards, allEleven ? h('label', {class: 'check'}, dialogue, '全カットを 1 回の会話で読ませる(ElevenLabs v4。声と課金が 1 文ずつの声と別になる。書き出して試しを聞くまで「声を聞く」は使えない)') : null, s.cast.length < 3 ? h('button', {type: 'button', onclick: () => {
+    castBox.replaceChildren(...[...cards, allEleven ? h('label', {class: 'check'}, dialogue, '全カットを 1 回の会話で読ませる（ElevenLabs v4。声と課金が 1 文ずつの声と別になる。書き出して試しを聞くまで「声を聞く」は使えない）') : null, s.cast.length < 3 ? h('button', {type: 'button', onclick: () => {
       const c = chars.find(x => !s.cast.some(m => m.charId === x.id)) ?? chars[0];
       let n = s.cast.length + 1;
       while (s.cast.some(m => m.name === `出演者${n}`)) n++;
       s.cast.push({name: `出演者${n}`, charId: c.id, verId: c.latest.id, provider: 'voicevox', speaker: 8, speakerName: '', speed: 1.25});
       for (const cut of s.cuts) if (cut.actors) cut.actors.push({motionId: cut.motionId, expression: cut.expression});
       touch(); renderCast(); renderAll();
-    }}, '出演者を足す') : null].filter(Boolean));
+    }}, '出演者を追加') : null].filter(Boolean));
   }
   const sceneList = h('div', {class: 'se-list'});
   function renderScenes() {
@@ -667,7 +667,7 @@ export async function showShort({main, alive, jobsChanged}, id) {
   };
   if (dance) dancing = dancePanel({s, id, options: shortOptions, motions, audio: audioFields, save, touch, onSplit: replaceShort, onPick: i => pickCut(i), onMotion: () => preview()});
   // ダンス MV の型は変えられない(出演者 1 人、拍で割った秒が要る)。ほかの型からもダンス MV には変えない
-  const styleField = dance ? h('p', {class: 'muted'}, `型: ${STYLE_LABEL.dance}（変えられない。ほかの型は「ショートを作る」から）`)
+  const styleField = dance ? h('p', {class: 'muted'}, `型: ${STYLE_LABEL.dance}（変えられない。ほかの型は「ショートの一覧」から）`)
     : !can(overview, 'talkStyles') ? h('p', {class: 'muted'}, `型: ${STYLE_LABEL[s.style] ?? s.style}（変えられない。ダンス MV は「ダンス MV を作る」から）`)
     : select('型', DRAFT_STYLES.map(k => [k, STYLE_LABEL[k]]), () => s.style ?? 'trivia', v => { s.style = v; touch(); renderAll(); });
 
@@ -676,12 +676,12 @@ export async function showShort({main, alive, jobsChanged}, id) {
   const left = h('aside', {class: 'se-left', 'aria-label': '素材'},
     dancing?.box,
     sec('出演者', castList, more('出演者を直す', false, castBox)),
-    sec('シーン', sceneList),
+    sec('ステージ', sceneList),
     creatureBox ? sec('生き物', creatureBox) : null,
     sec(dance ? '曲' : '音', soundList, dance ? null : more('音を直す', false, ambience, h('label', {class: 'check'}, autoBgm, '音声ファイルが無いときは型の既定の BGM を使う'), ...audioFields)),
-    sec('全体への頼みごと', ...askBox(s, '全体への頼みごと', '例: 全体にテンポを上げて。最後のオチをもう少し長く')),
+    sec('全体への依頼', ...askBox(s, '全体への依頼', '例: 全体にテンポを上げて。最後のオチをもう少し長く')),
     sec('型とシリーズ帯', h('div', {class: 'form-stack'}, styleField, h('label', {}, 'シリーズ帯（画面の上の小さな帯）', series))),
-    MAKER_LABEL[s.draftBy] ? h('p', {class: 'muted'}, `下書きの作り手: ${MAKER_LABEL[s.draftBy]}${s.draft?.checkedBy ? `。主張の確かめ: ${s.draft.checkedBy}` : ''}`) : null,
+    MAKER_LABEL[s.draftBy] ? h('p', {class: 'muted'}, `下書きの作り手: ${MAKER_LABEL[s.draftBy]}${s.draft?.checkedBy ? `。主張の確認: ${s.draft.checkedBy}` : ''}`) : null,
     s.draft?.warnings?.length ? h('details', {class: 'cut'}, h('summary', {}, `下書きの注意 ${s.draft.warnings.length} 件`), h('ul', {}, s.draft.warnings.map(w => h('li', {}, w)))) : null,
     claimBox?.box,
     can(overview, 'shortDraft') && (s.style === 'drama' || s.serial) ? serialPanel(s, touch, {save, alive}) : null,
@@ -694,8 +694,8 @@ export async function showShort({main, alive, jobsChanged}, id) {
     playerBox);
   const timeline = h('section', {class: 'se-timeline', 'aria-label': 'タイムライン'},
     h('div', {class: 'se-tl-head'}, h('h2', {}, 'タイムライン'),
-      h('span', {class: 'se-legend'}, h('span', {class: 'se-dot ok', 'aria-hidden': 'true'}), '確認した'), h('span', {class: 'se-legend'}, h('span', {class: 'se-dot ask', 'aria-hidden': 'true'}), '直しを頼んだ'),
-      h('span', {class: 'muted se-tl-hint'}, dance ? 'カットは「拍から割る」で作る。押すと右の欄で確かめて直せる' : 'カットを押すと右の欄で確かめて直せる'), dance ? null : cutOps),
+      h('span', {class: 'se-legend'}, h('span', {class: 'se-dot ok', 'aria-hidden': 'true'}), '確認した'), h('span', {class: 'se-legend'}, h('span', {class: 'se-dot ask', 'aria-hidden': 'true'}), '直しを依頼した'),
+      h('span', {class: 'muted se-tl-hint'}, dance ? 'カットは「拍から割る」で作る。押すと右の欄で確認して直せる' : 'カットを押すと右の欄で確認して直せる'), dance ? null : cutOps),
     h('div', {class: 'se-tl-scroll'}, tlGrid));
 
   main.replaceChildren(h('div', {class: 'short-edit'}, top,

@@ -12,7 +12,7 @@
 //   node scripts/studio.mjs options  --char <キャラ> --id ID --json options.json   (front / build / video / springTune。2 段目まで重ねる)
 //   node scripts/studio.mjs video    --char <キャラ> --id ID (--name blink --src blink.mp4 | --dir <NAME.mp4 のフォルダ>)
 //   node scripts/studio.mjs run      --char <キャラ> --id ID --step front|build|video|checks [--proto N] [--set accept|full] [--wait] [--port 8870]
-//   node scripts/studio.mjs promote  --char <キャラ> --id ID --proto N --ver <版 ID> --label "..." --note "変えたこと" [--latest]
+//   node scripts/studio.mjs promote  --char <キャラ> --id ID --proto N --ver <バージョン ID> --label "..." --note "変えたこと" [--latest]
 //   node scripts/studio.mjs requests [--char <キャラ>] [--id ID] [--all]  未着手の依頼(Claude が読む。--all で全部の状態)。却下した候補と理由も出す
 //   node scripts/studio.mjs candidate --char <キャラ> --id ID --request r001 --file cand.png [--note "..."] [--port 8870]
 //                                                                      候補を置く(動いているサーバーを通す。work.json をサーバーと取り合わないため)

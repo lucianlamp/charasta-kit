@@ -1,4 +1,4 @@
-// 表情づくり(lib/studio.mjs): work.json、材料のコピー(元は読むだけ)、採用した絵、区画の範囲、古いかどうか、版にする。
+// 表情づくり(lib/studio.mjs): work.json、材料のコピー(元は読むだけ)、採用した絵、区画の範囲、古いかどうか、バージョンにする。
 // Blender と Python のスクリプトは呼ばない(CHARASTA_FAKE_BLENDER)。ブラウザでも撮らない(CHARASTA_FAKE_CAPTURE)。
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -200,7 +200,7 @@ test('ジョブが待ちか実行中の間は変えない(409)。再起動で止
   assert.equal((await studio.status('c1', 's1')).steps.checks.stale, false);
 });
 
-test('版にする: 試作を版として取り込み(sha256 が同じ)、表情づくりに記録する。変えたことの文が要る', async () => {
+test('バージョンにする: 試作をバージョンとして取り込み(sha256 が同じ)、表情づくりに記録する。変えたことの文が要る', async () => {
   const {lib, studio, q} = await setup();
   await studio.create({charId: 'c1', id: 's1'});
   await studio.copyInputs('c1', 's1', {project: 'p1'});
