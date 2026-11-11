@@ -115,7 +115,7 @@ To change it, set `libraryDir` in `config.json`. Imported files are never change
 | `motionbricksDir` | The MotionBricks repository | Not set |
 | `motionbricksBackend` | MotionBricks inference: `auto` (TensorRT if it runs, otherwise ONNX Runtime), `trt` or `onnx` | `auto` |
 | `vrmaPipelineDir` | The tool that makes motions from video | Not set |
-| `stageStudioDir` | stage-studio, which draws the scenes for MVs and shorts | The bundled `stage-studio/` |
+| `stageStudioDir` | stage-studio, which draws the stages for MVs and shorts | The bundled `stage-studio/` |
 | `voicevoxDir` | Location of VOICEVOX Engine. If one is already running on 127.0.0.1:50021, that one is used | Not set |
 | `hyperframesCli`, `hyperframesBrowser` | The HyperFrames `cli.js` and the Chrome executable | Not set |
 | `env` | Environment variables added to the external commands that jobs run | None |

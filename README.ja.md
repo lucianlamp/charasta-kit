@@ -14,7 +14,7 @@
 - キャラと版の一覧、ビューア、撮影(サムネイル、角度、表情、リップシンク)。キャラの作り方はきゃらくる(Tripo Studio)
 - セリフと声、表情づくり(Blender を使う)、体型と揺れものの調整(新しい版として保存)
 - モーションの取り込み(VRMA)と、動画からのモーションづくり、MotionBricks(任意の機能)
-- ステージの一覧と下見。新しいステージはエージェントに頼んで足す
+- ステージの一覧と下見。新しいステージはエージェントに依頼して追加する
 - ショート動画(対話型)とダンス MV の制作(同梱の `stage-studio/` が Blender で描く)
 
 このキットは、作者の版から機能を絞った簡単なスタジオです(版の種類 `kit`。`docs/edition.md`)。
@@ -113,16 +113,16 @@ npm start
 | `motionbricksDir` | MotionBricks のリポジトリ | 未設定 |
 | `motionbricksBackend` | MotionBricks の推論。`auto`(TensorRT が動けば TensorRT、動かなければ ONNX Runtime)、`trt`、`onnx` | `auto` |
 | `vrmaPipelineDir` | 動画からモーションを作る道具 | 未設定 |
-| `stageStudioDir` | MV とショートのシーンを描く stage-studio | 同梱の `stage-studio/` |
+| `stageStudioDir` | MV とショートのステージを描く stage-studio | 同梱の `stage-studio/` |
 | `voicevoxDir` | VOICEVOX Engine の場所。127.0.0.1:50021 で動いていればそれを使う | 未設定 |
 | `hyperframesCli`、`hyperframesBrowser` | HyperFrames の `cli.js` と Chrome の実体 | 未設定 |
 | `env` | ジョブの外部コマンドに足す環境変数 | なし |
 
 値が `null` か空文字のキーは未設定として扱います。環境変数 `CHARASTA_CONFIG` で別の設定ファイルを指せます。ほかの環境変数は `CHARASTA_PYTHON`、`CHARASTA_FFMPEG`、`CHARASTA_FFPROBE`、`CHARASTA_YTDLP`、`CHARASTA_ENCODER`、`CHARASTA_HW_ENCODER` です。
 
-## エージェントに頼む
+## エージェントに依頼する
 
-画面の頼みごと(ショートの直し、新しいステージ、体型と揺れものの直し、表情づくりの絵)と、キャラやモーションの取り込みは、エージェントに進めてもらえます。Codex でも Claude Code でも使えます。このフォルダを作業の場所にして開き、「きゃらすたの依頼を進めて」のように頼みます。エージェントへの手引きは `AGENTS.md`(Claude Code は `CLAUDE.md` から読む)、作業ごとの手順は `skills/` です。画面のボタンの名前は「エージェントに頼む」です。
+画面からの依頼(ショートの直し、新しいステージ、体型と揺れものの直し、表情づくりの絵)と、キャラやモーションの取り込みは、エージェントに進めてもらえます。Codex でも Claude Code でも使えます。このフォルダを作業の場所にして開き、「きゃらすたの依頼を進めて」のように頼みます。エージェントへの手引きは `AGENTS.md`(Claude Code は `CLAUDE.md` から読む)、作業ごとの手順は `skills/` です。画面のボタンの名前は「エージェントに頼む」です。
 
 ## 取り込みと撮影
 
@@ -142,7 +142,7 @@ node tools/thumb.mjs --char chara4 --ver v3
 ## 構成
 
 - `AGENTS.md`: エージェント(Codex、Claude Code など)への手引き。`CLAUDE.md` は Claude Code が読む入口で、`AGENTS.md` を読み込むだけ
-- `skills/`: エージェントの作業ごとの手順(頼みごと、取り込み)。`.agents/skills/`(Codex が探す)と `.claude/skills/`(Claude Code が探す)は同じ中身の写し
+- `skills/`: エージェントの作業ごとの手順(依頼、取り込み)。`.agents/skills/`(Codex が探す)と `.claude/skills/`(Claude Code が探す)は同じ中身の写し
 - `edition.json`: 版の種類(`kit`)。消すと作者の版として動くが、その機能の道具と文書はこのキットに入っていない
 - `server.mjs`、`lib/`: サーバー
 - `public/`: 画面
