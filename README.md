@@ -124,7 +124,7 @@ Keys whose value is `null` or an empty string are treated as not set. The `CHARA
 
 ## Asking an agent
 
-Requests made on screen (fixing a short, a new stage, body shape and spring-bone fixes, drawings for expression making) and importing characters or motions can be handled by an agent. Both Codex and Claude Code work. Open this folder as the agent's workspace and ask something like "きゃらすたの依頼を進めて" (handle the Charasta requests). The guide for agents is `AGENTS.md` (Claude Code reads it through `CLAUDE.md`), and the step-by-step instructions for each task are in `skills/`. The button on screen is labelled 「エージェントに頼む」 (ask an agent).
+Requests made on screen (fixing a short, a new stage, body shape and spring-bone fixes, drawings for expression making) and importing characters or motions can be handled by an agent. Both Codex and Claude Code work. Open this folder as the agent's workspace and ask something like "きゃらすたの依頼を進めて" (handle the Charasta requests). The guide for agents is `AGENTS.md` (Claude Code reads it through `CLAUDE.md`), and the step-by-step instructions for each task are in `skills/`. The button on screen is labelled 「エージェントに依頼する」 (ask an agent).
 
 ## Importing and shooting
 
