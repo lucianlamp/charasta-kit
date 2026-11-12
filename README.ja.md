@@ -2,7 +2,7 @@
 
 [English](README.md) | 日本語
 
-![きゃらすた](docs/images/banner.webp)
+![きゃらすた](docs/images/banner_ja.webp)
 
 ![version](https://img.shields.io/badge/version-0.1.0--beta-ff2e88)
 ![platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20(beta)-19c8f0)
