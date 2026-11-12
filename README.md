@@ -25,6 +25,10 @@ The kit is free to use. You may not redistribute it (see "License" below).
 
 ## Screens
 
+A dance MV made with the graphic look (motion graphics around a cut-out character, drawn by the bundled stage-studio):
+
+https://github.com/user-attachments/assets/5dfcfe95-563d-466c-ba81-496520b527c7
+
 | Building a dialogue short | Adding motion |
 | --- | --- |
 | ![The short editor](docs/images/screen_dialogue.webp) | ![The motion screen](docs/images/screen_motion.webp) |
