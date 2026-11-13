@@ -78,13 +78,25 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && !drawer.hi
 addEventListener('blur', () => { if (document.activeElement?.tagName === 'IFRAME' && !drawer.hidden) setDrawer(false); });   // ビューアの中を押すと親には click が来ない
 
 // ---- 上部バー ----
+// Tripo とのコラボの表示(Tripo の担当者の依頼。きゃらくるの上部バーと同じ並び)。招待リンクは Impact のアフィリエイトリンク
+const TRIPO_INVITE = 'https://tripo.pxf.io/MKq3Jn?.invite_code=L9ZTKW';
+function tripoSponsor() {
+  const out = {href: TRIPO_INVITE, target: '_blank', rel: 'noopener sponsored'};
+  return h('div', {class: 'sponsor'},
+    h('span', {class: 'sponsor-by'}, 'sponsored by'),
+    h('a', {...out, class: 'sponsor-logo'}, h('img', {src: '/app/tripo-logo.png', alt: 'Tripo', width: '85', height: '20'})),
+    // 狭い幅では「Tripo ↗」に縮める(style.css)
+    h('a', {...out, class: 'sponsor-cta', 'aria-label': 'Tripo でモデルを作る(新しいタブで開く)'},
+      h('span', {class: 'cta-long'}, 'Tripo でモデルを作る'), h('span', {class: 'cta-short'}, 'Tripo'), h('span', {class: 'cta-arrow', 'aria-hidden': 'true'}, '↗')));
+}
 function renderBar(ov, stage, c, verId) {
   const brand = h('a', {class: 'brand', href: '#chars'}, h('img', {src: '/app/icon.svg', alt: '', width: '28', height: '28'}), 'きゃらすた');
+  const sponsor = tripoSponsor();
   renderPhoneNav(stage, c);
   const gallery = h('a', {class: 'model-link', href: '#gallery', 'aria-current': /^#gallery/.test(location.hash) ? 'page' : null}, '動画');
   const shorts = h('a', {class: 'model-link', href: '#shorts', 'aria-current': /^#shorts?(\/|$)/.test(location.hash) ? 'page' : null}, 'ショート');
   const scenes = h('a', {class: 'model-link', href: '#stages', 'aria-current': /^#stages/.test(location.hash) ? 'page' : null}, 'ステージ');
-  if (stage === 'none') { bar.replaceChildren(brand, h('div', {class: 'grow'}), scenes, shorts, gallery, jobsButton, drawer); return; }
+  if (stage === 'none') { bar.replaceChildren(brand, sponsor, h('div', {class: 'grow'}), scenes, shorts, gallery, jobsButton, drawer); return; }
   const close = () => { sw.open = false; };
   const creature = isCreature(c);
   const pickVersion = v => e => {   // 表情と仕上げの URL はバージョンを持たないので、同じ URL のまま読み直す。表情の確認と体型と揺れものはバージョンの URL へ
@@ -108,7 +120,7 @@ function renderBar(ov, stage, c, verId) {
   menuClose = e => { if (!sw.contains(e.target)) close(); };
   const tab = ([id, n, label]) => h('a', {class: 'tab', href: stageHref(id, c), 'aria-current': id === stage ? 'page' : null}, h('span', {class: 'mono n'}, n), h('span', {}, label));
   // 生き物は 4 工程のタブを出さず、キャラのページへのリンクだけ
-  bar.replaceChildren(brand, sw, creature ? h('div', {class: 'grow'}) : h('nav', {class: 'tabs', 'aria-label': '工程'}, STAGES.map(tab)),
+  bar.replaceChildren(brand, sponsor, sw, creature ? h('div', {class: 'grow'}) : h('nav', {class: 'tabs', 'aria-label': '工程'}, STAGES.map(tab)),
     h('a', {class: 'model-link', href: stageHref('model', c), 'aria-current': stage === 'model' ? 'page' : null}, creature ? 'キャラのページ' : '完成モデル'), scenes, shorts, gallery, jobsButton, drawer);
 }
 

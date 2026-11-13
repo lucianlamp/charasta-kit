@@ -79,6 +79,40 @@ legend { font-size: 13px; color: var(--soft); padding: 0; margin-bottom: 6px; }
 #appbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; min-height: 64px; padding: 8px 20px; background: var(--panel); border-bottom: 1px solid var(--line); position: relative; z-index: 20; }
 .brand { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; min-height: 44px; }
 .switch { position: relative; }
+.brand { flex: none; }
+/* Tripo とのコラボの表示。左の縦線で「きゃらすた」と分け、狭い幅では「sponsored by」を隠しボタンを「Tripo ↗」に縮める(下の @media) */
+.sponsor { flex: none; display: flex; align-items: center; gap: 10px; padding-left: 14px; border-left: 1px solid var(--line-strong); min-height: 28px; }
+.sponsor-by { font-size: 11px; color: var(--muted); white-space: nowrap; }
+.sponsor-logo { display: flex; align-items: center; min-height: 44px; }
+.sponsor-logo img { display: block; height: 20px; width: auto; }
+.sponsor-cta { display: flex; align-items: center; min-height: 36px; padding: 0 12px; border-radius: 8px; font-size: 13px; font-weight: 700; white-space: nowrap; color: #0D0F12; background: linear-gradient(90deg, #5CD6F2, #A98BFA); }
+.sponsor-cta:hover { filter: brightness(1.08); }
+.sponsor-cta .cta-short { display: none; }
+/* 日本語の字形の ↗ は細く「／」に見えるので、記号の字形で出す */
+.cta-arrow { margin-left: 4px; font-family: "Segoe UI Symbol", "Apple Symbols", system-ui, sans-serif; font-weight: 400; }
+/* キャラを選んだ画面は工程のタブとキャラの切り替えが並ぶので、早めに縮める。1679 以下では「sponsored by」を隠しボタンを「Tripo ↗」に、
+   1439 以下ではロゴだけにし、タブと完成モデルの左右の余白を詰める(1440 と 1280 でジョブまで 1 行に収まる)。
+   1200 以上ではタブの折り返しの基準を中身の幅にする(360px のままだと中身が入る幅でも次の行へ送られる)。キャラの無い画面は横に余りがあるので 1100 と 900 で縮める */
+@media (max-width: 1679px) {
+  #appbar:has(.switch) { column-gap: 14px; }
+  #appbar:has(.switch) .sponsor-by, #appbar:has(.switch) .cta-long { display: none; }
+  #appbar:has(.switch) .cta-short { display: inline; }
+}
+@media (min-width: 1200px) and (max-width: 1679px) {
+  #appbar:has(.switch) .tabs { flex-basis: auto; }
+}
+@media (max-width: 1439px) {
+  #appbar:has(.switch) .sponsor-cta { display: none; }
+  #appbar:has(.switch) .tab { padding: 0 8px; }
+  #appbar:has(.switch) .model-link { padding: 0 10px; }
+}
+@media (max-width: 1100px) {
+  .sponsor-by, .cta-long { display: none; }
+  .cta-short { display: inline; }
+}
+@media (max-width: 900px) {
+  .sponsor-cta { display: none; }
+}
 .switch summary { list-style: none; display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 4px 12px 4px 4px; background: var(--raised); border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
 .switch summary::-webkit-details-marker { display: none; }
 .who { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.25; min-width: 0; }
@@ -549,6 +583,9 @@ dialog.review-dialog:not([open]) { display: none; }
   #appbar { min-height: 0; padding: 8px 16px; flex-wrap: nowrap; gap: 10px; }
   #appbar .tabs, #appbar .model-link { display: none; }
   #appbar:has(.switch) .brand { display: none; }
+  /* Tripo はロゴだけ(上の 900 以下の決まり)。キャラの画面では「きゃらすた」を隠すので、ロゴはキャラの切り替えとジョブの間に置く */
+  #appbar:has(.switch) .sponsor { order: 1; padding-left: 10px; }
+  #appbar:has(.switch) .jobs-link { order: 2; }
   .jobs-link { flex: none; padding: 0 10px; }
   .jobs-word { display: none; }
   .jobs-drawer { right: 16px; }
