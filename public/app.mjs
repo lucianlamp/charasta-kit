@@ -79,7 +79,7 @@ addEventListener('blur', () => { if (document.activeElement?.tagName === 'IFRAME
 
 // ---- 上部バー ----
 // Tripo とのコラボの表示(Tripo の担当者の依頼。きゃらくるの上部バーと同じ並び)。招待リンクは Impact のアフィリエイトリンク
-const TRIPO_INVITE = 'https://tripo.pxf.io/MKq3Jn?.invite_code=L9ZTKW';
+const TRIPO_INVITE = 'https://tripo.pxf.io/MKq3Jn?p.invite_code=L9ZTKW';
 function tripoSponsor() {
   const out = {href: TRIPO_INVITE, target: '_blank', rel: 'noopener sponsored'};
   return h('div', {class: 'sponsor'},
